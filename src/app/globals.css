@@ -1,8 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #FAF8F4;
   --foreground: #171717;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: url(https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLDz8Z11lFd2JQEl8qw.woff2) format('woff2');
+    unicode-range: U +0900 -097F, U +1CD0 -1CF9, U +200C -200D, U +20A8, U +20B9, U +20F0, U +25CC, U + A830-A839, U + A8E0-A8FF, U +11B00 -11B09;
 }
 
 @theme inline {
@@ -22,9 +31,81 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Poppins', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+h1,h2,h3,.mono-label{
+  font-family:'Montserrat',sans-serif;
+  letter-spacing:0.02em;
 }
 
 .pt-2 {
   padding-top: 2px
+}
+
+.box-card .tag {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    color: #5b4a2f;
+}
+
+.sticker {
+    position: relative;
+    border: 2px dashed rgba(17, 17, 17, 0.35);
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px 9px 14px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    background: var(--cream);
+    transform: rotate(-3deg);
+    white-space: nowrap;
+}
+
+.sticker::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    flex: none;
+}
+
+.sticker.blush {
+    background: var(--blush);
+    color: #5b2f2b;
+    border-color: rgba(91, 47, 43, 0.35);
+}
+
+.hero-visual {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-visual .sticker {
+    position: absolute;
+    z-index: 3;
+}
+
+.sticker.sage{
+    color: #22301c;
+    border-color: rgba(34, 48, 28, 0.35);
+}
+
+.sticker.gold {
+    color: #3e2f0d;
+    border-color: rgba(62, 47, 13, 0.4);
 }

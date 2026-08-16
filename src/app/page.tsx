@@ -11,7 +11,7 @@ export const metadata = {
 
 const trendingProducts = [
   { brand: "funkful", name: "Personalized Name Mug", price: "From R199", thumbLabel: "Custom Mug" },
-  { brand: "scoopful", name: "Lucky Scoop — Beauty Edition", price: "From R249", thumbLabel: "Mystery Scoop" },
+  { brand: "scoopful", name: "Lucky Scoop — BestSeller", price: "From R159", thumbLabel: "Mystery Scoop" },
   { brand: "funkful", name: "Insulated Tumbler, 500ml", price: "From R289", thumbLabel: "Custom Tumbler" },
   { brand: "scoopful", name: "VIP Premium Scoop Box", price: "From R399", thumbLabel: "VIP Scoop" },
 ];
@@ -37,7 +37,7 @@ export default function HomePage() {
 
       {/* Header */}
       <header style={{ background: palette.cream, borderBottom: "1px solid rgba(17,17,17,0.08)" }} className="sticky top-0 z-50 bg-[--brand-bg,inherit]">
-        <div className="max-w-1180px mx-auto px-8 flex items-center justify-between py-4">
+        <div className="max-w-[1180px] mx-auto px-8 flex items-center justify-between py-4">
           <Link href="/">
             <Image src={funkful.logo} alt="Funkful" width={110} height={26} className="w-auto" />
           </Link>
@@ -70,19 +70,19 @@ export default function HomePage() {
       </header>
 
       {/* Hero */}
-      <section className="max-w-\[1180px] mx-auto px-8 py-16 md:py-24">
+      <section className="max-w-[1180px] mx-auto px-8 py-16 md:py-24">
         <div className="grid md:grid-cols-[1.1fr_0.9fr] gap-14 items-center">
           <div>
             <div className="flex gap-2.5 flex-wrap mb-6">
               <span
                 style={{ borderColor: "rgba(17,17,17,0.35)" }}
-                className="border-2 border-dashed rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wider"
+                className="sticker border-2 border-dashed rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wider"
               >
                 South Africa 🇿🇦
               </span>
               <span
-                style={{ background: palette.blush, color: "#5b2f2b", borderColor: "rgba(91,47,43,0.35)" }}
-                className="border-2 border-dashed rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wider"
+                style={{ background: palette.blush}}
+                className="sticker blush border-2 border-dashed rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wider"
               >
                 Every scoop is different
               </span>
@@ -112,23 +112,17 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="relative flex items-center justify-center">
-            <div className="relative w-full max-w-\[380px\] aspect-square">
-              <div
-                style={{ background: palette.beige }}
-                className="absolute rounded-[22px] w-\[78%\] h-\[78%\] top-0 left-0 -rotate-6 shadow-xl p-5"
-              >
-                <span className="font-extrabold text-xs uppercase" style={{ color: "#5b4a2f" }}>
+          <div className="hero-visual relative flex items-center justify-center">
+            <div className="relative w-full max-w-[380px] aspect-square">
+              <div style={{ background: palette.beige }} className="box-card absolute rounded-[22px] w-[78%] h-[78%] top-0 left-0 -rotate-6 shadow-xl p-5">
+                <span className="tag font-extrabold uppercase" style={{ color: "#5b4a2f" }}>
                   Funkful Originals
                   <br />
                   Packed with love
                 </span>
               </div>
-              <div
-                style={{ background: palette.blush }}
-                className="absolute rounded-[22px] w-\[70%\] h-\[70%\] bottom-0 right-0 rotate-6 shadow-xl p-5 flex flex-col justify-end"
-              >
-                <Image src={scoopful.logo} alt="" width={56} height={56} className="mb-2 object-contain" />
+              <div style={{ background: palette.blush }} className="absolute rounded-[22px] w-[70%] h-[70%] bottom-0 right-0 rotate-8 shadow-xl p-5 flex flex-col justify-end">
+                <Image src={scoopful.logo} alt="" width={1000} height={1000} className="mb-2 object-contain" />
                 <span className="font-extrabold text-xs uppercase" style={{ color: "#5b2f2b" }}>
                   Your scoop awaits
                 </span>
@@ -136,14 +130,12 @@ export default function HomePage() {
             </div>
             <span
               style={{ background: palette.gold, color: "#3e2f0d" }}
-              className="absolute top-[6%] right-[2%] border-2 border-dashed rounded-full px-4 py-2 text-xs font-bold uppercase"
-            >
+              className="sticker gold absolute top-[6%] right-[2%] border-2 border-dashed rounded-full px-4 py-2 text-xs font-bold uppercase">
               VIP scoop inside
             </span>
             <span
               style={{ background: palette.sage, color: "#1c2617" }}
-              className="absolute bottom-[10%] left-[-4%] rotate-[9deg] border-2 border-dashed rounded-full px-4 py-2 text-xs font-bold uppercase"
-            >
+              className="sticker sage absolute bottom-[10%] left-[-4%] rotate-[9deg] border-2 border-dashed rounded-full px-4 py-2 text-xs font-bold uppercase">
               Hand-signed card
             </span>
           </div>
@@ -152,7 +144,7 @@ export default function HomePage() {
 
       {/* Brand split */}
       <section id="custom" style={{ background: palette.black, color: palette.cream }} className="py-20 md:py-24">
-        <div className="max-w-\[1180px] mx-auto px-8">
+        <div className="max-w-[1180px] mx-auto px-8">
           <div className="max-w-xl mb-12">
             <span style={{ color: palette.gold }} className="text-xs font-bold uppercase tracking-[0.14em] block mb-2.5">
               One roof, two worlds
@@ -195,7 +187,7 @@ export default function HomePage() {
 
       {/* Unboxing experience */}
       <section style={{ background: palette.beige }} className="py-20 md:py-24">
-        <div className="max-w-\[1180px\] mx-auto px-8">
+        <div className="max-w-[1180px] mx-auto px-8">
           <div className="max-w-xl mb-12">
             <span style={{ color: "#8a4a45" }} className="text-xs font-bold uppercase tracking-[0.14em] block mb-2.5">
               The 5-star unboxing system
@@ -221,7 +213,7 @@ export default function HomePage() {
 
       {/* Trending / unified cart */}
       <section className="py-20 md:py-24">
-        <div className="max-w-\[1180px\] mx-auto px-8">
+        <div className="max-w-[1180px] mx-auto px-8">
           <div className="flex items-end justify-between gap-6 flex-wrap mb-12">
             <div>
               <span style={{ color: "#8a4a45" }} className="text-xs font-bold uppercase tracking-[0.14em] block mb-2.5">
@@ -267,7 +259,7 @@ export default function HomePage() {
 
       {/* Anime Box teaser */}
       <section id="anime" style={{ background: palette.lavender }} className="py-16">
-        <div className="max-w-\[1180px\] mx-auto px-8 flex items-center justify-between gap-10 flex-wrap">
+        <div className="max-w-[1180px] mx-auto px-8 flex items-center justify-between gap-10 flex-wrap">
           <div className="max-w-xl">
             <span style={{ color: "#4a3b7a" }} className="text-xs font-bold uppercase tracking-[0.14em] block mb-2.5">
               {animeBox.eyebrow} — coming soon
@@ -309,7 +301,7 @@ export default function HomePage() {
 
       {/* Founder story */}
       <section id="about" className="py-20 md:py-24">
-        <div className="max-w-\[1180px\] mx-auto px-8 grid md:grid-cols-[0.8fr_1.2fr] gap-14 items-center">
+        <div className="max-w-[1180px] mx-auto px-8 grid md:grid-cols-[0.8fr_1.2fr] gap-14 items-center">
           <div
             style={{ background: palette.sage, color: "#22301c" }}
             className="rounded-3xl aspect-4/5 flex items-center justify-center font-extrabold uppercase text-sm text-center p-5"
@@ -329,7 +321,7 @@ export default function HomePage() {
 
       {/* Newsletter */}
       <section style={{ background: palette.black, color: palette.cream }} className="py-20 text-center">
-        <div className="max-w-\[1180px\] mx-auto px-8">
+        <div className="max-w-[1180px] mx-auto px-8">
           <h2 className="text-3xl md:text-4xl font-black uppercase mb-3.5">Get 10% off your first order</h2>
           <p className="text-neutral-300 mb-8">
             One list, every brand — personalized gifts, mystery scoops, and first dibs on Anime Box.
@@ -354,7 +346,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer style={{ background: palette.beige }} className="py-16 pt-16 pb-8">
-        <div className="max-w-\[1180px\] mx-auto px-8">
+        <div className="max-w-[1180px] mx-auto px-8">
           <div className="grid md:grid-cols-[1.4fr_1fr_1fr_1fr] gap-8 mb-12">
             <div>
               <Image src={funkful.logo} alt="Funkful" width={140} height={34} className="h-8.5 w-auto mb-3" />

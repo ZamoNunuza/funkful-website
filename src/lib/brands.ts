@@ -47,7 +47,7 @@ export const brands: Record<BrandSlug, Brand> = {
     tagline: "Scoop. Surprise. Smile.",
     eyebrow: "The Fun Bestie",
     description:
-      "A gamified mystery scoop event — curated high-value items, no two scoops ever identical.",
+      "A gamified mystery scoop event — five ball colors, five rarities, and every scoop tells you exactly which colors are guaranteed.",
     logo: "/assets/scoopful-logo.png",
     accent: "#EBC6C2", // blush
     accentInk: "#5b2f2b",
@@ -80,6 +80,17 @@ export const palette = {
   sage: "#A8B5A0",
   lavender: "#CFC5E8",
   gold: "#D8BE85",
+} as const;
+
+// Scoopful's "ball system" — five rarity tiers used across the hero,
+// the ball-legend section, and each product card's guaranteed-odds line.
+// Ordered lowest → highest rarity.
+export const ballColors = {
+  blue: "#5C7FA6",
+  yellow: "#E3B23C",
+  green: "#7C9473",
+  red: "#A6564B",
+  orange: "#D98A42",
 } as const;
 
 export function getBrand(slug: BrandSlug): Brand {

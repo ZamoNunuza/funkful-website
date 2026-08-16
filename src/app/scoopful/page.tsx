@@ -1,22 +1,84 @@
 // src/app/scoopful/page.tsx
 import Image from "next/image";
 import Link from "next/link";
-import { brands, palette, navLinks } from "@/lib/brands";
+import { brands, palette, ballColors, navLinks } from "@/lib/brands";
 
-const scoops = [
-  { name: "Lucky Scoop — Classic", desc: "Our original mystery scoop. Beauty, lifestyle & surprise items, hand-packed.", price: "R249", badge: "Bestseller", swatch: palette.blush },
-  { name: "VIP Premium Scoop", desc: "Rare, high-tier finds only. Our most-hyped scoop, limited weekly stock.", price: "R399", badge: "VIP", swatch: palette.gold },
-  { name: "Lucky Scoop — Beauty Edition", desc: "Skincare & makeup minis and full sizes, scooped at random.", price: "R279", badge: "New", swatch: palette.beige },
-  { name: "Double Scoop Bundle", desc: "Two scoops, one box — built for sharing (or not).", price: "R429", was: "R498", badge: "Bundle", swatch: palette.lavender },
-  { name: "Lucky Scoop — Lifestyle", desc: "Desk finds, accessories and small surprises for everyday joy.", price: "R249", badge: "Restocked", swatch: palette.sage },
-  { name: "Scoopful Gift Set, x3", desc: "Three scoops pre-wrapped for gifting, with a hand-signed card.", price: "R649", badge: "Gift Ready", swatch: palette.blush },
+// Five ball colors positioned as a loose cluster behind the hero copy —
+// purely decorative, matches the mock's floating-balls hero art.
+const heroBalls = [
+  { color: ballColors.yellow, size: "38%", top: "2%", left: "8%" },
+  { color: ballColors.blue, size: "44%", top: "10%", right: "4%" },
+  { color: ballColors.red, size: "34%", bottom: "6%", left: "2%" },
+  { color: ballColors.green, size: "40%", bottom: "0%", right: "12%" },
+  { color: ballColors.orange, size: "30%", top: "36%", left: "34%" },
 ];
 
-const filters = ["All Scoops", "Lucky Scoops", "VIP Scoops", "Bundles", "Beauty Edition"];
+// The ball-rarity legend — lowest to highest value. Every scoop's
+// "guaranteed odds" line below is built from these same five colors.
+const ballSystem = [
+  { name: "Blue", tag: "Everyday", desc: "Scrunchies, makeup puffs, pimple patches — small daily joys.", color: ballColors.blue },
+  { name: "Yellow", tag: "Common", desc: "Lip balm, hand cream, roll-on perfume, coin purses.", color: ballColors.yellow },
+  { name: "Green", tag: "Uncommon", desc: "Full-size perfumes, key holders, notebook & pen sets.", color: ballColors.green },
+  { name: "Red", tag: "Rare", desc: "Glowing serum, sunscreen — skincare heroes.", color: ballColors.red },
+  { name: "Orange", tag: "Grand Prize", desc: "Cosmetic bags, jewelry pouches, care set.", color: ballColors.orange },
+];
+
+// Sticker (badge) color treatments used on the eyebrow tag and product cards.
+const stickerStyles = {
+  gold: { background: palette.gold, color: "#3e2f0d", borderColor: "rgba(62,47,13,0.4)" },
+  dark: { background: palette.black, color: palette.cream, borderColor: "rgba(250,248,244,0.4)" },
+  sage: { background: palette.sage, color: "#1c2617", borderColor: "rgba(28,38,23,0.35)" },
+  plain: { background: palette.cream, color: palette.black, borderColor: "rgba(17,17,17,0.35)" },
+} as const;
+
+const scoops = [
+  {
+    name: "Lucky Scoop",
+    odds: "3 Blue · 2 Yellow · 1 Green — guaranteed",
+    desc: "Our original mystery scoop. A friendly mix of everyday and daily-favorite finds, hand-packed same day.",
+    price: "R159",
+    badge: "Bestseller",
+    badgeStyle: "gold" as const,
+    thumbBg: palette.blush,
+    balls: [ballColors.blue, ballColors.blue, ballColors.blue, ballColors.yellow, ballColors.yellow, ballColors.green],
+  },
+  {
+    name: "Deluxe Scoop",
+    odds: "2 Blue · 2 Yellow · 2 Green · 1 Red — guaranteed",
+    desc: "A bigger scoop with your first guaranteed rare find — think glowing serum or sunscreen.",
+    price: "R269",
+    badge: "Restocked",
+    badgeStyle: "sage" as const,
+    thumbBg: palette.beige,
+    balls: [ballColors.blue, ballColors.blue, ballColors.yellow, ballColors.yellow, ballColors.green, ballColors.green, ballColors.red],
+  },
+  {
+    name: "VIP Premium Scoop",
+    odds: "1 Blue · 2 Yellow · 2 Green · 2 Red · 1 Orange — guaranteed",
+    desc: "Rare, high-tier finds only. Every color in the pit, with a guaranteed Grand Prize orange item.",
+    price: "R429",
+    badge: "VIP",
+    badgeStyle: "plain" as const,
+    thumbBg: palette.lavender,
+    balls: [ballColors.blue, ballColors.yellow, ballColors.yellow, ballColors.green, ballColors.green, ballColors.red, ballColors.red, ballColors.orange],
+  },
+  {
+    name: "Grand Prize Scoop",
+    odds: "1 Yellow · 1 Green · 2 Red · 2 Orange — guaranteed",
+    desc: "Our most-hyped scoop. Two guaranteed Grand Prize items — cosmetic bags, jewelry pouches, or care set.",
+    price: "R499",
+    badge: "Rarest",
+    badgeStyle: "gold" as const,
+    thumbBg: palette.gold,
+    balls: [ballColors.yellow, ballColors.green, ballColors.red, ballColors.red, ballColors.orange, ballColors.orange],
+  },
+];
+
+const filters = ["All Scoops", "Lucky", "Deluxe", "VIP", "Grand Prize"];
 
 const howItWorks = [
-  { n: "01", title: "Pick your scoop", body: "Choose Lucky, VIP, or a themed edition. Every tier sets the value range, not the exact contents." },
-  { n: "02", title: "We hand-pack the mystery", body: "Curated same day, sealed, and never repeated the same way twice." },
+  { n: "01", title: "Pick your scoop", body: "Each tier sets exactly which ball colors are guaranteed — not the exact items inside them." },
+  { n: "02", title: "We hand-pack the mystery", body: "Curated same day from real stock, sealed, and never repeated the same way twice." },
   { n: "03", title: "You scoop, you share", body: "Unbox on camera or just for you — either way, tag us for a shot at a restock feature." },
 ];
 
@@ -27,8 +89,8 @@ export default function ScoopfulPage() {
   return (
     <>
       {/* Header — same shell as the homepage, "Scoopful" marked active */}
-      <header style={{ borderBottom: "1px solid rgba(17,17,17,0.08)" }} className="sticky top-0 z-50 bg-[--brand-bg,inherit]">
-        <div className="max-w-1180px mx-auto px-8 flex items-center justify-between py-4">
+      <header style={{ background: palette.cream, borderBottom: "1px solid rgba(17,17,17,0.08)" }} className="sticky top-0 z-50 bg-[--brand-bg,inherit]">
+        <div className="max-w-[1180px] mx-auto px-8 flex items-center justify-between py-4">
           <Link href="/">
             <Image src={funkful.logo} alt="Funkful" width={110} height={26} className="w-auto" />
           </Link>
@@ -57,7 +119,7 @@ export default function ScoopfulPage() {
               Bag{" "}
               <span
                 style={{ background: palette.black, color: palette.cream }}
-                className="inline-flex items-center justify-center w-[18px] h-[18px] pt-2 rounded-full text-[10px] ml-1"
+                className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full text-[10px] ml-1"
               >
                 2
               </span>
@@ -67,14 +129,38 @@ export default function ScoopfulPage() {
       </header>
 
       {/* Breadcrumb */}
-      <div className="max-w-\[1180px\] mx-auto px-8 pt-4 text-xs text-neutral-500">
+      <div className="max-w-[1180px] mx-auto px-8 pt-4 text-xs text-neutral-500">
         <Link href="/">Home</Link> / <span className="text-black font-medium">Scoopful</span>
       </div>
 
       {/* Hero */}
-      <section style={{ background: "var(--brand-accent)" }} className="mt-4 py-11 md:py-14">
-        <div className="max-w-\[1180px\] mx-auto px-8 grid md:grid-cols-[220px_1fr] gap-10 items-center">
-          <Image src={scoopful.logo} alt={scoopful.name} width={220} height={220} className="w-full" />
+      <section style={{ background: "var(--brand-accent)" }} className="mt-4 py-11 md:py-14 overflow-hidden">
+        <div className="max-w-[1180px] mx-auto px-8 grid md:grid-cols-[220px_1fr] gap-10 items-center">
+          <div className="relative w-full aspect-square max-w-[220px] mx-auto md:mx-0">
+            {heroBalls.map((ball, i) => (
+              <div
+                key={i}
+                className="absolute rounded-full"
+                style={{
+                  width: ball.size,
+                  height: ball.size,
+                  top: ball.top,
+                  left: ball.left,
+                  right: ball.right,
+                  bottom: ball.bottom,
+                  background: ball.color,
+                  boxShadow: "inset -6px -8px 14px rgba(0,0,0,0.18), inset 4px 6px 10px rgba(255,255,255,0.35)",
+                }}
+              />
+            ))}
+            <Image
+              src={scoopful.logo}
+              alt={scoopful.name}
+              width={500}
+              height={500}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-auto drop-shadow-lg"
+            />
+          </div>
           <div>
             <span
               style={{ background: palette.black, color: palette.cream }}
@@ -86,8 +172,8 @@ export default function ScoopfulPage() {
               {scoopful.tagline}
             </h1>
             <p style={{ color: "#5b3d38" }} className="text-sm leading-relaxed max-w-lg mb-6">
-              What if shopping felt like opening a beautifully wrapped present every single time? Every
-              scoop is a curated mystery filled with high-value items — no two are ever identical.
+              Five ball colors, one mystery scoop. Every scoop guarantees a mix of colors — and the rarer
+              the color, the bigger the prize. No two scoops are ever identical.
             </p>
             <div className="flex gap-3 flex-wrap">
               <a href="#catalog" style={{ background: palette.black, color: palette.cream }} className="font-bold text-xs uppercase tracking-wide px-6.5 py-4 rounded-full">
@@ -101,8 +187,35 @@ export default function ScoopfulPage() {
         </div>
       </section>
 
+      {/* The Ball System — rarity legend */}
+      <section className="pt-16 pb-2">
+        <div className="max-w-[1180px] mx-auto px-8">
+          <span style={{ color: "var(--brand-ink)" }} className="text-xs font-bold uppercase tracking-[0.14em] block mb-2.5">
+            The Ball System
+          </span>
+          <h2 className="text-2xl md:text-3xl font-extrabold uppercase mb-2">Five colors. Five rarities.</h2>
+          <p className="text-sm text-neutral-600 max-w-xl leading-relaxed mb-9">
+            Every item in the pit is sorted into a color by value — the deeper into the rainbow you go, the
+            bigger the find. Every scoop tells you exactly which colors are guaranteed.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4.5">
+            {ballSystem.map((ball) => (
+              <div key={ball.name} style={{ borderColor: "rgba(17,17,17,0.1)" }} className="border rounded-[18px] p-5.5 text-center bg-[--cream]">
+                <div
+                  className="w-[42px] h-[42px] rounded-full mx-auto mb-3.5"
+                  style={{ background: ball.color, boxShadow: "inset -5px -6px 10px rgba(0,0,0,0.2), inset 3px 4px 8px rgba(255,255,255,0.35)" }}
+                />
+                <h4 className="text-sm font-extrabold uppercase mb-1.5">{ball.name}</h4>
+                <div className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wide mb-2.5">{ball.tag}</div>
+                <p className="text-xs text-neutral-600 leading-relaxed">{ball.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Filter bar */}
-      <div style={{ borderBottom: "1px solid rgba(17,17,17,0.08)" }} className="sticky top-[57px] z-40 bg-[color:var(--tw-bg,inherit)] py-4">
+      <div style={{ borderBottom: "1px solid rgba(17,17,17,0.08)" }} className="sticky top-[57px] z-40 bg-[color:var(--tw-bg,inherit)] py-4 mt-14">
         <div className="max-w-[1180px] mx-auto px-8 flex justify-between items-center flex-wrap gap-3">
           <div className="flex gap-2.5 flex-wrap">
             {filters.map((f, i) => (
@@ -122,30 +235,26 @@ export default function ScoopfulPage() {
       {/* Product grid */}
       <section id="catalog" className="py-14">
         <div className="max-w-[1180px] mx-auto px-8">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 gap-6">
             {scoops.map((scoop) => (
               <div key={scoop.name} style={{ borderColor: "rgba(17,17,17,0.08)" }} className="bg-[--cream] border rounded-[20px] overflow-hidden">
-                <div style={{ background: scoop.swatch }} className="relative aspect-square flex items-center justify-center p-5">
-                  <span
-                    style={{ background: palette.cream }}
-                    className="absolute top-3.5 left-3.5 border-2 border-dashed rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wide"
-                  >
+                <div style={{ background: scoop.thumbBg }} className="relative flex items-center justify-center gap-2.5 p-8 text-center flex-wrap">
+                  <span style={stickerStyles[scoop.badgeStyle]} className="absolute top-3.5 left-3.5 border-2 border-dashed rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wide" >
                     {scoop.badge}
                   </span>
-                  <Image src={scoopful.logo} alt="" width={64} height={64} className="object-contain opacity-90" />
+                  {scoop.balls.map((color, i) => (
+                    <div key={i} className="w-6.5 h-6.5 rounded-full" style={{ background: color, boxShadow: "inset -3px -4px 7px rgba(0,0,0,0.2), inset 2px 3px 5px rgba(255,255,255,0.35)" }} />
+                  ))}
                 </div>
                 <div className="p-5">
-                  <h4 className="text-sm font-bold mb-1.5">{scoop.name}</h4>
-                  <p className="text-xs text-neutral-600 leading-relaxed mb-3">{scoop.desc}</p>
+                  <h4 className="text-base font-extrabold uppercase mb-1">{scoop.name}</h4>
+                  <div className="text-[11.5px] font-bold text-neutral-500 uppercase tracking-wide mb-2.5">{scoop.odds}</div>
+                  <p className="text-xs text-neutral-600 leading-relaxed mb-3.5">{scoop.desc}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold">
-                      {scoop.was && <span className="font-normal text-neutral-400 line-through mr-1.5 text-xs">{scoop.was}</span>}
-                      {scoop.price}
-                    </span>
+                    <span className="text-base font-extrabold">{scoop.price}</span>
                     <button
                       style={{ background: palette.black, color: palette.cream }}
-                      className="text-[11.5px] font-bold uppercase tracking-wide px-4 py-2.5 rounded-full"
-                    >
+                      className="text-[11.5px] font-bold uppercase tracking-wide px-4 py-2.5 rounded-full">
                       Add to bag
                     </button>
                   </div>
