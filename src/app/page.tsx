@@ -123,7 +123,7 @@ export default function HomePage() {
               </div>
               <div style={{ background: palette.blush }} className="absolute rounded-[22px] w-[70%] h-[70%] bottom-0 right-0 rotate-8 shadow-xl p-5 flex flex-col justify-end">
                 <Image src={scoopful.logo} alt="" width={1000} height={1000} className="mb-2 object-contain" />
-                <span className="font-extrabold text-xs uppercase" style={{ color: "#5b2f2b" }}>
+                <span className="font-extrabold text-center text-xs uppercase" style={{ color: "#5b2f2b" }}>
                   Your scoop awaits
                 </span>
               </div>

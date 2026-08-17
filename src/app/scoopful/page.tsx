@@ -1,7 +1,9 @@
 // src/app/scoopful/page.tsx
+"use client";
 import Image from "next/image";
 import Link from "next/link";
 import { brands, palette, ballColors, navLinks } from "@/lib/brands";
+import { useCart } from "@/lib/cart-context";
 
 // Five ball colors positioned as a loose cluster behind the hero copy —
 // purely decorative, matches the mock's floating-balls hero art.
@@ -33,40 +35,45 @@ const stickerStyles = {
 
 const scoops = [
   {
+    id: "scoopful-lucky-scoop-classic",
     name: "Lucky Scoop",
     odds: "3 Blue · 2 Yellow · 1 Green — guaranteed",
     desc: "Our original mystery scoop. A friendly mix of everyday and daily-favorite finds, hand-packed same day.",
-    price: "R159",
+    priceCents: 15900,
     badge: "Bestseller",
     badgeStyle: "gold" as const,
     thumbBg: palette.blush,
     balls: [ballColors.blue, ballColors.blue, ballColors.blue, ballColors.yellow, ballColors.yellow, ballColors.green],
   },
   {
+    id: "scoopful-deluxe-scoop",
     name: "Deluxe Scoop",
     odds: "2 Blue · 2 Yellow · 2 Green · 1 Red — guaranteed",
     desc: "A bigger scoop with your first guaranteed rare find — think glowing serum or sunscreen.",
-    price: "R269",
+    priceCents: 26900,
     badge: "Restocked",
     badgeStyle: "sage" as const,
     thumbBg: palette.beige,
     balls: [ballColors.blue, ballColors.blue, ballColors.yellow, ballColors.yellow, ballColors.green, ballColors.green, ballColors.red],
   },
   {
+    id: "scoopful-vip-premium-scoop",
     name: "VIP Premium Scoop",
     odds: "1 Blue · 2 Yellow · 2 Green · 2 Red · 1 Orange — guaranteed",
     desc: "Rare, high-tier finds only. Every color in the pit, with a guaranteed Grand Prize orange item.",
-    price: "R429",
+    priceCents: 42900,
+    wasCents: 45000,
     badge: "VIP",
     badgeStyle: "plain" as const,
     thumbBg: palette.lavender,
     balls: [ballColors.blue, ballColors.yellow, ballColors.yellow, ballColors.green, ballColors.green, ballColors.red, ballColors.red, ballColors.orange],
   },
   {
+    id: "scoopful-grand-prize-scoop",
     name: "Grand Prize Scoop",
     odds: "1 Yellow · 1 Green · 2 Red · 2 Orange — guaranteed",
     desc: "Our most-hyped scoop. Two guaranteed Grand Prize items — cosmetic bags, jewelry pouches, or care set.",
-    price: "R499",
+    priceCents: 49900,
     badge: "Rarest",
     badgeStyle: "gold" as const,
     thumbBg: palette.gold,
@@ -82,9 +89,14 @@ const howItWorks = [
   { n: "03", title: "You scoop, you share", body: "Unbox on camera or just for you — either way, tag us for a shot at a restock feature." },
 ];
 
+function formatrands(cents: number) {
+    return `R${(cents / 100).toFixed(0)}`;
+}
+
 export default function ScoopfulPage() {
   const scoopful = brands.scoopful;
   const funkful = brands.funkful;
+  const {addItem, itemCount} = useCart();
 
   return (
     <>
@@ -105,8 +117,7 @@ export default function ScoopfulPage() {
                   style={{
                     color: link.soon ? "#7d6da3" : isActive ? "var(--brand-ink)" : palette.black,
                     borderColor: isActive ? "var(--brand-ink)" : "transparent",
-                  }}
-                >
+                  }} >
                   {link.label}
                 </Link>
               );
@@ -121,12 +132,16 @@ export default function ScoopfulPage() {
                 style={{ background: palette.black, color: palette.cream }}
                 className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full text-[10px] ml-1"
               >
-                2
+                {itemCount}
               </span>
             </Link>
           </div>
         </div>
       </header>
+
+      {/* ship banner */}
+      <div className="ship-banner">Free nationwide shipping on orders over R400 <span>·</span> Flat R99 door-to-door otherwise</div>
+
 
       {/* Breadcrumb */}
       <div className="max-w-[1180px] mx-auto px-8 pt-4 text-xs text-neutral-500">
@@ -237,7 +252,7 @@ export default function ScoopfulPage() {
         <div className="max-w-[1180px] mx-auto px-8">
           <div className="grid sm:grid-cols-2 gap-6">
             {scoops.map((scoop) => (
-              <div key={scoop.name} style={{ borderColor: "rgba(17,17,17,0.08)" }} className="bg-[--cream] border rounded-[20px] overflow-hidden">
+              <div key={scoop.id} style={{ borderColor: "rgba(17,17,17,0.08)" }} className="bg-[--cream] border rounded-[20px] overflow-hidden">
                 <div style={{ background: scoop.thumbBg }} className="relative flex items-center justify-center gap-2.5 p-8 text-center flex-wrap">
                   <span style={stickerStyles[scoop.badgeStyle]} className="absolute top-3.5 left-3.5 border-2 border-dashed rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wide" >
                     {scoop.badge}
@@ -251,8 +266,18 @@ export default function ScoopfulPage() {
                   <div className="text-[11.5px] font-bold text-neutral-500 uppercase tracking-wide mb-2.5">{scoop.odds}</div>
                   <p className="text-xs text-neutral-600 leading-relaxed mb-3.5">{scoop.desc}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-base font-extrabold">{scoop.price}</span>
-                    <button
+                    <span className="text-base font-extrabold">
+                        {scoop.wasCents && (<span className="line-through text-neutral-400 mr-1">{formatrands(scoop.wasCents)}</span>)}
+                        {formatrands(scoop.priceCents)}</span>
+                    <button type="button" 
+                    onClick={() =>
+                        addItem({
+                            id: scoop.id,
+                            brand: "scoopful",
+                            name: scoop.name,
+                            priceCents: scoop.priceCents,
+                        })
+                    }
                       style={{ background: palette.black, color: palette.cream }}
                       className="text-[11.5px] font-bold uppercase tracking-wide px-4 py-2.5 rounded-full">
                       Add to bag

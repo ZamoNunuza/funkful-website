@@ -1,24 +1,25 @@
 @import "tailwindcss";
-
 :root {
   --background: #FAF8F4;
   --foreground: #171717;
+  --black: #111111;
+  --cream: #FAF8F4;
 }
 
-@font-face {
-    font-family: 'Poppins';
+/*@font-face {
+    font-family: '--font-poppins';
     font-style: normal;
     font-weight: 300;
     font-display: swap;
     src: url(https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLDz8Z11lFd2JQEl8qw.woff2) format('woff2');
     unicode-range: U +0900 -097F, U +1CD0 -1CF9, U +200C -200D, U +20A8, U +20B9, U +20F0, U +25CC, U + A830-A839, U + A8E0-A8FF, U +11B00 -11B09;
-}
+}*/
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-montserrat: var(--font-montserrat);
+  --font-poppins: var(--font-poppins);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,13 +32,13 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-poppins), sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
-h1,h2,h3,.mono-label{
-  font-family:'Montserrat',sans-serif;
+h1,h2,h3,h4,h5,h6,button,a {
+  font-family: var(--font-montserrat), sans-serif;
   letter-spacing:0.02em;
 }
 
@@ -49,7 +50,7 @@ h1,h2,h3,.mono-label{
     position: absolute;
     top: 20px;
     left: 20px;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-montserrat), sans-serif;
     font-weight: 800;
     font-size: 13px;
     color: #5b4a2f;
@@ -63,7 +64,7 @@ h1,h2,h3,.mono-label{
     align-items: center;
     gap: 8px;
     padding: 9px 18px 9px 14px;
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--font-montserrat), sans-serif;
     font-weight: 700;
     font-size: 12px;
     letter-spacing: 0.09em;
@@ -109,3 +110,15 @@ h1,h2,h3,.mono-label{
     color: #3e2f0d;
     border-color: rgba(62, 47, 13, 0.4);
 }
+
+.ship-banner{
+  background:var(--black);
+  color:var(--cream);
+  text-align:center;
+  padding:9px 12px;
+  font-family:var(--font-montserrat),sans-serif;
+  font-weight:700;
+  font-size:12px;
+  letter-spacing:0.04em;
+  text-transform:uppercase;}
+.ship-banner span{color:var(--gold);}
