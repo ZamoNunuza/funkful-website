@@ -128,10 +128,7 @@ export default function ScoopfulPage() {
             <span>Account</span>
             <Link href="/cart">
               Bag{" "}
-              <span
-                style={{ background: palette.black, color: palette.cream }}
-                className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full text-[10px] ml-1"
-              >
+              <span className="cart-dot">
                 {itemCount}
               </span>
             </Link>
@@ -140,7 +137,7 @@ export default function ScoopfulPage() {
       </header>
 
       {/* ship banner */}
-      <div className="ship-banner">Free nationwide shipping on orders over R400 <span>·</span> Flat R99 door-to-door otherwise</div>
+      <div className="ship-banner">Free nationwide shipping on orders over R400 <span>·</span> Mix Funkful Originals & Scoopful in one cart <span>·</span> Flat R99 door-to-door otherwise</div>
 
 
       {/* Breadcrumb */}
@@ -279,7 +276,7 @@ export default function ScoopfulPage() {
                         })
                     }
                       style={{ background: palette.black, color: palette.cream }}
-                      className="text-[11.5px] font-bold uppercase tracking-wide px-4 py-2.5 rounded-full">
+                      className="text-[11.5px] font-bold uppercase tracking-wide px-4 py-2.5 rounded-full hover:bg-gray-900">
                       Add to bag
                     </button>
                   </div>

@@ -42,8 +42,67 @@ h1,h2,h3,h4,h5,h6,button,a {
   letter-spacing:0.02em;
 }
 
+button:hover {
+  background-color: var(--color-gray-700)!important;
+  cursor: pointer;
+}
+
+.btn {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 16px 28px;
+  border-radius: 999px;
+  display: inline-block;
+  transition: transform .18s ease;
+
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.secondary {
+  background: transparent;
+  color: var(--black);
+  border: 2px solid var(--black);
+}
+
+a.primary {
+  background: var(--black);
+  color: var(--cream);
+}
+
+a.secondary:hover {
+  transform: translateY(-2px);
+  background: var(--black);
+  color: var(--cream);
+}
+
+a.primary:hover {
+  transform: translateY(-2px);
+  background: var(--cream);
+  color: var(--black);
+  border: 2px solid var(--black);
+}
+
 .pt-2 {
   padding-top: 2px
+}
+
+.cart-dot {
+  background: var(--black);
+  color: var(--cream);
+  border-radius: 50%;
+  width: 17px;
+  height: 17px;
+  font-size: 9.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
 }
 
 .box-card .tag {
@@ -101,7 +160,7 @@ h1,h2,h3,h4,h5,h6,button,a {
     z-index: 3;
 }
 
-.sticker.sage{
+.sticker.sage {
     color: #22301c;
     border-color: rgba(34, 48, 28, 0.35);
 }
@@ -111,7 +170,7 @@ h1,h2,h3,h4,h5,h6,button,a {
     border-color: rgba(62, 47, 13, 0.4);
 }
 
-.ship-banner{
+.ship-banner {
   background:var(--black);
   color:var(--cream);
   text-align:center;
@@ -121,4 +180,7 @@ h1,h2,h3,h4,h5,h6,button,a {
   font-size:12px;
   letter-spacing:0.04em;
   text-transform:uppercase;}
-.ship-banner span{color:var(--gold);}
+
+.ship-banner span {
+  color:var(--gold);
+}

@@ -58,12 +58,7 @@ export default function HomePage() {
             <span>Account</span>
             <span>
               Bag{" "}
-              <span
-                style={{ background: palette.black, color: palette.cream }}
-                className="inline-flex items-center justify-center w-[18px] h-[18px] pt-2 rounded-full text-[10px] ml-1"
-              >
-                2
-              </span>
+              <span className="cart-dot"> 2 </span>
             </span>
           </div>
         </div>
@@ -95,18 +90,10 @@ export default function HomePage() {
               a shared, viral unboxing moment. One cart. Two kinds of joy.
             </p>
             <div className="flex gap-3.5 flex-wrap">
-              <Link
-                href="#custom"
-                style={{ background: palette.black, color: palette.cream }}
-                className="font-bold text-xs uppercase tracking-wider px-7 py-4 rounded-full"
-              >
+              <Link href={funkful.href} className="btn primary">
                 Design your gift
               </Link>
-              <Link
-                href={scoopful.href}
-                style={{ borderColor: palette.black }}
-                className="font-bold text-xs uppercase tracking-wider px-7 py-4 rounded-full border-2"
-              >
+              <Link href={scoopful.href} className="btn secondary">
                 Get a scoop
               </Link>
             </div>
