@@ -45,6 +45,7 @@ h1,h2,h3,h4,h5,h6,button,a {
 button:hover {
   background-color: var(--color-gray-700)!important;
   cursor: pointer;
+  color: var(--cream) !important;
 }
 
 .btn {
@@ -86,6 +87,23 @@ a.primary:hover {
   background: var(--cream);
   color: var(--black);
   border: 2px solid var(--black);
+}
+
+.btn.secondary {
+  background: transparent;
+}
+
+.btn.secondary:hover, .btn.primary:hover {
+  background-color: var(--black) !important;
+}
+
+.btn.primary {
+  color: var(--cream);
+  flex: 1;
+}
+
+.underline:hover {
+  text-decoration: underline;
 }
 
 .pt-2 {

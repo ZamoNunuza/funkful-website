@@ -55,7 +55,7 @@ export default function HomePage() {
           </nav>
           <div className="flex items-center gap-5 text-sm font-semibold">
             <span>Search</span>
-            <span>Account</span>
+            <Link href="/account" className="flex items-center gap-1"><span>Account</span></Link>
             <span>
               Bag{" "}
               <span className="cart-dot"> 2 </span>
