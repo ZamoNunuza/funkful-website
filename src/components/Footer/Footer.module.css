@@ -1,0 +1,81 @@
+.footer {
+  background: var(--beige);
+  padding: 56px 0 28px;
+  margin-top: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 32px;
+}
+
+.brandCol {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.logoImg {
+  height: 26px;
+}
+.blurb {
+  font-size: 13px;
+  color: #6a6255;
+  line-height: 1.55;
+  max-width: 260px;
+}
+.socials {
+  display: flex;
+  gap: 16px;
+  font-family: var(--font-montserrat), sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.linkCol {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.linkCol h5 {
+  font-family: var(--font-montserrat), sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--blush-ink);
+  margin-bottom: 4px;
+}
+.linkCol a,
+.linkCol .address {
+  font-size: 13px;
+  color: #4a4438;
+}
+.linkCol a:hover {
+  color: var(--black);
+}
+
+.bottom {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #71695c;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(17, 17, 17, 0.1);
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

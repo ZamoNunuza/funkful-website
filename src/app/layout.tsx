@@ -2,6 +2,8 @@
 import type { Metadata } from "next";
 import { Montserrat, Poppins } from "next/font/google";
 import { CartProvider } from "@/lib/cart-context";
+import Header from "@/components/Header/Header";
+import Footer from "@/components/Footer/Footer";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -19,7 +21,7 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: "Funkful | Custom Gifts & Scoopful",
-  description: "Custom mugs, tumblers, apparel and mystery scoops made with personality.",
+  description: "Custom mugs, tumblers, apparel, plus Scoopful mystery scoopd - one cart, every brand.",
 };
 
 export default function RootLayout({
@@ -28,10 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${montserrat.variable} ${poppins.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${montserrat.variable} ${poppins.variable} h-full antialiased`} >
       <body className="min-h-full">
         <CartProvider>{children}</CartProvider>
       </body>
