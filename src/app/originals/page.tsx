@@ -72,47 +72,6 @@ export default function OriginalsPage() {
 
   return (
     <main style={{ background: palette.cream, color: palette.black }}>
-      {/* Header */}
-      <header style={{ borderBottom: "1px solid rgba(17,17,17,0.08)" }} className="sticky top-0 z-50 bg-inherit">
-        <div className="max-w-[1180px] mx-auto px-8 flex items-center justify-between py-4">
-          <Link href="/">
-            <Image src={funkful.logo} alt="Funkful" width={110} height={26} className="h-6 w-auto" />
-          </Link>
-          <nav className="hidden md:flex gap-9">
-            {navLinks.map((link) => {
-              const href = link.label === "Personalized" ? "/originals" : link.href;
-              const isActive = href === "/originals";
-              return (
-                <Link
-                  key={link.href}
-                  href={href}
-                  className="text-sm font-semibold uppercase tracking-wide pb-1 border-b-2"
-                  style={{
-                    color: link.soon ? "#7d6da3" : palette.black,
-                    borderColor: isActive ? palette.black : "transparent",
-                  }}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
-          <div className="flex items-center gap-5 text-sm font-semibold">
-            <span>Search</span>
-            <span>Account</span>
-            <Link href="/cart">
-              Bag{" "}
-              <span className="cart-dot">
-                {itemCount}
-              </span>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-        {/* ship banner */}
-      <div className="ship-banner">Free nationwide shipping on orders over R400 <span>·</span> Mix Funkful Originals & Scoopful in one cart <span>·</span> Flat R99 door-to-door otherwise</div>
-
       {/* Breadcrumb */}
       <div className="max-w-[1180px] mx-auto px-8 pt-4 text-xs text-neutral-500">
         <Link href="/">Home</Link> / <span className="text-black font-medium">Personalized</span>
@@ -383,25 +342,6 @@ export default function OriginalsPage() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer style={{ background: palette.beige }} className="pt-12 pb-7">
-        <div className="max-w-[1180px] mx-auto px-8">
-          <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
-            <Image src={funkful.logo} alt="Funkful" width={120} height={28} className="h-7 w-auto" />
-            <div className="flex gap-7 text-sm font-semibold">
-              <span>Personalized</span>
-              <Link href="/scoopful">Scoopful</Link>
-              <Link href="/#anime">Anime Box</Link>
-              <Link href="/#about">About</Link>
-            </div>
-          </div>
-          <div style={{ borderColor: "rgba(17,17,17,0.1)" }} className="border-t pt-5 flex justify-between text-xs text-neutral-600 flex-wrap gap-2.5">
-            <span>© 2026 Funkful (Pty) Ltd. All rights reserved.</span>
-            <span>funkful.co.za</span>
-          </div>
-        </div>
-      </footer>
     </main>
   );
 }

@@ -1,5 +1,9 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
+import { brands, palette } from "@/lib/brands";
 import styles from './Footer.module.css';
 
 const CONTACT = {
@@ -28,16 +32,19 @@ const SUPPORT_LINKS = [
 ];
 
 export default function Footer() {
+    const funkful = brands.funkful;
+    const pathname = usePathname();
+
     return (
         <footer className={styles.footer}>
-            <div className={`wrap ${styles.grid}`}>
+            <div className={`max-w-[1180px] ${styles.grid}`}>
                 <div className={styles.brandCol}>
                     <Image
-                        src="/assets/funkful-logo.png"
+                        src={funkful.logo}
                         alt="Funkful"
                         className={styles.logoImg}
-                        width={200}
-                        height={80}
+                        width={120}
+                        height={28}
                     />
                     <p className={styles.blurb}>
                         Personalized gifts, mystery scoops, and everything in between —
@@ -45,27 +52,33 @@ export default function Footer() {
                     </p>
                     <div className={styles.socials}>
                         {SOCIALS.map((s) => (
-                            <a
+                            <Link
                                 key={s.label}
                                 href={s.href}
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
                                 {s.label}
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>
 
                 <div className={styles.linkCol}>
                     <h5>Shop</h5>
-                    {SHOP_LINKS.map((l) => (
-                        <Link key={l.label} href={l.href}>
-                            {l.label}
-                        </Link>
-                    ))}
+                    {SHOP_LINKS.map((l) =>  {
+                            const isActive = pathname === l.href;
+                            return (
+                            <Link
+                                key={l.label}
+                                href={l.href}
+                                className={isActive ? styles.activeLink : ''}
+                            >
+                                {l.label}
+                            </Link>
+                            );
+                        })}
                 </div>
-
                 <div className={styles.linkCol}>
                     <h5>Support</h5>
                     {SUPPORT_LINKS.map((l) => (
@@ -81,11 +94,10 @@ export default function Footer() {
                     <a href={`tel:${CONTACT.phone.replace(/\s/g,'')}`}>{CONTACT.phone}</a>
                     <span className={styles.address}>{CONTACT.address}</span>
                 </div>
-
-                <div className={`wrap ${styles.bottom}`}>
-                    <span>© {new Date().getFullYear()} Funkful (Pty) Ltd. All rights reserved.</span>
-                    <span>funkful.co.za</span>
-                </div>
+            </div>
+            <div className={`max-w-[1180px] ${styles.bottom}`}>
+                <span>© {new Date().getFullYear()} Funkful (Pty) Ltd. All rights reserved.</span>
+                <span>funkful.co.za</span>
             </div>
         </footer>
     );

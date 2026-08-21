@@ -99,7 +99,7 @@ a.primary:hover {
 
 .btn.primary {
   color: var(--cream);
-  flex: 1;
+  /*flex: 1;*/
 }
 
 .underline:hover {

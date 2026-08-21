@@ -31,9 +31,7 @@ function LoginLoading() {
           }}
           className="border rounded-[22px] p-8"
         >
-          <p className="text-center text-sm text-neutral-500">
-            Loading...
-          </p>
+          <p className="text-center text-sm text-neutral-500">Loading...</p>
         </div>
       </div>
     </main>
@@ -48,11 +46,15 @@ function LoginForm() {
 
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
 
-  const [signInState, signInAction, signInPending] =
-    useActionState<AuthState, FormData>(signIn, null);
+  const [signInState, signInAction, signInPending] = useActionState<
+    AuthState,
+    FormData
+  >(signIn, null);
 
-  const [signUpState, signUpAction, signUpPending] =
-    useActionState<AuthState, FormData>(signUp, null);
+  const [signUpState, signUpAction, signUpPending] = useActionState<
+    AuthState,
+    FormData
+  >(signUp, null);
 
   const funkful = brands.funkful;
 
@@ -96,7 +98,7 @@ function LoginForm() {
                       color: "#7d7568",
                     }
               }
-              className="btn primary tracking-wide"
+              className="btn primary flex-1 tracking-wide"
             >
               Sign in
             </button>
@@ -134,39 +136,18 @@ function LoginForm() {
           )}
 
           {mode === "sign-in" ? (
-            <form
-              action={signInAction}
-              className="flex flex-col gap-4"
-            >
+            <form action={signInAction} className="flex flex-col gap-4">
               <input type="hidden" name="next" value={next} />
-
               <Field label="Email">
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  placeholder="you@email.com"
-                  style={inputStyle}
-                  className="w-full"
-                />
+                <input type="email" name="email" required placeholder="you@email.com" style={inputStyle} className="w-full"/>
               </Field>
 
               <Field label="Password">
-                <input
-                  type="password"
-                  name="password"
-                  required
-                  placeholder="••••••••"
-                  style={inputStyle}
-                  className="w-full"
-                />
+                <input type="password" name="password" required placeholder="••••••••" style={inputStyle} className="w-full"/>
               </Field>
 
               {signInState?.error && (
-                <p
-                  className="text-xs"
-                  style={{ color: "#8a2f2b" }}
-                >
+                <p className="text-xs" style={{ color: "#8a2f2b" }}>
                   {signInState.error}
                 </p>
               )}
@@ -174,72 +155,33 @@ function LoginForm() {
               <button
                 type="submit"
                 disabled={signInPending}
-                style={{
-                  background: palette.black,
-                  color: palette.cream,
-                }}
-                className="font-extrabold text-xs uppercase tracking-wide py-3.5 rounded-full disabled:opacity-60"
-              >
+                style={{ background: palette.black, color: palette.cream}}
+                className="font-extrabold text-xs uppercase tracking-wide py-3.5 rounded-full disabled:opacity-60" >
                 {signInPending ? "Signing in…" : "Sign in"}
               </button>
             </form>
           ) : (
-            <form
-              action={signUpAction}
-              className="flex flex-col gap-4"
-            >
+            <form action={signUpAction} className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-3">
                 <Field label="First name">
-                  <input
-                    type="text"
-                    name="firstName"
-                    required
-                    placeholder="Thabo"
-                    style={inputStyle}
-                    className="w-full"
-                  />
+                  <input type="text"  name="firstName" required placeholder="Thabo" style={inputStyle} className="w-full"/>
                 </Field>
 
                 <Field label="Last name">
-                  <input
-                    type="text"
-                    name="lastName"
-                    required
-                    placeholder="Mokoena"
-                    style={inputStyle}
-                    className="w-full"
-                  />
+                  <input type="text" name="lastName" required placeholder="Mokoena" style={inputStyle} className="w-full" />
                 </Field>
               </div>
 
               <Field label="Email">
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  placeholder="you@email.com"
-                  style={inputStyle}
-                  className="w-full"
-                />
+                <input type="email"  name="email" required placeholder="you@email.com" style={inputStyle} className="w-full"/>
               </Field>
 
               <Field label="Password">
-                <input
-                  type="password"
-                  name="password"
-                  required
-                  minLength={6}
-                  placeholder="At least 6 characters"
-                  style={inputStyle}
-                  className="w-full"
-                />
+                <input type="password" name="password" required minLength={6} placeholder="At least 6 characters" style={inputStyle} className="w-full"/>
               </Field>
 
               {signUpState?.error && (
-                <p
-                  className="text-xs"
-                  style={{ color: "#8a2f2b" }}
-                >
+                <p className="text-xs" style={{ color: "#8a2f2b" }}>
                   {signUpState.error}
                 </p>
               )}
@@ -253,9 +195,7 @@ function LoginForm() {
                 }}
                 className="font-extrabold text-xs uppercase tracking-wide py-3.5 rounded-full disabled:opacity-60"
               >
-                {signUpPending
-                  ? "Creating account…"
-                  : "Create account"}
+                {signUpPending ? "Creating account…" : "Create account"}
               </button>
             </form>
           )}
@@ -276,13 +216,7 @@ const inputStyle = {
   background: palette.cream,
 } as const;
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1.5">
       <span

@@ -100,46 +100,6 @@ export default function ScoopfulPage() {
 
   return (
     <>
-      {/* Header — same shell as the homepage, "Scoopful" marked active */}
-      <header style={{ background: palette.cream, borderBottom: "1px solid rgba(17,17,17,0.08)" }} className="sticky top-0 z-50 bg-[--brand-bg,inherit]">
-        <div className="max-w-[1180px] mx-auto px-8 flex items-center justify-between py-4">
-          <Link href="/">
-            <Image src={funkful.logo} alt="Funkful" width={110} height={26} className="w-auto" />
-          </Link>
-          <nav className="hidden md:flex gap-9">
-            {navLinks.map((link) => {
-              const isActive = link.href === scoopful.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-sm font-semibold uppercase tracking-wide pb-1 border-b-2"
-                  style={{
-                    color: link.soon ? "#7d6da3" : isActive ? "var(--brand-ink)" : palette.black,
-                    borderColor: isActive ? "var(--brand-ink)" : "transparent",
-                  }} >
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
-          <div className="flex items-center gap-5 text-sm font-semibold">
-            <span>Search</span>
-            <span>Account</span>
-            <Link href="/cart">
-              Bag{" "}
-              <span className="cart-dot">
-                {itemCount}
-              </span>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* ship banner */}
-      <div className="ship-banner">Free nationwide shipping on orders over R400 <span>·</span> Mix Funkful Originals & Scoopful in one cart <span>·</span> Flat R99 door-to-door otherwise</div>
-
-
       {/* Breadcrumb */}
       <div className="max-w-[1180px] mx-auto px-8 pt-4 text-xs text-neutral-500">
         <Link href="/">Home</Link> / <span className="text-black font-medium">Scoopful</span>
@@ -322,31 +282,12 @@ export default function ScoopfulPage() {
                 Add a personalized mug or tumbler to the same order — it all ships and checks out together.
               </p>
             </div>
-            <Link href="/#custom" style={{ background: palette.black, color: palette.cream }} className="font-bold text-xs uppercase tracking-wide px-6.5 py-4 rounded-full">
+            <Link href="/originals" style={{ background: palette.black, color: palette.cream }} className="font-bold text-xs uppercase tracking-wide px-6.5 py-4 rounded-full">
               Shop Funkful Originals
             </Link>
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer style={{ background: palette.beige }} className="pt-12 pb-7">
-        <div className="max-w-[1180px] mx-auto px-8">
-          <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
-            <Image src={funkful.logo} alt="Funkful" width={120} height={28} className="h-7 w-auto" />
-            <div className="flex gap-7 text-sm font-semibold">
-              <Link href="/#custom">Funkful</Link>
-              <span style={{ color: "var(--brand-ink)" }}>Scoopful</span>
-              <Link href="/#anime">Anime Box</Link>
-              <Link href="/#about">About</Link>
-            </div>
-          </div>
-          <div style={{ borderColor: "rgba(17,17,17,0.1)" }} className="border-t pt-5 flex justify-between text-xs text-neutral-600 flex-wrap gap-2.5">
-            <span>© 2026 Funkful (Pty) Ltd. All rights reserved.</span>
-            <span>funkful.co.za</span>
-          </div>
-        </div>
-      </footer>
     </>
   );
 }

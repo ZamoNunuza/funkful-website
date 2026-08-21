@@ -32,7 +32,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${montserrat.variable} ${poppins.variable} h-full antialiased`} >
       <body className="min-h-full">
-        <CartProvider>{children}</CartProvider>
+        <CartProvider>
+          <Header />
+          {children}
+          <Footer />
+        </CartProvider>
       </body>
     </html>
   );

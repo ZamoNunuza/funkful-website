@@ -35,35 +35,6 @@ export default function HomePage() {
         ✂️ <b>Free die-cut sticker</b> + loyalty QR card on every order — no matter which brand you scoop from
       </div>
 
-      {/* Header */}
-      <header style={{ background: palette.cream, borderBottom: "1px solid rgba(17,17,17,0.08)" }} className="sticky top-0 z-50 bg-[--brand-bg,inherit]">
-        <div className="max-w-[1180px] mx-auto px-8 flex items-center justify-between py-4">
-          <Link href="/">
-            <Image src={funkful.logo} alt="Funkful" width={110} height={26} className="w-auto" />
-          </Link>
-          <nav className="hidden md:flex gap-9">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm font-semibold uppercase tracking-wide"
-                style={{ color: link.soon ? "#7d6da3" : palette.black }}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-          <div className="flex items-center gap-5 text-sm font-semibold">
-            <span>Search</span>
-            <Link href="/account" className="flex items-center gap-1"><span>Account</span></Link>
-            <span>
-              Bag{" "}
-              <span className="cart-dot"> 2 </span>
-            </span>
-          </div>
-        </div>
-      </header>
-
       {/* Hero */}
       <section className="max-w-[1180px] mx-auto px-8 py-16 md:py-24">
         <div className="grid md:grid-cols-[1.1fr_0.9fr] gap-14 items-center">
@@ -330,45 +301,6 @@ export default function HomePage() {
           </form>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer style={{ background: palette.beige }} className="py-16 pt-16 pb-8">
-        <div className="max-w-[1180px] mx-auto px-8">
-          <div className="grid md:grid-cols-[1.4fr_1fr_1fr_1fr] gap-8 mb-12">
-            <div>
-              <Image src={funkful.logo} alt="Funkful" width={140} height={34} className="h-8.5 w-auto mb-3" />
-              <p className="text-sm text-neutral-600 leading-relaxed max-w-xs">
-                Creative gifts, surprises & custom products. Made with personality. South Africa 🇿🇦
-              </p>
-            </div>
-            <div>
-              <h5 className="text-xs font-extrabold uppercase tracking-wide mb-4">Funkful</h5>
-              <a href="#" className="block text-sm text-neutral-700 mb-2.5">Custom Mugs</a>
-              <a href="#" className="block text-sm text-neutral-700 mb-2.5">Custom Tumblers</a>
-              <a href="#" className="block text-sm text-neutral-700 mb-2.5">Custom Apparel</a>
-            </div>
-            <div>
-              <h5 className="text-xs font-extrabold uppercase tracking-wide mb-4">Scoopful</h5>
-              <a href="#" className="block text-sm text-neutral-700 mb-2.5">Mystery Scoops</a>
-              <a href="#" className="block text-sm text-neutral-700 mb-2.5">Lucky Scoops</a>
-              <a href="#" className="block text-sm text-neutral-700 mb-2.5">VIP Boxes</a>
-            </div>
-            <div>
-              <h5 className="text-xs font-extrabold uppercase tracking-wide mb-4">Company</h5>
-              <a href="#about" className="block text-sm text-neutral-700 mb-2.5">About</a>
-              <a href="#anime" className="block text-sm text-neutral-700 mb-2.5">Anime Box — Coming Soon</a>
-              <a href="#" className="block text-sm text-neutral-700 mb-2.5">WhatsApp Us</a>
-            </div>
-          </div>
-          <div
-            style={{ borderColor: "rgba(17,17,17,0.12)" }}
-            className="border-t pt-5 flex justify-between text-xs text-neutral-600 flex-wrap gap-2.5"
-          >
-            <span>© 2026 Funkful (Pty) Ltd. All rights reserved.</span>
-            <span>funkful.co.za</span>
-          </div>
-        </div>
-      </footer>
     </main>
   );
 }

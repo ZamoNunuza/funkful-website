@@ -3,23 +3,18 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { palette, navLinks } from "@/lib/brands";
+import { useCart } from '@/lib/cart-context';
 import styles from './Header.module.css';
 
-export interface HeaderProps {
-  /** Number shown on the cart bubble. Wire this up to real cart state. */
-  cartCount?: number;
-}
 
-const NAV_LINKS = [
-  { label: 'Personalized', href: '/originals' },
-  { label: 'Scoopful', href: '/scoopful' },
-  { label: 'Anime Boxes ✨', href: '/#anime', soon: true },
-  { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' },
-];
-
-export default function Header({ cartCount = 0 }: HeaderProps) {
+export default function Header() {
   const pathname = usePathname();
+  const { itemCount } = useCart();
+
+  if (pathname === '/cart') {
+    return null;
+  }
 
   return (
     <>
@@ -29,28 +24,28 @@ export default function Header({ cartCount = 0 }: HeaderProps) {
         <span>·</span> Flat R99 otherwise
       </div>
 
-      <header className={styles.header}>
+      <header style={{ background: palette.cream, borderBottom: "1px solid rgba(17,17,17,0.08)" }} className="sticky top-0 z-50 bg-[--brand-bg,inherit]">
         <div className={`wrap ${styles.navInner}`}>
           <Link href="/">
             <Image
               src="/assets/funkful-logo.png"
               alt="Funkful"
-              width={160}
-              height={50}
+              width={110}
+              height={26}
               className={styles.logoImg}
             />
           </Link>
 
-          <nav className={styles.links}>
-            {NAV_LINKS.map((link) => {
+          <nav className={`${styles.links} hidden md:flex gap-9`}>
+            {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
                   className={[
-                    isActive ? styles.active : '',
-                    link.soon ? styles.soon : '',
+                    link.soon ? styles.soon : isActive ? styles.active : palette.black,
+                    isActive ? styles.active : "transparent",         
                   ]
                     .filter(Boolean)
                     .join(' ')}
@@ -63,9 +58,9 @@ export default function Header({ cartCount = 0 }: HeaderProps) {
 
           <div className={styles.navIcons}>
             <span>Search</span>
-            <span>Account</span>
+            <Link href="/account" className="flex items-center gap-1"><span>Account</span></Link>
             <Link href="/cart">
-              Bag <span className={styles.cartDot}>{cartCount}</span>
+              Bag <span className={styles.cartDot}>{itemCount}</span>
             </Link>
           </div>
         </div>

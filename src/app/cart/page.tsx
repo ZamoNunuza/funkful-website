@@ -77,7 +77,7 @@ export default function CartPage() {
       <header style={{ borderBottom: "1px solid rgba(17,17,17,0.08)" }}>
         <div className="max-w-[1180px] mx-auto px-8 flex items-center justify-between py-4">
           <Link href="/">
-            <Image src={brands.funkful.logo} alt="Funkful" width={110} height={24} className="h-6 w-auto" />
+            <Image src={brands.funkful.logo} alt="Funkful" width={110} height={24} className="w-auto" />
           </Link>
           <span className="text-sm font-semibold text-neutral-500">🔒 Secure checkout</span>
         </div>
@@ -269,13 +269,6 @@ export default function CartPage() {
           </div>
         </div>
       </div>
-
-      <footer style={{ background: palette.beige }} className="py-9">
-        <div className="max-w-[1180px] mx-auto px-8 flex justify-between text-xs text-neutral-600 flex-wrap gap-2.5">
-          <span>© 2026 Funkful (Pty) Ltd. All rights reserved.</span>
-          <span>funkful.co.za</span>
-        </div>
-      </footer>
     </main>
   );
 }
