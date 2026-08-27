@@ -39,7 +39,7 @@ const scoops = [
     name: "Lucky Scoop",
     odds: "3 Blue · 2 Yellow · 1 Green — guaranteed",
     desc: "Our original mystery scoop. A friendly mix of everyday and daily-favorite finds, hand-packed same day.",
-    priceCents: 15900,
+    priceCents: 16900,
     badge: "Bestseller",
     badgeStyle: "gold" as const,
     thumbBg: palette.blush,
@@ -50,7 +50,7 @@ const scoops = [
     name: "Deluxe Scoop",
     odds: "2 Blue · 2 Yellow · 2 Green · 1 Red — guaranteed",
     desc: "A bigger scoop with your first guaranteed rare find — think glowing serum or sunscreen.",
-    priceCents: 26900,
+    priceCents: 27900,
     badge: "Restocked",
     badgeStyle: "sage" as const,
     thumbBg: palette.beige,
@@ -61,8 +61,8 @@ const scoops = [
     name: "VIP Premium Scoop",
     odds: "1 Blue · 2 Yellow · 2 Green · 2 Red · 1 Orange — guaranteed",
     desc: "Rare, high-tier finds only. Every color in the pit, with a guaranteed Grand Prize orange item.",
-    priceCents: 42900,
-    wasCents: 45000,
+    priceCents: 46900,
+    //wasCents: 45000,
     badge: "VIP",
     badgeStyle: "plain" as const,
     thumbBg: palette.lavender,
@@ -73,7 +73,7 @@ const scoops = [
     name: "Grand Prize Scoop",
     odds: "1 Yellow · 1 Green · 2 Red · 2 Orange — guaranteed",
     desc: "Our most-hyped scoop. Two guaranteed Grand Prize items — cosmetic bags, jewelry pouches, or care set.",
-    priceCents: 49900,
+    priceCents: 52900,
     badge: "Rarest",
     badgeStyle: "gold" as const,
     thumbBg: palette.gold,
@@ -95,8 +95,7 @@ function formatrands(cents: number) {
 
 export default function ScoopfulPage() {
   const scoopful = brands.scoopful;
-  const funkful = brands.funkful;
-  const {addItem, itemCount} = useCart();
+  const {addItem} = useCart();
 
   return (
     <>
@@ -131,6 +130,7 @@ export default function ScoopfulPage() {
               width={500}
               height={500}
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-auto drop-shadow-lg"
+              draggable={false}
             />
           </div>
           <div>
@@ -224,7 +224,7 @@ export default function ScoopfulPage() {
                   <p className="text-xs text-neutral-600 leading-relaxed mb-3.5">{scoop.desc}</p>
                   <div className="flex items-center justify-between">
                     <span className="text-base font-extrabold">
-                        {scoop.wasCents && (<span className="line-through text-neutral-400 mr-1">{formatrands(scoop.wasCents)}</span>)}
+                        {/*{scoop.wasCents && (<span className="line-through text-neutral-400 mr-1">{formatrands(scoop.wasCents)}</span>)}*/}
                         {formatrands(scoop.priceCents)}</span>
                     <button type="button" 
                     onClick={() =>

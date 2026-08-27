@@ -8,7 +8,7 @@ import styles from './Footer.module.css';
 
 const CONTACT = {
   email: 'hello@funkful.co.za',
-  phone: '+27 00 000 0000',
+  phone: '+27 82 216 3056',
   address: 'Johannesburg, Gauteng, South Africa',
 };
 

@@ -4,6 +4,7 @@ import { Montserrat, Poppins } from "next/font/google";
 import { CartProvider } from "@/lib/cart-context";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
+import SiteProtection from "@/components/SiteProtection";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -32,6 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${montserrat.variable} ${poppins.variable} h-full antialiased`} >
       <body className="min-h-full">
+        {/*<SiteProtection />*/}
         <CartProvider>
           <Header />
           {children}

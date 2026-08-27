@@ -80,7 +80,7 @@ export default function OriginalsPage() {
       {/* Hero */}
       <section style={{ background: funkful.accent }} className="mt-4 py-11 md:py-14">
         <div className="max-w-[1180px] mx-auto px-8 grid md:grid-cols-[220px_1fr] gap-10 items-center">
-          <Image src={funkful.logo} alt={funkful.name} width={220} height={220} className="w-full opacity-90" />
+          <Image src={funkful.logo} alt={funkful.name} width={220} height={220} className="w-full opacity-90" draggable={false}/>
           <div>
             <span
               style={{ background: palette.black, color: palette.cream }}
@@ -181,7 +181,7 @@ export default function OriginalsPage() {
                                   {product.badge}
                                 </span>
                               )}
-                              <Image src={funkful.logo} alt="" width={56} height={56} className="object-contain opacity-80" />
+                              <Image src={funkful.logo} alt="" width={56} height={56} className="object-contain opacity-80" draggable={false} />
                             </div>
                             <div className="p-5 flex flex-col flex-1">
                               <h4 className="text-sm font-bold mb-1.5">{product.name}</h4>

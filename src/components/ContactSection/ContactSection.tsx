@@ -6,7 +6,7 @@ import styles from './ContactSection.module.css';
 // TODO: swap placeholders for real business details
 const DETAILS = [
   { label: 'Email', value: 'hello@funkful.co.za', href: 'mailto:hello@funkful.co.za' },
-  { label: 'Phone', value: '+27 00 000 0000', href: 'tel:+270000000' },
+  { label: 'Phone', value: '+27 82 216 3056', href: 'tel:+27822163056' },
   { label: 'Based in', value: 'Johannesburg, Gauteng, South Africa' },
   { label: 'Hours', value: 'Mon–Fri, 9am–5pm SAST' },
 ];
@@ -32,8 +32,8 @@ export default function ContactSection() {
   }
 
   return (
-    <section className={styles.contact} id="contact">
-      <div className={`wrap ${styles.grid}`}>
+    <section className="mt-4 py-11 md:py-14 overflow-hidden" id="contact">
+      <div className={`max-w-[1180px] mx-auto px-8 ${styles.grid}`}>
         <div className={styles.copy}>
           <span className={styles.monoLabel}>We&apos;d love to hear from you</span>
           <h2>Contact Us</h2>
@@ -86,7 +86,7 @@ export default function ContactSection() {
             />
           </label>
 
-          <button type="submit" className="btn btn-dark" disabled={status === 'submitting'}>
+          <button type="submit" className="btn btn-dark shadow-md" disabled={status === 'submitting'}>
             {status === 'submitting' ? 'Sending…' : 'Send message'}
           </button>
 

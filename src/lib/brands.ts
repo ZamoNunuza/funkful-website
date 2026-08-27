@@ -106,4 +106,5 @@ export const navLinks = [
   { label: "Scoopful", href: "/scoopful" },
   { label: "Anime Boxes ✨", href: "/#anime", soon: true },
   { label: "About", href: "/#about" },
+  { label: "Contact", href: "/contact" }
 ];
