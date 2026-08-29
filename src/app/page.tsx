@@ -281,7 +281,7 @@ export default function HomePage() {
       </section>
 
       {/* Newsletter */}
-      <Newsletter />
+      {/*<Newsletter />*/}
     </main>
   );
 }
