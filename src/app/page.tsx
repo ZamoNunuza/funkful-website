@@ -1,7 +1,10 @@
 // src/app/page.tsx
+
+
 import Image from "next/image";
 import Link from "next/link";
 import { brands, palette, navLinks } from "@/lib/brands";
+import Newsletter from "@/components/Newsletter/Newsletter";
 
 export const metadata = {
   title: "Funkful — Made With Personality",
@@ -278,29 +281,7 @@ export default function HomePage() {
       </section>
 
       {/* Newsletter */}
-      <section style={{ background: palette.black, color: palette.cream }} className="py-20 text-center">
-        <div className="max-w-[1180px] mx-auto px-8">
-          <h2 className="text-3xl md:text-4xl font-black uppercase mb-3.5">Get 10% off your first order</h2>
-          <p className="text-neutral-300 mb-8">
-            One list, every brand — personalized gifts, mystery scoops, and first dibs on Anime Box.
-          </p>
-          <form className="flex justify-center gap-2.5 flex-wrap">
-            <input
-              type="email"
-              placeholder="your@email.com"
-              style={{ borderColor: palette.cream, color: palette.cream }}
-              className="border-2 bg-transparent rounded-full px-5.5 py-3.5 text-sm min-w-\[260px\]"
-            />
-            <button
-              type="submit"
-              style={{ background: palette.gold, color: "#3e2f0d" }}
-              className="font-extrabold text-xs uppercase tracking-wide rounded-full px-7 py-4"
-            >
-              Join the family
-            </button>
-          </form>
-        </div>
-      </section>
+      <Newsletter />
     </main>
   );
 }

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { brands, palette } from "@/lib/brands";
+import { brands } from "@/lib/brands";
 import styles from './Footer.module.css';
 
 const CONTACT = {
@@ -25,7 +25,7 @@ const SHOP_LINKS = [
 ];
 
 const SUPPORT_LINKS = [
-  { label: 'About', href: '/about' },
+  { label: 'About', href: '/#about' },
   { label: 'Contact', href: '/contact' },
   { label: 'Shipping & Returns', href: '/shipping' },
   { label: 'FAQ', href: '/faq' },
@@ -82,7 +82,7 @@ export default function Footer() {
                 <div className={styles.linkCol}>
                     <h5>Support</h5>
                     {SUPPORT_LINKS.map((l) => (
-                        <Link key={l.label} href={l.href}>
+                        <Link key={l.label} href={l.href} className={pathname === l.href ? styles.activeLink : ''}>
                             {l.label}
                         </Link>
                     ))}

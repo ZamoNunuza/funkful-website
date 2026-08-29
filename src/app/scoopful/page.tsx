@@ -81,6 +81,21 @@ const scoops = [
   },
 ];
 
+// Full-size, non-mystery items that sit above every scoop tier's price
+// ceiling — sold as guaranteed add-ons rather than crammed into the ball
+// odds. Purchased directly, stacks with any scoop in the same cart.
+const addOns = [
+  {
+    id: "scoopful-addon-future-avenue-perfume-100ml",
+    name: "Future Avenue Perfume 100ml",
+    desc: "The full-size bottle — the same scent that shows up mini in our Orange grand-prize pulls, guaranteed and yours to keep.",
+    priceCents: 54900,
+    badge: "Guaranteed",
+    badgeStyle: "gold" as const,
+    thumbBg: palette.gold,
+  },
+];
+
 const filters = ["All Scoops", "Lucky", "Deluxe", "VIP", "Grand Prize"];
 
 const howItWorks = [
@@ -246,6 +261,57 @@ export default function ScoopfulPage() {
           </div>
         </div>
       </section>
+
+      {/* Premium Add-Ons — guaranteed, full-price items too big for the ball system */}
+            <section id="addons" className="pb-14">
+              <div className="max-w-[1180px] mx-auto px-8">
+                <span style={{ color: "var(--brand-ink)" }} className="text-xs font-bold uppercase tracking-[0.14em] block mb-2.5">
+                  Skip the mystery
+                </span>
+                <h2 className="text-2xl md:text-3xl font-extrabold uppercase mb-2">Premium add-ons</h2>
+                <p className="text-sm text-neutral-600 max-w-xl leading-relaxed mb-9">
+                  Some finds are too good to leave to chance. These full-size items aren&apos;t part of any
+                  scoop&apos;s odds — add one straight to your bag and it&apos;s guaranteed, no ball pull required.
+                </p>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {addOns.map((addOn) => (
+                    <div key={addOn.id} style={{ borderColor: "rgba(17,17,17,0.08)" }} className="bg-[--cream] border rounded-[20px] overflow-hidden">
+                      <div style={{ background: addOn.thumbBg }} className="relative flex items-center justify-center p-10 text-center">
+                        <span style={stickerStyles[addOn.badgeStyle]} className="absolute top-3.5 left-3.5 border-2 border-dashed rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wide">
+                          {addOn.badge}
+                        </span>
+                        <div
+                          className="w-14 h-14 rounded-full"
+                          style={{ background: palette.black, boxShadow: "inset -5px -6px 10px rgba(0,0,0,0.25), inset 3px 4px 8px rgba(255,255,255,0.2)" }}
+                        />
+                      </div>
+                      <div className="p-5">
+                        <h4 className="text-base font-extrabold uppercase mb-1">{addOn.name}</h4>
+                        <p className="text-xs text-neutral-600 leading-relaxed mb-3.5">{addOn.desc}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-base font-extrabold">{formatrands(addOn.priceCents)}</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              addItem({
+                                id: addOn.id,
+                                brand: "scoopful",
+                                name: addOn.name,
+                                priceCents: addOn.priceCents,
+                              })
+                            }
+                            style={{ background: palette.black, color: palette.cream }}
+                            className="text-[11.5px] font-bold uppercase tracking-wide px-4 py-2.5 rounded-full hover:bg-gray-900"
+                          >
+                            Add to bag
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
 
       {/* How it works */}
       <section id="how" style={{ background: palette.black, color: palette.cream }} className="py-16">

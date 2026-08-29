@@ -22,12 +22,12 @@
   --font-poppins: var(--font-poppins);
 }
 
-@media (prefers-color-scheme: dark) {
+/*@media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
-}
+}*/
 
 body {
   background: var(--background);
@@ -62,7 +62,7 @@ button:hover {
 
 a {
   text-decoration: none;
-  color: inherit;
+  /*color: inherit;*/
 }
 
 a.secondary {

@@ -85,7 +85,7 @@ const faqData: FaqCategory[] = [
         answer: (
           <p>
             We start working on orders quickly, especially personalised items, so reach out{' '}
-            <span className={styles.placeholder}>as soon as possible, within [X hours]</span> of
+            <span className={styles.placeholder}>as soon as possible, within [24 hours]</span> of
             ordering and we&apos;ll do our best to help. Once an order has moved into production we
             may not be able to change it.
           </p>
