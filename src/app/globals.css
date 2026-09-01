@@ -202,3 +202,7 @@ a.primary:hover {
 .ship-banner span {
   color:var(--gold);
 }
+
+.rounded-8 {
+  border-radius: 8px;
+}
