@@ -6,7 +6,7 @@ import { sendWelcomeDiscountEmail } from "@/lib/newsletter-email";
 // Server-side client using the service role key — never expose this key to the client
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SECRET_KEY!
 );
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
 
                 return NextResponse.json({
                     message: existing?.discount_used
-                        ? "You're alreadt on the list - your welcome code has been used."
+                        ? "You're already on the list - your welcome code has been used."
                         : "You're already on the list! Here's your code again.",
                     discount_code: existing?.discount_code ?? null,
                     discount_expires_at: existing?.discount_expires_at ?? null,

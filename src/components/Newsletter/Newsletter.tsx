@@ -160,7 +160,7 @@ function Newsletter() {
                     className="border-2 bg-transparent rounded-full px-6 py-3 text-xs font-extrabold uppercase tracking-wide">
                     {copied ? "Copied!" : "Copy code"}
                   </button>
-                  <a href="/shop" style={{ background: palette.gold, color: "#3e2f0d" }}
+                  <a href="https://funkful.co.za" style={{ background: palette.gold, color: "#3e2f0d" }}
                     className="rounded-full px-6 py-3 text-xs font-extrabold uppercase tracking-wide">
                     Shop now
                   </a>
