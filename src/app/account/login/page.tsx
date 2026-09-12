@@ -43,6 +43,7 @@ function LoginForm() {
 
   const next = searchParams.get("next") ?? "/account";
   const checkEmail = searchParams.get("checkEmail") === "1";
+  const confirmationError = searchParams.get("error");
 
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
 
@@ -132,6 +133,22 @@ function LoginForm() {
             >
               Almost there — check your inbox to confirm your email before
               signing in.
+            </p>
+          )}
+
+          {confirmationError && (
+            <p
+              style={{
+                background: "#f8e5e2",
+                color: "#8a2f2b",
+              }}
+              className="text-xs font-semibold rounded-xl p-3.5 mb-5"
+            >
+              {confirmationError === "confirmation_missing"
+                ? "This confirmation link is incomplete. Please use the latest email from Funkful."
+                : confirmationError === "confirmation_failed"
+                  ? "We couldn't confirm this email link. It may have expired or already been used. Please request a new confirmation email."
+                  : "Your account was confirmed, but we couldn't finish setting up your profile. Please contact Funkful support."}
             </p>
           )}
 

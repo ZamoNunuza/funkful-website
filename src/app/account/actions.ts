@@ -10,19 +10,32 @@ type ProfileState = { error?: string; success?: boolean } | null;
 export async function signUp(_prevState: AuthState, formData: FormData): Promise<AuthState> {
   const supabase = await createClient();
 
-  const email = String(formData.get("email") ?? "");
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  const firstName = String(formData.get("firstName") ?? "");
-  const lastName = String(formData.get("lastName") ?? "");
+  const firstName = String(formData.get("firstName") ?? "").trim();
+  const lastName = String(formData.get("lastName") ?? "").trim();
 
-  const { error } = await supabase.auth.signUp({
+  if (!firstName || !lastName || !email || !password) {
+    return { error: "Please complete all required fields." };
+  }
+
+  if (password.length < 6) {
+    return { error: "Your password must be at least 6 characters long." };
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!siteUrl) {
+    return { error: "Funkful is not configured correctly. NEXT_PUBLIC_SITE_URL is missing." };
+  }
+
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      // Lands in auth.users.raw_user_meta_data — the profiles-table trigger
-      // (see supabase/profiles.sql) reads this to seed the first profile row.
+      // Lands in auth.users.raw_user_meta_data. The database trigger uses this
+      // metadata to seed public.profiles when the Auth user is created.
       data: { first_name: firstName, last_name: lastName },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/account`,
+      emailRedirectTo: `${siteUrl.replace(/\/$/, "")}/auth/callback?next=/account`,
     },
   });
 
@@ -30,8 +43,13 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
     return { error: error.message };
   }
 
-  // Email confirmation is on by default in Supabase — there's no session
-  // yet, so send them to sign in once they've confirmed, not straight to /account.
+  // When email confirmation is enabled, Supabase normally returns a user with
+  // no active session. Do not attempt to sign the customer in here. The
+  // confirmation link will establish the session through /auth/callback.
+  if (!data.user) {
+    return { error: "We could not create your account. Please try again." };
+  }
+
   redirect("/account/login?checkEmail=1");
 }
 

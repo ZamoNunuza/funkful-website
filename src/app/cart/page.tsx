@@ -24,9 +24,23 @@ export default function CartPage() {
   const [postalCode, setPostalCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [promoCode, setPromoCode] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState("");
+  const [discountCents, setDiscountCents] = useState(0);
 
   const brandsInCart = new Set(items.map((i) => i.brand));
-  const totalCents = subtotalCents; // shipping is free, no promo logic wired yet
+  const shippingCents = Math.max(0, subtotalCents - discountCents) >= 40000 ? 0 : 9900;
+  const totalCents = Math.max(0, subtotalCents - discountCents + (items.length ? shippingCents : 0));
+
+  async function applyPromo() {
+    setError(null);
+    try {
+      const res = await fetch("/api/promo", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({code: promoCode, subtotalCents}) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Could not apply promo code.");
+      setAppliedPromo(data.code); setDiscountCents(data.discountCents); setPromoCode(data.code);
+    } catch (e) { setAppliedPromo(""); setDiscountCents(0); setError(e instanceof Error ? e.message : "Could not apply promo code."); }
+  }
 
   async function handlePlaceOrder() {
     setError(null);
@@ -48,6 +62,7 @@ export default function CartPage() {
         body: JSON.stringify({
           email,
           shipping: { firstName, lastName, address, city, postalCode },
+          promoCode: appliedPromo || promoCode,
           items: items.map((i) => ({
             id: i.id,
             name: i.name,
@@ -170,16 +185,14 @@ export default function CartPage() {
           <div className="flex gap-2.5 mt-6.5">
             <input
               type="text"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
               placeholder="Promo code"
               style={{ borderColor: "rgba(17,17,17,0.2)" }}
               className="flex-1 border rounded-full px-4.5 py-3.5 text-sm bg-transparent"
             />
-            <button
-              type="button"
-              style={{ background: palette.black, color: palette.cream }}
-              className="font-bold text-xs uppercase tracking-wide px-5.5 py-3.5 rounded-full"
-            >
-              Apply
+            <button type="button" onClick={applyPromo} style={{ background: palette.black, color: palette.cream }} className="font-bold text-xs uppercase tracking-wide px-5.5 py-3.5 rounded-full">
+              {appliedPromo ? "Applied" : "Apply"}
             </button>
           </div>
 
@@ -243,7 +256,7 @@ export default function CartPage() {
         <div style={{ background: palette.beige }} className="rounded-[22px] p-7 sticky top-5">
           <h3 className="text-sm font-extrabold uppercase mb-4.5">Order summary</h3>
           <Row label={`Subtotal (${items.reduce((n, i) => n + i.quantity, 0)} items)`} value={formatRands(subtotalCents)} />
-          <Row label="Shipping" value={<span style={{ color: "#4a6b3c" }} className="font-semibold">Free</span>} />
+          <Row label="Discount" value={discountCents ? `-R${(discountCents/100).toFixed(2)}` : "—"} />\n          <Row label="Shipping" value={shippingCents === 0 ? <span style={{ color: "#4a6b3c" }} className="font-semibold">Free</span> : `R${(shippingCents/100).toFixed(2)}`} />
           <div style={{ borderColor: "rgba(17,17,17,0.15)" }} className="border-t mt-2 pt-4 flex justify-between font-extrabold text-base">
             <span>Total</span>
             <span>{formatRands(totalCents)}</span>

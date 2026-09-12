@@ -6,7 +6,12 @@ import { brands, palette } from "@/lib/brands";
 import { signOut } from "@/app/account/actions";
 import { ProfileForm } from "@/app/account/profile-form";
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ confirmed?: string }>;
+}) {
+  const { confirmed } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -25,6 +30,13 @@ export default async function AccountPage() {
     .select("first_name, last_name, phone, address, city, postal_code")
     .eq("id", user.id)
     .maybeSingle();
+
+  const { data: orders } = await supabase
+    .from("orders")
+    .select("id, order_number, total_cents, status, payment_status, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(20);
 
   const funkful = brands.funkful;
 
@@ -49,6 +61,15 @@ export default async function AccountPage() {
             Back to shopping
           </Link>
         </p>
+        {confirmed === "1" && (
+          <div
+            style={{ background: palette.sage, color: "#1c2617" }}
+            className="rounded-xl p-4 mb-7 text-sm font-semibold"
+          >
+            ✓ Email confirmed — welcome to Funkful! Your account is ready.
+          </div>
+        )}
+
         <span style={{ color: "#8a4a45" }} className="text-xs font-bold uppercase tracking-wide">
           Your account
         </span>
@@ -70,10 +91,25 @@ export default async function AccountPage() {
           />
 
           <div style={{ background: palette.beige }} className="rounded-[22px] p-7 h-fit">
-            <h3 className="text-sm font-extrabold uppercase mb-3.5">Order history</h3>
-            <p className="text-sm text-neutral-600 leading-relaxed">
-              Nothing here yet — once orders are linked to accounts, they&apos;ll show up in this panel.
-            </p>
+            <h3 className="text-sm font-extrabold uppercase mb-4">Order history</h3>
+            {!orders?.length ? (
+              <p className="text-sm text-neutral-600 leading-relaxed">Your completed orders will appear here.</p>
+            ) : (
+              <div className="space-y-3">
+                {orders.map((order) => (
+                  <div key={order.id} className="rounded-xl bg-white/60 p-4 flex justify-between gap-4 text-sm">
+                    <div>
+                      <p className="font-bold">{order.order_number}</p>
+                      <p className="text-xs text-neutral-500">{new Date(order.created_at).toLocaleDateString("en-ZA")}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold">R{(order.total_cents / 100).toFixed(2)}</p>
+                      <p className="text-[10px] uppercase font-bold text-neutral-500">{order.status}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
