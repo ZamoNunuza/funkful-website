@@ -25,11 +25,15 @@ export default async function AccountPage({
     redirect("/account/login?next=/account");
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from("profiles")
-    .select("first_name, last_name, phone, address, city, postal_code")
+    .select('first_name, last_name, phone, address, city, postal_code')
     .eq("id", user.id)
     .maybeSingle();
+
+     console.log("USER:", user?.id);
+  console.log("PROFILE:", profile);
+  console.log("PROFILE ERROR:", error);
 
   const { data: orders } = await supabase
     .from("orders")
@@ -44,9 +48,6 @@ export default async function AccountPage({
     <main style={{ background: palette.cream, color: palette.black }} className="min-h-screen">
       <header style={{ borderBottom: "1px solid rgba(17,17,17,0.08)" }}>
         <div className="max-w-[900px] mx-auto px-8 flex items-center justify-between py-4">
-          <Link href="/">
-            <Image src={funkful.logo} alt="Funkful" width={110} height={26} className="w-auto" />
-          </Link>
           <form action={signOut}>
             <button type="submit" className="text-sm font-semibold underline">
               Sign out

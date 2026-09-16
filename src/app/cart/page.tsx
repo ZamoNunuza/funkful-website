@@ -256,7 +256,8 @@ export default function CartPage() {
         <div style={{ background: palette.beige }} className="rounded-[22px] p-7 sticky top-5">
           <h3 className="text-sm font-extrabold uppercase mb-4.5">Order summary</h3>
           <Row label={`Subtotal (${items.reduce((n, i) => n + i.quantity, 0)} items)`} value={formatRands(subtotalCents)} />
-          <Row label="Discount" value={discountCents ? `-R${(discountCents/100).toFixed(2)}` : "—"} />\n          <Row label="Shipping" value={shippingCents === 0 ? <span style={{ color: "#4a6b3c" }} className="font-semibold">Free</span> : `R${(shippingCents/100).toFixed(2)}`} />
+          <Row label="Discount" value={discountCents ? `-R${(discountCents/100).toFixed(2)}` : "—"} />\n          
+          <Row label="Shipping" value={shippingCents === 0 ? <span style={{ color: "#4a6b3c" }} className="font-semibold">Free</span> : `R${(shippingCents/100).toFixed(2)}`} />
           <div style={{ borderColor: "rgba(17,17,17,0.15)" }} className="border-t mt-2 pt-4 flex justify-between font-extrabold text-base">
             <span>Total</span>
             <span>{formatRands(totalCents)}</span>

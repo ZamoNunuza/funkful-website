@@ -17,6 +17,8 @@ interface ProfileFormProps {
 
 type ProfileState = { error?: string; success?: boolean } | null;
 
+
+
 export function ProfileForm({ initial }: ProfileFormProps) {
   const [state, action, pending] = useActionState<ProfileState, FormData>(updateProfile, null);
 
@@ -30,24 +32,24 @@ export function ProfileForm({ initial }: ProfileFormProps) {
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="First name">
-          <input name="firstName" defaultValue={initial.firstName} style={inputStyle} className="w-full" />
+          <input name="firstName" required defaultValue={initial.firstName} style={inputStyle} className="w-full" />
         </Field>
         <Field label="Last name">
-          <input name="lastName" defaultValue={initial.lastName} style={inputStyle} className="w-full" />
+          <input name="lastName" required defaultValue={initial.lastName} style={inputStyle} className="w-full" />
         </Field>
       </div>
       <Field label="Phone">
-        <input name="phone" defaultValue={initial.phone} placeholder="082 123 4567" style={inputStyle} className="w-full" />
+        <input name="phone" required defaultValue={initial.phone} placeholder="082 123 4567" style={inputStyle} className="w-full" />
       </Field>
       <Field label="Address">
-        <input name="address" defaultValue={initial.address} placeholder="12 Vilakazi Street" style={inputStyle} className="w-full" />
+        <input name="address" required defaultValue={initial.address} placeholder="12 Vilakazi Street" style={inputStyle} className="w-full" />
       </Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="City">
-          <input name="city" defaultValue={initial.city} placeholder="Johannesburg" style={inputStyle} className="w-full" />
+          <input name="city" required defaultValue={initial.city} placeholder="Johannesburg" style={inputStyle} className="w-full" />
         </Field>
         <Field label="Postal code">
-          <input name="postalCode" defaultValue={initial.postalCode} placeholder="2001" style={inputStyle} className="w-full" />
+          <input name="postalCode" required defaultValue={initial.postalCode} placeholder="2001" style={inputStyle} className="w-full" />
         </Field>
       </div>
 
