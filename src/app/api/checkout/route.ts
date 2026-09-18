@@ -74,18 +74,45 @@ export async function POST(req: NextRequest) {
   // rebuilt from Supabase so a customer cannot change the amount in DevTools.
   const productIds = [...new Set(body.items.map((item) => item.id))];
   const { data: exactProducts } = await supabase
-    .from("products")
-    .select("id,name,brand,product_type,base_price_cents,is_active,stock_quantity,track_inventory")
-    .in("id", productIds);
+  .from("products")
+  .select()
+  .in("id", productIds);
 
-  const { data: allProducts, error: productError } = await supabase
+  /*const { data: allProducts, error: productError } = await supabase
     .from("products")
     .select("id,name,brand,product_type,base_price_cents,stock_quantity,track_inventory,is_active")
-    .eq("is_active", true);
+    .eq("is_active", true);*/
 
-  if (productError || !allProducts) {
-    return NextResponse.json({ error: "Could not load the product catalogue." }, { status: 500 });
-  }
+    const { data: catalogue, error: productError } = await supabase
+  .from("products")
+  .select(
+    "id,name,brand,product_type,base_price_cents,is_active,stock_quantity,track_inventory"
+  )
+  .eq("is_active", true);
+
+    if (productError) {
+  console.error("PRODUCT CATALOGUE ERROR:", {
+    message: productError.message,
+    details: productError.details,
+    hint: productError.hint,
+    code: productError.code,
+  });
+
+  return NextResponse.json(
+    {
+      error: "Could not load the product catalogue.",
+      details: productError.message,
+      code: productError.code,
+    },
+    { status: 500 }
+  );
+}
+
+const allProducts = catalogue ?? [];
+
+  //if (productError || !allProducts) {
+    //return NextResponse.json({ error: "Could not load the product catalogue." }, { status: 500 });
+ // }
 
 
   const products = exactProducts ?? [];
