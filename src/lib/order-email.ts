@@ -2,7 +2,7 @@ import { Resend } from "resend";
 import { palette } from "@/lib/brands";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://funkful.co.za";
-const FROM = process.env.ORDER_EMAIL_FROM || process.env.AUTH_EMAIL_FROM || "Funkful <hello@funkful.co.za>";
+const FROM = process.env.ORDER_EMAIL_FROM || process.env.AUTH_EMAIL_FROM || "Funkful <orders@funkful.co.za>";
 const ADMIN_TO = process.env.ORDER_NOTIFICATION_EMAIL || "";
 
 export interface OrderEmailItem {
@@ -66,3 +66,4 @@ export async function sendPaymentFailedEmail(order: OrderEmailOrder) {
   const html = shell("Payment not completed", `Your payment for ${order.order_number} was not completed.`, `<h1 style="font-size:28px;margin:0 0 12px;text-transform:uppercase">Payment not completed</h1><p style="color:#666;line-height:1.6">We couldn't confirm payment for order <strong>${escapeHtml(order.order_number)}</strong>. Your bag is still available, so you can return to checkout and try again.</p><p style="margin-top:26px"><a href="${SITE_URL}/cart" style="display:inline-block;background:${palette.black};color:${palette.cream};padding:14px 22px;border-radius:999px;text-decoration:none;font-size:12px;font-weight:800;text-transform:uppercase">Return to bag</a></p>`);
   return resend.emails.send({ from: FROM, to: order.email, subject: `Payment not completed · ${order.order_number}`, html }, { idempotencyKey: `payment-failed/${order.id}` });
 }
+
