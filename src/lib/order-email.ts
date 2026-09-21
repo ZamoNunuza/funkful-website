@@ -28,6 +28,10 @@ export interface OrderEmailOrder {
   shipping_cents: number;
   total_cents: number;
   promo_code?: string | null;
+  // Set once the order has shipped (see sendOrderShipped).
+  courier?: string | null;
+  tracking_number?: string | null;
+  tracking_url?: string | null;
 }
 
 function money(cents: number) { return `R${(cents / 100).toFixed(2)}`; }
@@ -56,7 +60,7 @@ export async function sendOrderConfirmation(order: OrderEmailOrder, items: Order
 export async function sendOrderNotification(order: OrderEmailOrder, items: OrderEmailItem[]) {
   if (!process.env.RESEND_API_KEY || !ADMIN_TO) return { skipped: true };
   const resend = new Resend(process.env.RESEND_API_KEY);
-  const html = shell("New paid order", `${order.order_number} · ${money(order.total_cents)}`, `<h1 style="font-size:26px;margin:0 0 10px;text-transform:uppercase">New paid order</h1><p style="color:#666;line-height:1.6">${escapeHtml(order.order_number)} has been paid. Customer: <strong>${escapeHtml([order.first_name, order.last_name].filter(Boolean).join(" ") || order.email)}</strong>.</p><table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px"><tbody>${itemRows(items)}</tbody></table><p style="margin-top:20px;font-size:17px;font-weight:800">Total: ${money(order.total_cents)}</p><div style="margin-top:20px;background:#f4f1ea;border-radius:14px;padding:16px;font-size:13px;line-height:1.6">${address(order)}<br>${escapeHtml(order.email)}</div><p style="margin-top:24px"><a href="${SITE_URL}/account" style="display:inline-block;background:${palette.black};color:${palette.cream};padding:13px 20px;border-radius:999px;text-decoration:none;font-size:12px;font-weight:800;text-transform:uppercase">Open Funkful</a></p>`);
+  const html = shell("New paid order", `${order.order_number} · ${money(order.total_cents)}`, `<h1 style="font-size:26px;margin:0 0 10px;text-transform:uppercase">New paid order</h1><p style="color:#666;line-height:1.6">${escapeHtml(order.order_number)} has been paid. Customer: <strong>${escapeHtml([order.first_name, order.last_name].filter(Boolean).join(" ") || order.email)}</strong>.</p><table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px"><tbody>${itemRows(items)}</tbody></table><p style="margin-top:20px;font-size:17px;font-weight:800">Total: ${money(order.total_cents)}</p><div style="margin-top:20px;background:#f4f1ea;border-radius:14px;padding:16px;font-size:13px;line-height:1.6">${address(order)}<br>${escapeHtml(order.email)}</div><p style="margin-top:24px"><a href="${SITE_URL}/admin/orders/${order.id}" style="display:inline-block;background:${palette.black};color:${palette.cream};padding:13px 20px;border-radius:999px;text-decoration:none;font-size:12px;font-weight:800;text-transform:uppercase">Open order</a></p>`);
   return resend.emails.send({ from: FROM, to: ADMIN_TO, subject: `New paid order · ${order.order_number}`, html }, { idempotencyKey: `order-admin/${order.id}` });
 }
 
@@ -67,3 +71,76 @@ export async function sendPaymentFailedEmail(order: OrderEmailOrder) {
   return resend.emails.send({ from: FROM, to: order.email, subject: `Payment not completed · ${order.order_number}`, html }, { idempotencyKey: `payment-failed/${order.id}` });
 }
 
+// ---------------------------------------------------------------------------
+// Fulfilment emails: shipped + delivered
+// ---------------------------------------------------------------------------
+
+interface FulfilmentEmailOptions {
+  /**
+   * Manual "resend" from the admin page. Normally the Resend idempotency key
+   * makes a repeat send a no-op; force gives it a fresh key so it really sends.
+   */
+  force?: boolean;
+}
+
+function itemSummary(items: OrderEmailItem[]) {
+  return items.map((item) => `<tr><td style="padding:10px 0;border-bottom:1px solid #eee;font-size:13px"><strong>${escapeHtml(item.product_name)}</strong>${item.variant ? `<div style="color:#777;font-size:12px;margin-top:3px">${escapeHtml(item.variant)}</div>` : ""}</td><td align="right" style="padding:10px 0;border-bottom:1px solid #eee;font-size:13px;white-space:nowrap">× ${item.quantity}</td></tr>`).join("");
+}
+
+/** Only ever link to http(s) URLs, so a bad value can't become a javascript: link. */
+function safeHttpUrl(value?: string | null) {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function fulfilmentKey(prefix: string, order: OrderEmailOrder, options: FulfilmentEmailOptions) {
+  return options.force ? `${prefix}/${order.id}/resend-${Date.now()}` : `${prefix}/${order.id}`;
+}
+
+function greetingFor(order: OrderEmailOrder) {
+  return order.first_name ? `Hey ${escapeHtml(order.first_name)},` : "Hey there,";
+}
+
+export async function sendOrderShipped(order: OrderEmailOrder, items: OrderEmailItem[], options: FulfilmentEmailOptions = {}) {
+  if (!process.env.RESEND_API_KEY) throw new Error("RESEND_API_KEY is not set.");
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const courier = order.courier?.trim() || "";
+  const trackUrl = safeHttpUrl(order.tracking_url);
+  const hasTracking = Boolean(order.tracking_number || trackUrl);
+
+  const trackingBlock = hasTracking
+    ? `<div style="margin:0 0 24px;background:#f4f1ea;border-radius:14px;padding:16px"><strong style="font-size:12px;text-transform:uppercase">Tracking</strong><div style="font-size:14px;line-height:1.7;margin-top:6px">${courier ? `${escapeHtml(courier)}<br>` : ""}${order.tracking_number ? `Tracking number: <strong>${escapeHtml(order.tracking_number)}</strong>` : ""}</div>${trackUrl ? `<p style="margin:14px 0 0"><a href="${escapeHtml(trackUrl)}" style="display:inline-block;background:${palette.black};color:${palette.cream};padding:13px 20px;border-radius:999px;text-decoration:none;font-size:12px;font-weight:800;text-transform:uppercase">Track your parcel</a></p>` : ""}</div>`
+    : "";
+
+  const html = shell(
+    "Order shipped",
+    `Order ${order.order_number} is on its way.`,
+    `<p style="font-size:16px;margin:0 0 10px">${greetingFor(order)}</p><h1 style="font-size:28px;margin:0 0 12px;text-transform:uppercase">It&#39;s on its way.</h1><p style="color:#666;line-height:1.6;margin:0 0 24px">Good news — order <strong>${escapeHtml(order.order_number)}</strong> has been handed to ${courier ? escapeHtml(courier) : "our courier"} and is heading to you. Keep your phone handy in case the courier needs to reach you.</p>${trackingBlock}<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tbody>${itemSummary(items)}</tbody></table><div style="margin-top:26px;background:#f4f1ea;border-radius:14px;padding:16px"><strong style="font-size:12px;text-transform:uppercase">Delivering to</strong><div style="font-size:13px;line-height:1.6;margin-top:6px">${address(order)}</div></div><p style="color:#777;font-size:12px;line-height:1.6;margin:22px 0 0">You can also follow this order any time from <a href="${SITE_URL}/account/orders/${escapeHtml(order.id)}" style="color:#171717">your Funkful account</a>.</p>`,
+  );
+
+  return resend.emails.send(
+    { from: FROM, to: order.email, subject: `Order ${order.order_number} is on its way 🚚`, html },
+    { idempotencyKey: fulfilmentKey("order-shipped", order, options) },
+  );
+}
+
+export async function sendOrderDelivered(order: OrderEmailOrder, items: OrderEmailItem[], options: FulfilmentEmailOptions = {}) {
+  if (!process.env.RESEND_API_KEY) throw new Error("RESEND_API_KEY is not set.");
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
+  const html = shell(
+    "Order delivered",
+    `Order ${order.order_number} has been delivered.`,
+    `<p style="font-size:16px;margin:0 0 10px">${greetingFor(order)}</p><h1 style="font-size:28px;margin:0 0 12px;text-transform:uppercase">Delivered!</h1><p style="color:#666;line-height:1.6;margin:0 0 24px">Order <strong>${escapeHtml(order.order_number)}</strong> has been delivered. We hope you love it.</p><table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tbody>${itemSummary(items)}</tbody></table><p style="color:#666;font-size:13px;line-height:1.6;margin:24px 0 0">Something not right? Quote your order number and <a href="${SITE_URL}/contact" style="color:#171717">get in touch</a> — you can also read our <a href="${SITE_URL}/returns" style="color:#171717">returns information</a>.</p><p style="margin-top:26px"><a href="${SITE_URL}/originals" style="display:inline-block;background:${palette.black};color:${palette.cream};padding:14px 22px;border-radius:999px;text-decoration:none;font-size:12px;font-weight:800;text-transform:uppercase">Shop again</a></p>`,
+  );
+
+  return resend.emails.send(
+    { from: FROM, to: order.email, subject: `Order ${order.order_number} has been delivered 🎁`, html },
+    { idempotencyKey: fulfilmentKey("order-delivered", order, options) },
+  );
+}
