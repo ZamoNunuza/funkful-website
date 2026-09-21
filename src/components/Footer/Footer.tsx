@@ -14,8 +14,8 @@ const CONTACT = {
 
 const SOCIALS = [
   { label: 'Instagram', href: 'https://instagram.com/funkful_sa' },
-  { label: 'TikTok', href: 'https://tiktok.com/@funkful' },
-  { label: 'Facebook', href: 'https://facebook.com/funkful' },
+  { label: 'TikTok', href: 'https://www.tiktok.com/@funkful_sa' },
+  { label: 'Facebook', href: 'https://facebook.com/funkful_sa' },
 ];
 
 const SHOP_LINKS = [
@@ -29,6 +29,7 @@ const SUPPORT_LINKS = [
   { label: 'Contact', href: '/contact' },
   { label: 'Shipping & Returns', href: '/shipping' },
   { label: 'FAQ', href: '/faq' },
+  { label: 'Privacy Policy', href: '/privacy-policy' },
 ];
 
 export default function Footer() {
@@ -46,10 +47,12 @@ export default function Footer() {
                         width={120}
                         height={28}
                     />
+
                     <p className={styles.blurb}>
                         Personalized gifts, mystery scoops, and everything in between —
                         one cart, every brand.
                     </p>
+
                     <div className={styles.socials}>
                         {SOCIALS.map((s) => (
                             <Link
@@ -66,9 +69,11 @@ export default function Footer() {
 
                 <div className={styles.linkCol}>
                     <h5>Shop</h5>
-                    {SHOP_LINKS.map((l) =>  {
-                            const isActive = pathname === l.href;
-                            return (
+
+                    {SHOP_LINKS.map((l) => {
+                        const isActive = pathname === l.href;
+
+                        return (
                             <Link
                                 key={l.label}
                                 href={l.href}
@@ -76,30 +81,52 @@ export default function Footer() {
                             >
                                 {l.label}
                             </Link>
-                            );
-                        })}
+                        );
+                    })}
                 </div>
+
                 <div className={styles.linkCol}>
                     <h5>Support</h5>
-                    {SUPPORT_LINKS.map((l) => (
-                        <Link key={l.label} href={l.href} className={pathname === l.href ? styles.activeLink : ''}>
-                            {l.label}
-                        </Link>
-                    ))}
+
+                    {SUPPORT_LINKS.map((l) => {
+                        const isActive = pathname === l.href;
+
+                        return (
+                            <Link
+                                key={l.label}
+                                href={l.href}
+                                className={isActive ? styles.activeLink : ''}
+                            >
+                                {l.label}
+                            </Link>
+                        );
+                    })}
                 </div>
 
                 <div className={styles.linkCol}>
                     <h5>Get in touch</h5>
-                    <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
-                    <a href={`tel:${CONTACT.phone.replace(/\s/g,'')}`}>{CONTACT.phone}</a>
-                    <span className={styles.address}>{CONTACT.address}</span>
+
+                    <a href={`mailto:${CONTACT.email}`}>
+                        {CONTACT.email}
+                    </a>
+
+                    <a href={`tel:${CONTACT.phone.replace(/\s/g, '')}`}>
+                        {CONTACT.phone}
+                    </a>
+
+                    <span className={styles.address}>
+                        {CONTACT.address}
+                    </span>
                 </div>
             </div>
+
             <div className={`max-w-[1180px] ${styles.bottom}`}>
-                <span>© {new Date().getFullYear()} Funkful (Pty) Ltd. All rights reserved.</span>
+                <span>
+                    © {new Date().getFullYear()} Funkful (Pty) Ltd. All rights reserved.
+                </span>
+
                 <span>funkful.co.za</span>
             </div>
         </footer>
     );
 }
-      

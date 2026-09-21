@@ -214,3 +214,7 @@ a.primary:hover {
 .rounded-8 {
   border-radius: 8px;
 }
+
+.subheader {
+  font-weight: 700;
+}
