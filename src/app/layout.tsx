@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { Montserrat, Poppins } from "next/font/google";
 import { CartProvider } from "@/lib/cart-context";
+import { WishlistProvider } from "@/lib/wishlist-context";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
 import SiteProtection from "@/components/SiteProtection";
@@ -35,9 +36,11 @@ export default function RootLayout({
       <body className="min-h-full">
         {/*<SiteProtection />*/}
         <CartProvider>
-          <Header />
-          {children}
-          <Footer />
+          <WishlistProvider>
+            <Header />
+            {children}
+            <Footer />
+          </WishlistProvider>
         </CartProvider>
       </body>
     </html>

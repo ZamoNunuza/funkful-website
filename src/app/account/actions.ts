@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { validatePassword } from "@/lib/account-shared";
 
 type AuthState = { error?: string } | null;
-type ProfileState = { error?: string; success?: boolean } | null;
 
 function clean(value: FormDataEntryValue | null) {
   return String(value ?? "").trim();
@@ -28,8 +28,9 @@ export async function signUp(_prevState: AuthState, formData: FormData): Promise
     return { error: "Please complete all fields." };
   }
 
-  if (password.length < 6) {
-    return { error: "Password must be at least 6 characters." };
+  const weakPassword = validatePassword(password);
+  if (weakPassword) {
+    return { error: `Choose a stronger password. ${weakPassword}` };
   }
 
   const { data, error } = await supabase.auth.signUp({
@@ -98,84 +99,13 @@ export async function signOut() {
   redirect("/");
 }
 
-export async function updateProfile(_prevState: ProfileState, formData: FormData): Promise<ProfileState> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "You need to be signed in to update your profile." };
-  }
-
-  const firstName = clean(formData.get("firstName")); 
-  const lastName = clean(formData.get("lastName")); 
-  const phone = clean(formData.get("phone")); 
-  const address = clean(formData.get("address")); 
-  const city = clean(formData.get("city")); 
-  const postalCode = clean(formData.get("postalCode"));
-
-  if (!firstName) { 
-    return { error: "First name is required." }; 
-  } 
-  if (!lastName) { 
-    return { error: "Last name is required." }; 
-  } 
-  if (!phone) { 
-    return { error: "Phone number is required." }; 
-  } 
-  if (!address) { 
-    return { error: "Address is required." }; 
-  } 
-  if (!city) { 
-    return { error: "City is required." }; 
-  } 
-  if (!postalCode) { 
-    return { error: "Postal code is required." }; 
-  }
-
-  const phoneRegex = /^(?:\+27|0)\d{9}$/; 
-  const cleanPhone = phone.replace(/\s/g, ""); 
-  if (!phoneRegex.test(cleanPhone)) { 
-    return { 
-      error: "Please enter a valid South African phone number.", 
-    }; 
-  } 
-
-  const postalCodeRegex = /^\d{4}$/; 
-  if (!postalCodeRegex.test(postalCode)) { 
-    return { 
-      error: "Postal code must be 4 digits.", 
-    }; 
-  }
-
-  const { error } = await supabase.from("profiles").upsert({
-    id: user.id,
-    first_name: firstName,
-    last_name: lastName,
-    phone: phone,
-    address: address,
-    city: city,
-    postal_code: postalCode,
-    updated_at: new Date().toISOString(),
-  });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidatePath("/account");
-  return { success: true };
-}
-
 export type ForgotPasswordState = { error?: string; success?: string } | null;
 
 export async function forgotPassword(
   _prevState: { error?: string; success?: string } | null,
   formData: FormData
 ): Promise<ForgotPasswordState> {
-  const email = formData.get("email") as string;
+  const email = clean(formData.get("email")).toLowerCase();
 
   if (!email) {
     return { error: "Please enter your email address." };
@@ -183,11 +113,16 @@ export async function forgotPassword(
 
   const supabase = await createClient();
 
+  // The link goes through /auth/callback, which exchanges the code for a
+  // session on the server and then forwards to the reset page. (Pointing the
+  // link straight at /account/reset-password doesn't work: middleware bounces
+  // signed-out visitors to the login page before the page can read the code.)
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/account/reset-password`,
+    redirectTo: `${siteUrl()}/auth/callback?next=/account/reset-password`,
   });
 
   if (error) {
+    console.error("forgotPassword failed:", error);
     return { error: "Something went wrong. Please try again." };
   }
 
@@ -199,18 +134,45 @@ export async function forgotPassword(
   };
 }
 
+export type ResetPasswordState = { error?: string } | null;
+
+/**
+ * Sets a new password after the customer followed the emailed reset link.
+ * By this point /auth/callback has already turned the link into a session, so
+ * this is an ordinary authenticated password update.
+ */
 export async function updatePassword(
-  _prevState: { error?: string } | null,
+  _prevState: ResetPasswordState,
   formData: FormData
-) {
-  const password = formData.get("password") as string;
+): Promise<ResetPasswordState> {
+  const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  const weak = validatePassword(password);
+  if (weak) return { error: weak };
+  if (password !== confirmPassword) return { error: "Your passwords don't match." };
+
   const supabase = await createClient();
-
-  const { error } = await supabase.auth.updateUser({ password });
-
-  if (error) {
-    return { error: "Couldn't update your password. Try requesting a new reset link." };
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "This reset link has expired. Request a new one from the sign-in page." };
   }
 
-  redirect("/account?passwordReset=1");
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    const code = (error as { code?: string }).code;
+    if (code === "same_password") {
+      return { error: "Choose a password you haven't used before on this account." };
+    }
+    console.error("updatePassword failed:", error);
+    return { error: error.message || "Couldn't update your password. Try requesting a new reset link." };
+  }
+
+  // A reset means the old password may be compromised: end every other session.
+  await supabase.auth.signOut({ scope: "others" });
+
+  revalidatePath("/", "layout");
+  redirect("/account/details?passwordUpdated=1");
 }

@@ -46,8 +46,8 @@ function LoginForm() {
   const checkEmail = searchParams.get("checkEmail") === "1";
   const confirmationError = searchParams.get("error");
 
-   const [mode, setMode] = useState<"sign-in" | "sign-up" | "forgot-password">(
-    "sign-in"
+  const [mode, setMode] = useState<"sign-in" | "sign-up" | "forgot-password">(
+    searchParams.get("mode") === "forgot" ? "forgot-password" : "sign-in"
   );
 
   const [signInState, signInAction, signInPending] = useActionState<
@@ -136,7 +136,9 @@ return (
                 ? "This confirmation link is incomplete. Please use the latest email from Funkful."
                 : confirmationError === "confirmation_failed"
                   ? "We couldn't confirm this email link. It may have expired or already been used. Please request a new confirmation email."
-                  : "Your account was confirmed, but we couldn't finish setting up your profile. Please contact Funkful support."}
+                  : confirmationError === "recovery_failed"
+                    ? "This password reset link has expired or was already used. Choose “Forgot password?” to get a new one."
+                    : "Your account was confirmed, but we couldn't finish setting up your profile. Please contact Funkful support."}
             </p>
           )}
 
@@ -194,7 +196,7 @@ return (
               </Field>
 
               <Field label="Password">
-                <input type="password" name="password" required minLength={6} placeholder="At least 6 characters" style={inputStyle} className="w-full" />
+                <input type="password" name="password" required minLength={8} placeholder="8+ characters, with a letter and number" autoComplete="new-password" style={inputStyle} className="w-full" />
               </Field>
 
               {signUpState?.error && (

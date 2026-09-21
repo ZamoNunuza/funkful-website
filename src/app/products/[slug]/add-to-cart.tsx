@@ -30,6 +30,7 @@ export default function AddToCart({ product }: { product: Product }) {
       name: product.name,
       variant: parts.join(" · ") || undefined,
       priceCents: price,
+      productType: product.type,
     });
   }
 

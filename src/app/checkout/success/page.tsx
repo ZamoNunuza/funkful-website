@@ -5,7 +5,7 @@ import { palette } from "@/lib/brands";
 export default async function CheckoutSuccessPage({ searchParams }: { searchParams: Promise<{ order?: string }> }) {
   const { order } = await searchParams;
   let orderNumber = "";
-  let status = "pending";
+  let status = "Payment being confirmed";
   if (order) {
     try {
       const supabase = createAdminClient();
@@ -19,7 +19,7 @@ export default async function CheckoutSuccessPage({ searchParams }: { searchPara
       <div className="text-5xl mb-5">✓</div>
       <p className="text-xs font-bold uppercase tracking-[0.15em] mb-3" style={{color:"#8a4a45"}}>Thank you for shopping Funkful</p>
       <h1 className="text-4xl font-black uppercase mb-4">Order received</h1>
-      <p className="text-sm text-neutral-600 leading-relaxed mb-3">Your payment was sent to Yoco successfully. We are waiting for the payment confirmation webhook before we mark the order as paid and begin fulfilment.</p>
+      <p className="text-sm text-neutral-600 leading-relaxed mb-3">Your payment was successfully submitted through Yoco. We’re confirming your payment and will begin processing your order once it has been confirmed.</p>
       {orderNumber && <p className="font-bold text-sm mb-8">Order {orderNumber} · {status}</p>}
       <div className="flex justify-center gap-3 flex-wrap">
         <Link href="/originals" style={{background:palette.black,color:palette.cream}} className="px-6 py-3 rounded-full text-xs font-bold uppercase">Continue shopping</Link>

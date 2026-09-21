@@ -1,6 +1,6 @@
 // src/lib/products.ts
 //
-// Product catalog for Funkful Originals. Scoopful's scoops stay defined
+// Product catalog for Funkful Originals and personalised products. Scoopful's scoops stay defined
 // inline on its own page (they're simple, no variants) — this file is for
 // products that need variant groups (size/color/capacity) and optional
 // personalization, which is most of the Funkful line.
@@ -9,7 +9,7 @@ import type { BrandSlug } from "@/lib/brands";
 import { palette } from "@/lib/brands";
 
 export type ProductCategory = "mugs" | "tumblers" | "apparel" | "glassware";
-export type ProductType = "ready-made" | "personalize";
+export type ProductType = "made-to-order" | "personalize";
 
 export interface ProductVariantOption {
   label: string;
@@ -48,25 +48,25 @@ export const productCategories: { value: ProductCategory; label: string }[] = [
 ];
 
 export const products: Product[] = [
-  // ---------- Mugs — ready-made ----------
+  // ---------- Mugs — Funkful Originals (made to order) ----------
   {
     id: "mug-ready-sunburst",
     brand: "funkful",
     category: "mugs",
-    type: "ready-made",
+    type: "made-to-order",
     name: "Sunburst Ceramic Mug",
-    description: "Hand-glazed 11oz mug in our signature sunburst print. Ready to ship, no personalization.",
+    description: "Hand-glazed 11oz mug in our signature sunburst print. A Funkful Original made to order and not available for personalisation.",
     basePriceCents: 17900,
-    badge: "Ready to ship",
+    badge: "Made to order",
     swatch: palette.gold,
   },
   {
     id: "mug-ready-wildflower",
     brand: "funkful",
     category: "mugs",
-    type: "ready-made",
+    type: "made-to-order",
     name: "Wildflower Ceramic Mug",
-    description: "Pressed-wildflower print on an 11oz ceramic mug. Ready to ship.",
+    description: "Pressed-wildflower print on an 11oz ceramic mug. A Funkful Original made to order and not available for personalisation.",
     basePriceCents: 17900,
     swatch: palette.blush,
   },
@@ -86,14 +86,14 @@ export const products: Product[] = [
     variantGroups: [{ name: "Color", options: [{ label: "White" }, { label: "Black" }, { label: "Blush" }] }],
   },
 
-  // ---------- Tumblers — ready-made ----------
+  // ---------- Tumblers — Funkful Originals (made to order) ----------
   {
     id: "tumbler-ready-ocean-20oz",
     brand: "funkful",
     category: "tumblers",
-    type: "ready-made",
+    type: "made-to-order",
     name: "Ocean Wave Tumbler — 20oz",
-    description: "Pre-printed ocean wave wrap, double-wall insulated stainless steel. Ready to ship.",
+    description: "Pre-printed ocean wave wrap, double-wall insulated stainless steel. A Funkful Original made to order and not available for personalisation.",
     basePriceCents: 29900,
     swatch: palette.sage,
   },
@@ -101,9 +101,9 @@ export const products: Product[] = [
     id: "tumbler-ready-sunset-15oz",
     brand: "funkful",
     category: "tumblers",
-    type: "ready-made",
+    type: "made-to-order",
     name: "Sunset Ombré Tumbler — 15oz",
-    description: "Pre-printed sunset ombré wrap, double-wall insulated stainless steel. Ready to ship.",
+    description: "Pre-printed sunset ombré wrap, double-wall insulated stainless steel. A Funkful Original made to order and not available for personalisation.",
     basePriceCents: 26900,
     swatch: palette.gold,
   },
@@ -155,16 +155,16 @@ export const products: Product[] = [
     ],
   },
 
-  // ---------- Glassware — ready-made ----------
+  // ---------- Glassware — Funkful Originals (made to order) ----------
   {
     id: "glass-ready-classic-bamboo",
     brand: "funkful",
     category: "glassware",
-    type: "ready-made",
+    type: "made-to-order",
     name: "Classic Bamboo Lid Glass Mug",
-    description: "Borosilicate glass mug with a natural bamboo lid, Funkful logo etched. Ready to ship.",
+    description: "Borosilicate glass mug with a natural bamboo lid, Funkful logo etched. A Funkful Original made to order and not available for personalisation.",
     basePriceCents: 22900,
-    badge: "Ready to ship",
+    badge: "Made to order",
     swatch: palette.lavender,
   },
 
@@ -183,14 +183,14 @@ export const products: Product[] = [
     variantGroups: [{ name: "Lid finish", options: [{ label: "Natural Bamboo" }, { label: "Dark Bamboo" }] }],
   },
 
-  // ---------- Apparel — ready-made ----------
+  // ---------- Apparel — Funkful Originals (made to order) ----------
   {
     id: "tee-ready-logo",
     brand: "funkful",
     category: "apparel",
-    type: "ready-made",
+    type: "made-to-order",
     name: "Funkful Logo Tee",
-    description: "Soft cotton tee with the Funkful script logo across the chest. Ready to ship.",
+    description: "Soft cotton tee with the Funkful script logo across the chest. A Funkful Original made to order and not available for personalisation.",
     basePriceCents: 22900,
     swatch: palette.beige,
     variantGroups: [
@@ -205,9 +205,9 @@ export const products: Product[] = [
     id: "hoodie-ready-script",
     brand: "funkful",
     category: "apparel",
-    type: "ready-made",
+    type: "made-to-order",
     name: "Funkful Script Hoodie",
-    description: "Heavyweight fleece hoodie with the Funkful script logo across the front. Ready to ship.",
+    description: "Heavyweight fleece hoodie with the Funkful script logo across the front. A Funkful Original made to order and not available for personalisation.",
     basePriceCents: 42900,
     badge: "Bestseller",
     swatch: palette.blush,

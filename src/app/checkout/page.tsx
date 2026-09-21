@@ -85,6 +85,12 @@ export default function CheckoutPage() {
 
         <aside style={{ background: palette.beige }} className="rounded-[24px] p-6 sm:p-7 lg:sticky lg:top-24">
           <h2 className="text-sm font-black uppercase mb-5">Your order</h2>
+          {items.some((item) => item.productType === "made-to-order") && (
+            <div className="mb-5 rounded-2xl border border-black/10 bg-white/60 px-4 py-3">
+              <p className="text-xs font-extrabold uppercase tracking-wide">Made-to-order items</p>
+              <p className="text-xs text-neutral-600 leading-relaxed mt-1">Funkful Originals take 5–7 working days to complete before packaging and shipping.</p>
+            </div>
+          )}
           <div className="space-y-4 mb-5">{items.map((item) => <div key={item.id} className="flex gap-3 items-start"><div style={{ background: brands[item.brand].accent }} className="w-12 h-12 rounded-xl p-2 flex items-center justify-center shrink-0"><Image src={brands[item.brand].logo} alt="" width={32} height={32} className="object-contain" /></div><div className="min-w-0 flex-1"><p className="font-bold text-sm">{item.name}</p><p className="text-xs text-neutral-500">Qty {item.quantity}{item.variant ? ` · ${item.variant}` : ""}</p></div><span className="font-bold text-sm">{formatRands(item.priceCents * item.quantity)}</span></div>)}</div>
           <SummaryRow label="Subtotal" value={formatRands(subtotalCents)} /><SummaryRow label="Discount" value={discountCents ? `-${formatRands(discountCents)}` : "—"} /><SummaryRow label="Shipping" value={shippingCents === 0 ? <span style={{ color: "#4a6b3c" }}>Free</span> : formatRands(shippingCents)} />
           <div className="border-t mt-3 pt-4 flex justify-between font-black text-lg"><span>Total</span><span>{formatRands(totalCents)}</span></div>

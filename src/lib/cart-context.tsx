@@ -10,6 +10,7 @@ export interface CartItem {
   variant?: string;
   priceCents: number;
   quantity: number;
+  productType?: "made-to-order" | "personalize" | "mystery" | "addon";
 }
 
 interface CartState { items: CartItem[]; }

@@ -39,6 +39,12 @@ export default function CartPage() {
         ) : (
           <div className="grid lg:grid-cols-[1.55fr_0.75fr] gap-10 items-start">
             <section>
+              {items.some((item) => item.productType === "made-to-order") && (
+                <div className="mb-5 rounded-2xl border border-black/10 bg-white/60 px-4 py-3">
+                  <p className="text-xs font-extrabold uppercase tracking-wide">Made-to-order items</p>
+                  <p className="text-xs text-neutral-600 leading-relaxed mt-1">Funkful Originals are made to order and take 5–7 working days to complete before packaging and shipping. They cannot be personalised.</p>
+                </div>
+              )}
               {brandsInCart.size > 1 && <div style={{ background: palette.sage, color: "#1c2617" }} className="text-xs font-bold uppercase tracking-wide px-4 py-3 rounded-2xl mb-5">🛍️ Funkful + Scoopful in one order — one shipment, one checkout</div>}
               <div className="divide-y border-y" style={{ borderColor: "rgba(17,17,17,0.1)" }}>
                 {items.map((item) => {

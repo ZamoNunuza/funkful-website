@@ -7,6 +7,7 @@ import Link from "next/link";
 import { brands, palette, navLinks } from "@/lib/brands";
 import { products, productCategories, getProductsByCategory, type ProductVariantGroup, type ProductCategory, type Product } from "@/lib/products";
 import { useCart } from "@/lib/cart-context";
+import WishlistButton from "@/components/wishlist/WishlistButton";
 
 function formatRands(cents: number) {
   return `R${(cents / 100).toFixed(0)}`;
@@ -74,7 +75,7 @@ export default function OriginalsPage() {
     <main style={{ background: palette.cream, color: palette.black }}>
       {/* Breadcrumb */}
       <div className="max-w-[1180px] mx-auto px-8 pt-4 text-xs text-neutral-500">
-        <Link href="/">Home</Link> / <span className="text-black font-medium">Personalized</span>
+        <Link href="/">Home</Link> / <span className="text-black font-medium">Funkful Originals</span>
       </div>
 
       {/* Hero */}
@@ -94,9 +95,8 @@ export default function OriginalsPage() {
             <p style={{ color: "#4a4438" }} className="text-sm leading-relaxed max-w-lg mb-2">
               {funkful.description}
             </p>
-            <p style={{ color: "#4a4438" }} className="text-sm leading-relaxed max-w-lg mb-6">
-              Every category comes two ways: grab a ready-made design and ship today, or build your own with a
-              name, initials, or short message.
+             <p style={{ color: "#4a4438" }} className="text-sm leading-relaxed max-w-lg mb-6">
+              Funkful Originals are made to order, so we only create each original design when you place an order. Prefer something personal? Our separate personalised range lets you add a name, initials, or short message.
             </p>
             <a
               href="#catalog"
@@ -144,13 +144,13 @@ export default function OriginalsPage() {
         </div>
       </div>
 
-      {/* Catalog — grouped by category, each with a ready-made grid and a personalize grid */}
+      {/* Catalog — grouped by category, with made-to-order Originals and personalised products */}
       <section id="catalog" className="py-14">
-        <div className="max-w-[1180px] mx-auto px-8 space-y-16">
+       <div className="max-w-[1180px] mx-auto px-8 space-y-16">
           {categoriesToShow.map((catValue) => {
             const catLabel = productCategories.find((c) => c.value === catValue)!.label;
             const all = getProductsByCategory(catValue);
-            const readyMade = all.filter((p) => p.type === "ready-made");
+            const readyMade = all.filter((p) => p.type === "made-to-order");
             const personalize = all.filter((p) => p.type === "personalize");
 
             return (
@@ -159,9 +159,10 @@ export default function OriginalsPage() {
 
                 {readyMade.length > 0 && (
                   <div className="mb-10">
-                    <h3 style={{ color: "#6a6458" }} className="text-xs font-extrabold uppercase tracking-wide mb-4">
-                      Ready to ship
-                    </h3>
+                    <div className="mb-5 rounded-2xl border border-black/10 bg-white/60 px-4 py-3">
+                      <p className="text-xs font-extrabold uppercase tracking-wide">Funkful Originals · Made to order</p>
+                      <p className="text-xs text-neutral-600 leading-relaxed mt-1">Please allow 5–7 working days for your original design to be completed before it is packaged and shipped. Funkful Originals cannot be personalised.</p>
+                    </div>
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                       {readyMade.map((product) => {
                         const sel = variantSelections[product.id] ?? {};
@@ -181,6 +182,7 @@ export default function OriginalsPage() {
                                   {product.badge}
                                 </span>
                               )}
+                              <WishlistButton productId={product.id} productName={product.name} className="absolute top-3.5 right-3.5 z-10" />
                               <Image src={funkful.logo} alt="" width={56} height={56} className="object-contain opacity-80" draggable={false} />
                             </div>
                             <div className="p-5 flex flex-col flex-1">
@@ -240,8 +242,9 @@ export default function OriginalsPage() {
                           <div
                             key={product.id}
                             style={{ background: product.swatch, borderColor: "rgba(17,17,17,0.1)" }}
-                            className="border-2 border-dashed rounded-[20px] overflow-hidden flex flex-col"
+                            className="relative border-2 border-dashed rounded-[20px] overflow-hidden flex flex-col"
                           >
+                            <WishlistButton productId={product.id} productName={product.name} className="absolute top-3.5 right-3.5 z-10" />
                             <div className="p-5 flex flex-col flex-1">
                               {product.badge && (
                                 <span

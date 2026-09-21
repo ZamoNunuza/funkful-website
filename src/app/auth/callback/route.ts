@@ -13,9 +13,15 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get("code");
   const next = safeNextPath(requestUrl.searchParams.get("next"));
 
+  // Password-reset links come through here too (see forgotPassword in
+  // account/actions.ts). They only need the session set up, not the
+  // email-confirmation profile sync below.
+  const isRecovery = next.startsWith("/account/reset-password");
+  const failure = isRecovery ? "recovery_failed" : "confirmation_failed";
+
   if (!code) {
     const errorUrl = new URL("/account/login", requestUrl.origin);
-    errorUrl.searchParams.set("error", "confirmation_missing");
+    errorUrl.searchParams.set("error", isRecovery ? "recovery_failed" : "confirmation_missing");
     return NextResponse.redirect(errorUrl);
   }
 
@@ -24,7 +30,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     const errorUrl = new URL("/account/login", requestUrl.origin);
-    errorUrl.searchParams.set("error", "confirmation_failed");
+    errorUrl.searchParams.set("error", failure);
     return NextResponse.redirect(errorUrl);
   }
 
@@ -34,8 +40,12 @@ export async function GET(request: NextRequest) {
 
   if (!user) {
     const errorUrl = new URL("/account/login", requestUrl.origin);
-    errorUrl.searchParams.set("error", "confirmation_failed");
+    errorUrl.searchParams.set("error", failure);
     return NextResponse.redirect(errorUrl);
+  }
+
+  if (isRecovery) {
+    return NextResponse.redirect(new URL(next, requestUrl.origin));
   }
 
   // The database trigger normally creates this row when auth.users is inserted.

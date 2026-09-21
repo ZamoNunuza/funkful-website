@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { products } from "@/lib/products";
 import { brands, palette } from "@/lib/brands";
 import AddToCart from "./add-to-cart";
+import WishlistButton from "@/components/wishlist/WishlistButton";
 
 export function generateStaticParams() {
   return products.map((product) => ({ slug: product.id }));
@@ -29,7 +30,16 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <p style={{ color: "#8a4a45" }} className="text-xs font-bold uppercase tracking-[0.14em] mb-2">{brand.name}</p>
           <h1 className="text-3xl md:text-4xl font-black uppercase leading-tight mb-4">{product.name}</h1>
           <p className="text-sm text-neutral-600 leading-relaxed mb-7">{product.description}</p>
+          {product.type === "made-to-order" && (
+            <div className="mb-7 rounded-2xl border border-black/10 bg-white/60 px-4 py-3">
+              <p className="text-xs font-extrabold uppercase tracking-wide">Made to order</p>
+              <p className="text-xs text-neutral-600 leading-relaxed mt-1">
+                This Funkful Original is made after you place your order. Please allow <strong>5–7 working days</strong> for completion before it is packaged and shipped. Funkful Originals cannot be personalised.
+              </p>
+            </div>
+          )}
           <AddToCart product={product} />
+          <div className="mt-4"><WishlistButton productId={product.id} productName={product.name} variant="labelled" /></div>
           <div className="mt-8 border-t pt-6 text-xs text-neutral-600 leading-relaxed space-y-2">
             <p>✓ Secure checkout through Yoco</p>
             <p>✓ Free delivery on orders over R400</p>

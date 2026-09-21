@@ -48,6 +48,14 @@ button:hover {
   color: var(--cream) !important;
 }
 
+/* Text-style buttons (Edit / Remove / Sign out, heart icons). The blanket
+   button:hover rule above would turn these into grey blocks, so opt out with
+   className="ghost". Set --ghost-hover inline to keep a custom hover colour. */
+button.ghost:hover {
+  background-color: transparent !important;
+  color: var(--ghost-hover, #111111) !important;
+}
+
 .btn {
   font-size: 13px;
   font-weight: 700;

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { brands, palette, ballColors, navLinks } from "@/lib/brands";
 import { useCart } from "@/lib/cart-context";
+import WishlistButton from "@/components/wishlist/WishlistButton";
 
 // Five ball colors positioned as a loose cluster behind the hero copy —
 // purely decorative, matches the mock's floating-balls hero art.

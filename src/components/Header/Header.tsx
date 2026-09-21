@@ -6,12 +6,14 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { palette, navLinks } from "@/lib/brands";
 import { useCart } from '@/lib/cart-context';
+import { useWishlist } from '@/lib/wishlist-context';
 import styles from './Header.module.css';
 
 
 export default function Header() {
   const pathname = usePathname();
   const { itemCount } = useCart();
+  const { count: wishlistCount } = useWishlist();
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Prevent background scroll while the mobile menu is open
@@ -70,6 +72,10 @@ export default function Header() {
            <div className={styles.navIcons}>
             <span className="hidden md:inline">Search</span>
             <Link href="/account" className="hidden md:flex items-center gap-1"><span>Account</span></Link>
+            <Link href="/account/wishlist" className="hidden md:flex items-center gap-1" aria-label={wishlistCount ? `Wishlist, ${wishlistCount} saved` : 'Wishlist'}>
+              <span>Wishlist</span>
+              {wishlistCount > 0 && <span className={styles.cartDot}>{wishlistCount}</span>}
+            </Link>
             <Link href="/cart">
               Bag <span className={styles.cartDot}>{itemCount}</span>
             </Link>
@@ -113,6 +119,7 @@ export default function Header() {
               );
             })}
             <Link href="/account">Account</Link>
+            <Link href="/account/wishlist">Wishlist{wishlistCount > 0 ? ` (${wishlistCount})` : ''}</Link>
           </nav>
         )}
       </header>
