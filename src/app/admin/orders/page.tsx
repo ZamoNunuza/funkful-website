@@ -101,27 +101,36 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
             const name = [order.first_name, order.last_name].filter(Boolean).join(" ") || order.email;
             return (
               <li key={order.id}>
-                <Card compact>
-                  <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
-                    <div className="min-w-0">
-                      <p className="font-black text-base">{order.order_number}</p>
-                      <p className="text-sm text-neutral-700 mt-1 break-all">{name}</p>
-                      <p className="text-xs text-neutral-500 mt-0.5">Placed {formatDate(order.created_at)}</p>
-                      {(order.courier || order.tracking_number) && (
-                        <p className="text-xs text-neutral-500 mt-0.5">
-                          {[order.courier, order.tracking_number].filter(Boolean).join(" · ")}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <StatusBadge label={meta.label} tone={meta.tone} />
-                      <span className="font-black">{formatRands(order.total_cents)}</span>
-                      <Link href={`/admin/orders/${order.id}`} className="text-xs font-extrabold uppercase underline">
-                        Open
-                      </Link>
-                    </div>
-                  </div>
-                </Card>
+                  <Link href={`/admin/orders/${order.id}`} className="block" aria-label={`Open order ${order.order_number}`}>
+                    <Card compact>
+                      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+                        <div className="min-w-0">
+                          <p className="font-black text-base">{order.order_number}</p>
+                          <p className="text-sm text-neutral-700 mt-1 break-all">{name}</p>
+                          <p className="text-xs text-neutral-500 mt-0.5">
+                            Placed {formatDate(order.created_at)}
+                          </p>
+
+                          {(order.courier || order.tracking_number) && (
+                            <p className="text-xs text-neutral-500 mt-0.5">
+                              {[order.courier, order.tracking_number].filter(Boolean).join(" · ")}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col items-end gap-2">
+                          <StatusBadge label={meta.label} tone={meta.tone} />
+                          <span className="font-black">
+                            {formatRands(order.total_cents)}
+                          </span>
+
+                          <span className="text-xs font-extrabold uppercase">
+                            Open
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  </Link>
               </li>
             );
           })}

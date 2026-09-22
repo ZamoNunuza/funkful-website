@@ -82,14 +82,45 @@ export async function signIn(_prevState: AuthState, formData: FormData): Promise
   const password = String(formData.get("password") ?? "");
   const next = String(formData.get("next") ?? "/account");
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     return { error: error.message };
   }
 
+  // Admin routing is role-based, not email-based. The role lives in the
+  // server-side profiles table and is checked with the service-role client so
+  // a customer cannot influence where an admin account is redirected.
+  let destination = "/account";
+  try {
+    if (signInData.user) {
+      const admin = createAdminClient();
+      const { data: profile, error: profileError } = await admin
+        .from("profiles")
+        .select("role")
+        .eq("id", signInData.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("Sign-in profile role lookup failed:", profileError);
+      } else if (profile?.role === "admin") {
+        destination = "/admin/orders";
+      } else {
+        const requestedNext = next.startsWith("/") && !next.startsWith("//") ? next : "/account";
+        // Never allow a non-admin to use the login `next` parameter to enter
+        // an admin route. The admin pages still perform their own server-side
+        // authorization check.
+        destination = requestedNext.startsWith("/admin") ? "/account" : requestedNext;
+      }
+    }
+  } catch (roleLookupError) {
+    console.error("Sign-in role lookup exception:", roleLookupError);
+    // If the role cannot be read, fail closed to the normal customer portal.
+    destination = "/account";
+  }
+
   revalidatePath("/", "layout");
-  redirect(next.startsWith("/") && !next.startsWith("//") ? next : "/account");
+  redirect(destination);
 }
 
 export async function signOut() {
