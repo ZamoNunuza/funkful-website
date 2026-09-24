@@ -286,6 +286,7 @@ export async function POST(req: NextRequest) {
           has_attachments:
             attachments.length > 0,
           attachments,
+
           received_at:
             email.created_at ??
             event.created_at ??
