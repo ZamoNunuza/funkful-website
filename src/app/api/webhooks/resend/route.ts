@@ -106,16 +106,22 @@ export async function POST(req: NextRequest) {
         .maybeSingle();
 
     if (existingError) {
-      console.error(
-        "Failed checking for existing inbound email:",
-        existingError
-      );
+        console.error("Failed checking for existing inbound email:", {
+        message: existingError.message,
+        details: existingError.details,
+        hint: existingError.hint,
+        code: existingError.code,
+    });
 
-      return NextResponse.json(
-        { error: "Database lookup failed." },
-        { status: 500 }
-      );
-    }
+  return NextResponse.json(
+    {
+      error: "Database lookup failed.",
+      details: existingError.message,
+      code: existingError.code,
+    },
+    { status: 500 }
+  );
+}
 
     if (existingEmail) {
       console.log("Inbound email already processed:", emailId);
