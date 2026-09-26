@@ -59,6 +59,35 @@ function getHeader(
   return key ? headers[key] : null;
 }
 
+function extractMessageIds(...values: Array<string | null>): string[] {
+  const ids = new Set<string>();
+
+  for (const value of values) {
+    if (!value) continue;
+
+    // Normal RFC email headers use <message-id@example.com>.
+    const bracketedIds = value.match(/<[^>]+>/g);
+
+    if (bracketedIds?.length) {
+      for (const id of bracketedIds) {
+        ids.add(id.trim());
+      }
+      continue;
+    }
+
+    // Fallback for headers that arrive without angle brackets.
+    for (const part of value.split(/\s+/)) {
+      const cleaned = part.trim();
+
+      if (cleaned) {
+        ids.add(cleaned);
+      }
+    }
+  }
+
+  return Array.from(ids);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const payload = await req.text();
@@ -105,7 +134,7 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = createAdminClient();
-
+    
     // Prevent duplicate processing.
     const { data: existing } = await supabase
       .from("inbound_emails")
@@ -195,67 +224,144 @@ export async function POST(req: NextRequest) {
       getHeader(headers, "References");
 
     /*
-     * If this is a reply, use the referenced
-     * message as the thread key.
-     *
-     * Otherwise use the current Message-ID.
-     */
-    const threadKey =
-      inReplyTo ||
-      (referencesHeader
-        ? referencesHeader.split(/\s+/)[0]
-        : null) ||
-      messageId ||
-      emailId;
+ * Resolve the conversation using the actual Message-IDs
+ * referenced by In-Reply-To and References.
+ *
+ * This is more reliable than treating the first item in
+ * References as the thread key because References can contain
+ * multiple Message-IDs from the conversation history.
+ */
+const referenceMessageIds = extractMessageIds(
+  inReplyTo,
+  referencesHeader
+);
 
-    /*
-     * Find an existing thread.
-     */
-    let threadId: string | null = null;
+/*
+ * Find an existing thread by any message already stored
+ * in that conversation.
+ */
+let threadId: string | null = null;
 
-    const { data: existingThread } =
+if (referenceMessageIds.length > 0) {
+  const { data: linkedMessage, error: linkedMessageError } =
+    await supabase
+      .from("email_thread_messages")
+      .select("thread_id")
+      .in("message_id", referenceMessageIds)
+      .limit(1)
+      .maybeSingle();
+
+  if (linkedMessageError) {
+    console.error(
+      "Failed finding thread from referenced Message-ID:",
+      linkedMessageError
+    );
+  }
+
+  if (linkedMessage?.thread_id) {
+    threadId = linkedMessage.thread_id;
+  }
+}
+
+/*
+ * Also check the existing email_threads.thread_key.
+ *
+ * This preserves compatibility with threads created by the
+ * current webhook before this improvement was deployed.
+ */
+if (!threadId) {
+  for (const candidateMessageId of referenceMessageIds) {
+    const { data: existingThread, error: existingThreadError } =
       await supabase
         .from("email_threads")
         .select("id")
-        .eq("thread_key", threadKey)
+        .eq("thread_key", candidateMessageId)
         .maybeSingle();
 
-    if (existingThread) {
-      threadId = existingThread.id;
-    } else {
-      /*
-       * Create a new thread.
-       */
-      const { data: newThread, error: threadError } =
-        await supabase
-          .from("email_threads")
-          .insert({
-            thread_key: threadKey,
-            email_type: emailType,
-            subject: email.subject ?? null,
-            customer_email: fromEmail,
-            status: "open",
-            last_message_at:
-              email.created_at ??
-              new Date().toISOString(),
-          })
-          .select("id")
-          .single();
+    if (existingThreadError) {
+      console.error(
+        "Failed finding existing email thread:",
+        existingThreadError
+      );
 
-      if (threadError) {
-        console.error(
-          "Failed creating email thread:",
-          threadError
-        );
-
-        return NextResponse.json(
-          { error: "Failed creating email thread." },
-          { status: 500 }
-        );
-      }
-
-      threadId = newThread.id;
+      continue;
     }
+
+    if (existingThread?.id) {
+      threadId = existingThread.id;
+      break;
+    }
+  }
+}
+
+/*
+ * If this Message-ID has already been recorded, use its
+ * existing thread as a final safeguard.
+ */
+if (!threadId && messageId) {
+  const { data: existingMessage, error: existingMessageError } =
+    await supabase
+      .from("email_thread_messages")
+      .select("thread_id")
+      .eq("message_id", messageId)
+      .maybeSingle();
+
+  if (existingMessageError) {
+    console.error(
+      "Failed checking existing Message-ID:",
+      existingMessageError
+    );
+  }
+
+  if (existingMessage?.thread_id) {
+    threadId = existingMessage.thread_id;
+  }
+}
+
+    /*
+    * If no existing conversation was found, create a new one.
+    *
+    * For a brand-new conversation the current Message-ID is the
+    * correct root thread key. If this is a reply to a message
+    * that is not yet present in our database, use the first
+    * referenced Message-ID as the fallback key.
+    */
+    const threadKey =
+      messageId ||
+      referenceMessageIds[0] ||
+      emailId;
+
+      if (!threadId) {
+        const { data: newThread, error: threadError } =
+          await supabase
+            .from("email_threads")
+            .insert({
+              thread_key: threadKey,
+              email_type: emailType,
+              subject: email.subject ?? null,
+              customer_email: fromEmail,
+              status: "open",
+              last_message_at:
+                email.created_at ??
+                new Date().toISOString(),
+            })
+            .select("id")
+            .single();
+
+        if (threadError) {
+          console.error(
+            "Failed creating email thread:",
+            threadError
+          );
+
+          return NextResponse.json(
+            { error: "Failed creating email thread." },
+            { status: 500 }
+          );
+        }
+
+        threadId = newThread.id;
+      }
 
     /*
      * Store the inbound email.
@@ -275,22 +381,14 @@ export async function POST(req: NextRequest) {
           in_reply_to: inReplyTo,
           references_header: referencesHeader,
           thread_id: threadId,
-          subject:
-            email.subject ?? null,
-          text_body:
-            email.text ?? null,
-          html_body:
-            email.html ?? null,
+          subject: email.subject ?? null,
+          text_body: email.text ?? null,
+          html_body: email.html ?? null,
           email_type: emailType,
           status: "new",
-          has_attachments:
-            attachments.length > 0,
+          has_attachments: attachments.length > 0,
           attachments,
-
-          received_at:
-            email.created_at ??
-            event.created_at ??
-            new Date().toISOString(),
+          received_at: email.created_at ?? event.created_at ?? new Date().toISOString(),
         })
         .select("id")
         .single();
@@ -310,6 +408,46 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json(
         { error: "Failed saving inbound email." },
+        { status: 500 }
+      );
+    }
+    /*
+    * Store the inbound email in the thread message history.
+    */
+    const { error: threadMessageError } = await supabase
+      .from("email_thread_messages")
+      .upsert(
+        {
+          thread_id: threadId,
+          direction: "inbound",
+          inbound_email_id: savedEmail.id,
+          message_id: messageId,
+          from_email: fromEmail,
+          from_name: fromName,
+          to_emails: recipients.map((recipient) =>
+            extractEmail(recipient)
+          ),
+          subject: email.subject ?? null,
+          text_body: email.text ?? null,
+          html_body: email.html ?? null,
+          sent_at:
+            email.created_at ??
+            event.created_at ??
+            new Date().toISOString(),
+        },
+        {
+          onConflict: "message_id",
+        }
+      );
+
+    if (threadMessageError) {
+      console.error(
+        "Failed saving thread message:",
+        threadMessageError
+      );
+
+      return NextResponse.json(
+        { error: "Failed saving thread message." },
         { status: 500 }
       );
     }
@@ -400,4 +538,6 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
+  
+  
 }

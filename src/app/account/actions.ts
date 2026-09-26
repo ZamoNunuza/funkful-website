@@ -104,7 +104,7 @@ export async function signIn(_prevState: AuthState, formData: FormData): Promise
       if (profileError) {
         console.error("Sign-in profile role lookup failed:", profileError);
       } else if (profile?.role === "admin") {
-        destination = "/admin/orders";
+        destination = "/admin/";
       } else {
         const requestedNext = next.startsWith("/") && !next.startsWith("//") ? next : "/account";
         // Never allow a non-admin to use the login `next` parameter to enter

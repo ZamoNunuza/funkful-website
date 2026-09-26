@@ -144,9 +144,16 @@ function Shell({ children }: { children: ReactNode }) {
   return (
     <main style={{ background: palette.cream, color: palette.black }} className="min-h-screen">
       <div className="max-w-[1000px] mx-auto px-5 sm:px-8 py-10 sm:py-14">
-        <span style={{ color: "#8a4a45" }} className="text-xs font-bold uppercase tracking-wide">
-          Funkful admin
-        </span>
+        <div className="grid grid-cols-[1fr_auto] items-center gap-4 mb-2">
+          <span style={{ color: "#8a4a45" }} className="text-xs font-bold uppercase tracking-wide" >
+            Funkful admin
+          </span>
+          <Link href="/admin/" style={{ color: "#8a4a45" }}
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide hover:opacity-70 transition-opacity">
+            <span aria-hidden="true">←</span>
+            Back to dashboard
+          </Link>
+        </div>
         <h1 className="text-3xl sm:text-4xl font-black uppercase mt-2 mb-8">Orders</h1>
         {children}
       </div>

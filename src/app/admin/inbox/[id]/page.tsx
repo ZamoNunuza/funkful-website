@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 type EmailRow = {
   id?: string;
+  thread_id?: string;
   from?: unknown;
   from_email?: unknown;
   sender_email?: unknown;
@@ -24,6 +25,7 @@ type EmailRow = {
   timestamp?: unknown;
   subject?: unknown;
   has_attachments?: unknown;
+  status?: unknown;
 };
 
 type Attachment = {
@@ -165,6 +167,15 @@ export default async function AdminInboxMessagePage({
   const text = getText(row);
   const html = getHtml(row);
   const date = getDate(row);
+  if (row.status === "new") {
+  await admin
+    .from("inbound_emails")
+    .update({
+      status: "read",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+  }
 
   return (
     <main className="min-h-screen bg-[#F7F4EF] text-[#111111]">
@@ -334,6 +345,43 @@ export default async function AdminInboxMessagePage({
                   Send reply
                 </button>
               </div>
+            </form>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <form action="/api/admin/inbox/status" method="POST">
+              <input type="hidden" name="threadId" value={row.thread_id} />
+              <input type="hidden" name="status" value="open" />
+
+              <button
+                type="submit"
+                className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold"
+              >
+                Open
+              </button>
+            </form>
+
+            <form action="/api/admin/inbox/status" method="POST">
+              <input type="hidden" name="threadId" value={row.thread_id} />
+              <input type="hidden" name="status" value="pending" />
+
+              <button
+                type="submit"
+                className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold"
+              >
+                Pending
+              </button>
+            </form>
+
+            <form action="/api/admin/inbox/status" method="POST">
+              <input type="hidden" name="threadId" value={row.thread_id} />
+              <input type="hidden" name="status" value="closed" />
+
+              <button
+                type="submit"
+                className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold"
+              >
+                Close
+              </button>
             </form>
           </div>
         </section>
