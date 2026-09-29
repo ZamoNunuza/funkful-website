@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { palette } from "@/lib/brands";
+import AdminSignOut from "./adminSignOut";
 
 export const metadata = { title: "Admin | Funkful", robots: { index: false, follow: false } };
 
@@ -28,7 +29,10 @@ export default async function AdminDashboardPage() {
             <h1 className="mt-2 text-3xl font-black uppercase sm:text-4xl">Dashboard</h1>
             <p className="mt-2 text-sm text-neutral-600">Orders and customer communications in one place.</p>
           </div>
-          <p className="text-sm font-bold">{user.email}</p>
+           <div className="flex flex-wrap items-center gap-3">
+              <p className="text-sm font-bold">{user.email}</p>
+              <AdminSignOut />
+            </div>
         </div>
 
         <div className="grid gap-5 md:grid-cols-2">

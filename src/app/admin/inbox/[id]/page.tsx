@@ -190,9 +190,7 @@ export default async function AdminInboxMessagePage({
               />
             </Link>
 
-            <div className="h-7 w-px bg-black/10" />
-
-            <div>
+            <div className="h-7 w-px bg-black/10" /><div>
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-black/40">
                 Funkful Admin
               </p>
@@ -347,7 +345,7 @@ export default async function AdminInboxMessagePage({
               </div>
             </form>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 px-6 py-6 md:px-8">
             <form action="/api/admin/inbox/status" method="POST">
               <input type="hidden" name="threadId" value={row.thread_id} />
               <input type="hidden" name="status" value="open" />
