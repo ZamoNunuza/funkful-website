@@ -155,6 +155,25 @@ const allProducts = catalogue ?? [];
       return NextResponse.json({ error: `${product.name} needs personalization details.` }, { status: 400 });
     }
 
+    if (personalization) {
+      const { data: personalizationSettings, error: personalizationError } = await supabase
+        .from("products")
+        .select("allow_personalization,personalization_price_delta_cents,personalization_max_length")
+        .eq("id", product.id)
+        .maybeSingle();
+
+      if (personalizationError) {
+        return NextResponse.json({ error: "Could not validate personalization." }, { status: 500 });
+      }
+      if (!personalizationSettings?.allow_personalization) {
+        return NextResponse.json({ error: `${product.name} does not support personalization.` }, { status: 400 });
+      }
+      if (personalization.length > (personalizationSettings.personalization_max_length ?? 80)) {
+        return NextResponse.json({ error: "Your personalization is too long." }, { status: 400 });
+      }
+      unitPrice += personalizationSettings.personalization_price_delta_cents ?? 0;
+    }
+
     if (product.track_inventory && product.stock_quantity < item.quantity) {
       return NextResponse.json({ error: `${product.name} does not have enough stock.` }, { status: 409 });
     }

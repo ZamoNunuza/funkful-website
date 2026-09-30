@@ -102,7 +102,7 @@ export const brandList = Object.values(brands);
 // Primary nav links shared across the site header. Kept here (not in the
 // component) so both the Funkful homepage and each brand layout stay in sync.
 export const navLinks = [
-  { label: "Personalized", href: "/originals" },
+  { label: "Funkful", href: "/originals" },
   { label: "Scoopful", href: "/scoopful" },
   { label: "Anime Boxes ✨", href: "/#anime", soon: true },
   { label: "About", href: "/#about" },
