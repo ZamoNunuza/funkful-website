@@ -117,6 +117,22 @@ export default function ProductImageManager({ products, initialImages }: { produ
   }
 }
 
+  async function protectExistingImages() {
+    if (!window.confirm("Protect all existing product images now? This will create private originals and watermarked previews, then make the old public bucket private.")) return;
+    setBusy(true);
+    setMessage("Protecting existing images…");
+    try {
+      const response = await fetch("/api/admin/product-images/migrate", { method: "POST" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || result.warning || "Image protection migration failed.");
+      setMessage(`Protection complete: ${result.migrated} migrated, ${result.failed} failed. ${result.legacyBucketPrivate ? "Legacy bucket is now private." : "Legacy bucket remains public until failures are resolved."}`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Protection migration failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function saveOrder(next: ProductImage[]) {
     setImages((current) => current.map((image) => next.find((item) => item.id === image.id) ?? image));
     const response = await fetch("/api/admin/product-images/reorder", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ productId: selectedId, imageIds: next.map((image) => image.id), primaryId: next.find((image) => image.is_primary)?.id ?? next[0]?.id }) });
@@ -166,6 +182,10 @@ export default function ProductImageManager({ products, initialImages }: { produ
           {products.map((product) => <option key={product.id} value={product.id}>{product.brand} · {product.name}</option>)}
         </select>
         {selectedProduct && <div className="mt-5 rounded-2xl bg-white p-4 text-xs"><p className="font-black">{selectedProduct.name}</p><p className="mt-1 text-neutral-500">{selectedProduct.id}</p><p className="mt-3 font-bold">{selectedImages.length} linked image{selectedImages.length === 1 ? "" : "s"}</p></div>}
+        <button type="button" onClick={protectExistingImages} disabled={busy} className="mb-5 w-full rounded-2xl border border-black/10 bg-black px-4 py-3 text-left text-white disabled:opacity-50">
+          <span className="block text-xs font-black uppercase tracking-wide">Protect existing images</span>
+          <span className="mt-1 block text-[11px] leading-5 text-white/70">Move originals to private storage and generate watermarked previews.</span>
+        </button>
         <div className="mt-5 rounded-2xl border border-dashed border-black/20 bg-white p-4">
           <p className="text-xs font-black uppercase">Upload</p>
           <p className="mt-1 text-[11px] leading-5 text-neutral-500">JPG, PNG or WebP · max 5 MB each. WebP is preferred for product photography.</p>

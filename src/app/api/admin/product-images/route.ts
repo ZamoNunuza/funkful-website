@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createWatermarkedPreview } from "@/lib/product-images/watermark";
 
-const BUCKET = "product-images";
+const LEGACY_BUCKET = "product-images";
+const ORIGINALS_BUCKET = "product-originals";
+const PREVIEWS_BUCKET = "product-previews";
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
@@ -60,36 +63,64 @@ export async function POST(request: Request) {
 
     const sortOrder = existing ? existing.sort_order + 1 : 0;
     const isPrimary = !existing;
-    const objectPath = `originals/${productId}/${String(sortOrder + 1).padStart(2, "0")}-${safeFileName(file.name)}`;
-    const bytes = new Uint8Array(await file.arrayBuffer());
+    const fileName = safeFileName(file.name);
+    const originalPath = `products/${productId}/${String(sortOrder + 1).padStart(2, "0")}-${fileName}`;
+    const previewPath = `products/${productId}/${String(sortOrder + 1).padStart(2, "0")}-${fileName.replace(/\.(jpe?g|png|webp)$/i, ".webp")}`;
+    const bytes = Buffer.from(await file.arrayBuffer());
+    const previewBytes = await createWatermarkedPreview(bytes);
 
-    const { error: uploadError } = await admin.storage.from(BUCKET).upload(objectPath, bytes, {
+    const { error: originalUploadError } = await admin.storage.from(ORIGINALS_BUCKET).upload(originalPath, bytes, {
       contentType: file.type,
       cacheControl: "31536000",
       upsert: false,
     });
+    if (originalUploadError) return jsonError(originalUploadError.message, 500);
 
-    if (uploadError) return jsonError(uploadError.message, 500);
-
-    const { data: publicUrl } = admin.storage.from(BUCKET).getPublicUrl(objectPath);
+    const { error: previewUploadError } = await admin.storage.from(PREVIEWS_BUCKET).upload(previewPath, previewBytes, {
+      contentType: "image/webp",
+      cacheControl: "3600",
+      upsert: false,
+    });
+    if (previewUploadError) {
+      await admin.storage.from(ORIGINALS_BUCKET).remove([originalPath]);
+      return jsonError(previewUploadError.message, 500);
+    }
     const { data: image, error: imageError } = await admin
       .from("product_images")
       .insert({
         product_id: productId,
-        image_url: publicUrl.publicUrl,
+        image_url: "",
+        original_path: originalPath,
+        preview_path: previewPath,
+        protection_status: "protected",
         alt_text: altText || product.name,
         is_primary: isPrimary,
         sort_order: sortOrder,
       })
-      .select("id,product_id,image_url,alt_text,is_primary,sort_order")
+      .select("id,product_id,image_url,alt_text,is_primary,sort_order,original_path,preview_path,protection_status")
       .single();
 
     if (imageError) {
-      await admin.storage.from(BUCKET).remove([objectPath]);
+      await admin.storage.from(ORIGINALS_BUCKET).remove([originalPath]);
+      await admin.storage.from(PREVIEWS_BUCKET).remove([previewPath]);
       return jsonError(imageError.message, 500);
     }
 
-    return NextResponse.json({ image });
+    const { data: finalImage, error: urlUpdateError } = await admin
+      .from("product_images")
+      .update({ image_url: `/api/product-images/${image.id}` })
+      .eq("id", image.id)
+      .select("id,product_id,image_url,alt_text,is_primary,sort_order,original_path,preview_path,protection_status")
+      .single();
+
+    if (urlUpdateError || !finalImage) {
+      await admin.storage.from(ORIGINALS_BUCKET).remove([originalPath]);
+      await admin.storage.from(PREVIEWS_BUCKET).remove([previewPath]);
+      await admin.from("product_images").delete().eq("id", image.id);
+      return jsonError(urlUpdateError?.message ?? "Could not finalize protected image.", 500);
+    }
+
+    return NextResponse.json({ image: finalImage });
   } catch (error) {
     console.error("Product image upload failed:", error);
     return jsonError(error instanceof Error ? error.message : "Upload failed.", 500);
@@ -105,20 +136,26 @@ export async function DELETE(request: Request) {
     const admin = createAdminClient();
     const { data: image, error: imageError } = await admin
       .from("product_images")
-      .select("id,product_id,image_url,is_primary")
+      .select("id,product_id,image_url,is_primary,original_path,preview_path")
       .eq("id", body.id)
       .maybeSingle();
 
     if (imageError) return jsonError(imageError.message, 500);
     if (!image) return jsonError("Image not found.", 404);
 
-    const marker = `/storage/v1/object/public/${BUCKET}/`;
+    const protectedPaths = [image.original_path, image.preview_path].filter((value): value is string => Boolean(value));
+    if (image.original_path) await admin.storage.from(ORIGINALS_BUCKET).remove([image.original_path]);
+    if (image.preview_path) await admin.storage.from(PREVIEWS_BUCKET).remove([image.preview_path]);
+
+    // Legacy public objects are removed only when the stored URL belongs to our old bucket.
+    const marker = `/storage/v1/object/public/${LEGACY_BUCKET}/`;
     const markerIndex = image.image_url.indexOf(marker);
     if (markerIndex >= 0) {
-      const objectPath = decodeURIComponent(image.image_url.slice(markerIndex + marker.length));
-      const { error: storageError } = await admin.storage.from(BUCKET).remove([objectPath]);
-      if (storageError) console.warn("Storage object removal failed:", storageError.message);
+      const legacyPath = decodeURIComponent(image.image_url.slice(markerIndex + marker.length));
+      await admin.storage.from(LEGACY_BUCKET).remove([legacyPath]);
     }
+
+    void protectedPaths;
 
     const { error: deleteError } = await admin.from("product_images").delete().eq("id", image.id);
     if (deleteError) return jsonError(deleteError.message, 500);
