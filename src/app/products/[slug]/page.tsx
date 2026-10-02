@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { brands, palette } from "@/lib/brands";
 import AddToCart from "./add-to-cart";
 import WishlistButton from "@/components/wishlist/WishlistButton";
@@ -16,6 +17,7 @@ export default async function ProductPage({
   const { slug } = await params;
 
   const supabase = await createClient();
+  const admin = createAdminClient();
 
   const { data: product } = await supabase
     .from("products")
@@ -36,7 +38,7 @@ export default async function ProductPage({
       .eq("is_active", true)
       .order("sort_order"),
 
-    supabase
+    admin
       .from("product_images")
       .select(
         "id,image_url,alt_text,is_primary,sort_order"

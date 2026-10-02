@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
 import OriginalsCatalog from "./OriginalsCatalog";
 import { brands, palette } from "@/lib/brands";
@@ -55,6 +56,7 @@ function OriginalsDataError({ message }: { message: string }) {
 
 export default async function OriginalsPage() {
   const supabase = await createClient();
+  const admin = createAdminClient();
 
   // Originals are identified by their stable `original-*` product IDs.
   // Do not use the broad `brand = funkful` filter here: that also includes
@@ -85,7 +87,7 @@ export default async function OriginalsPage() {
             .in("product_id", productIds)
             .eq("is_active", true)
             .order("sort_order"),
-          supabase
+          admin
             .from("product_images")
             .select("product_id,image_url,alt_text,is_primary,sort_order")
             .in("product_id", productIds)

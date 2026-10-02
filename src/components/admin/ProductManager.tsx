@@ -201,37 +201,56 @@ export default function ProductManager({
     );
   }
 
+  async function refreshProducts() {
+    const response = await fetch("/api/admin/products", {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Could not reload products.");
+    }
+
+      setProducts(result.products ?? []);
+      setVariants(result.variants ?? []);
+  }
+
   async function save() {
     if (!editing) return;
+
     setBusy(true);
     setMessage("");
+
     try {
       const response = await fetch("/api/admin/products", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(editing),
       });
+
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Could not save product.");
 
-      const saved = result.product as Product;
-      const savedVariants = (result.variants ?? []) as Variant[];
+      if (!response.ok) {
+        throw new Error(
+          result.error || "Could not save product."
+        );
+      }
 
-      setProducts((current) => {
-        const exists = current.some((p) => p.id === saved.id);
-        return exists ? current.map((p) => (p.id === saved.id ? saved : p)) : [...current, saved];
-      });
-
-      // Re-fetching the page is unnecessary; update the local variant state from the server response.
-      setVariants((current) => [
-        ...current.filter((v) => v.product_id !== saved.id),
-        ...savedVariants.filter((v) => v.product_id === saved.id),
-      ]);
+      await refreshProducts();
 
       setEditing(null);
       setMessage("Product saved successfully.");
+      setPage(1);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not save product.");
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not save product."
+      );
     } finally {
       setBusy(false);
     }

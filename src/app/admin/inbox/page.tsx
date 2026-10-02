@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import InboxRefresh from "./InboxRefresh";
+import InboxRefresh from "../../../components/admin/InboxRefresh";
 
 const MAILBOXES = [
   { key: "all", label: "All mail", address: "" },

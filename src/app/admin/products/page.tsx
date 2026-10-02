@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
-import ProductManager from "./ProductManager";
+import ProductManager from "../../../components/admin/ProductManager";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
