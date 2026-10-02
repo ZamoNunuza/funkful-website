@@ -131,7 +131,7 @@ export default async function AdminDashboardPage() {
 
           {/* Products & Images */}
           <Link
-            href="/admin/products/images"
+            href="/admin/products"
             className="rounded-3xl border border-black/10 bg-[#FAF8F4] p-7 transition hover:-translate-y-0.5 hover:shadow-sm"
           >
             <div className="flex items-start justify-between gap-4">
@@ -141,7 +141,7 @@ export default async function AdminDashboardPage() {
                 </p>
 
                 <h2 className="mt-2 text-2xl font-black uppercase">
-                  Products &amp; Images
+                  Products
                 </h2>
 
                 <p className="mt-2 max-w-md text-sm leading-6 text-neutral-600">
@@ -156,7 +156,7 @@ export default async function AdminDashboardPage() {
             </div>
 
             <span className="mt-8 inline-block text-sm font-black">
-              Manage catalogue →
+              Manage products →
             </span>
           </Link>
 
