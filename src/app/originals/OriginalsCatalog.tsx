@@ -334,10 +334,11 @@ export default function OriginalsCatalog({
                             {primaryImage && !showFallback ? (
                               <Image
                                 src={primaryImage.url}
-                                alt={primaryImage.alt}
+                                alt={primaryImage.alt ?? product.name}
                                 fill
+                                priority
                                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                                className="object-contain p-5"
+                                className="object-cover p-5"
                                 onError={() =>
                                   setImageErrors((prev) => ({
                                     ...prev,

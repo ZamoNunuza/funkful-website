@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
 type ProductImage = {
@@ -40,10 +41,13 @@ export default function ProductGallery({
         style={{ background: fallbackBackground }}
         className="relative flex aspect-square items-center justify-center overflow-hidden rounded-[28px] p-8"
       >
-        <img
+        <Image
           src={fallbackImage}
           alt={productName}
-          className="max-h-full max-w-full object-contain"
+          fill
+          unoptimized
+          className="object-contain"
+          sizes="(max-width: 768px) 100vw, 50vw"
         />
       </div>
     );
@@ -58,13 +62,13 @@ export default function ProductGallery({
         }}
         className="relative aspect-square overflow-hidden rounded-[28px]"
       >
-        <img
+        <Image
           src={selectedImage.image_url}
-          alt={
-            selectedImage.alt_text ||
-            productName
-          }
-          className="h-full w-full object-contain p-8 transition-opacity duration-200"
+          alt={selectedImage.alt_text || productName}
+          fill
+          unoptimized
+          className="object-contain p-8 transition-opacity duration-200"
+          sizes="(max-width: 768px) 100vw, 50vw"
         />
 
         {sortedImages.length > 1 && (
@@ -97,7 +101,7 @@ export default function ProductGallery({
                     : "border-black/10 hover:border-black/30"
                 }`}
               >
-                <img
+                <Image
                   src={image.image_url}
                   alt={
                     image.alt_text ||
@@ -105,7 +109,9 @@ export default function ProductGallery({
                       index + 1
                     }`
                   }
-                  className="h-full w-full object-contain p-2"
+                  width={100}
+                  height={100}
+                  sizes="100px"
                 />
 
                 {image.is_primary && (
