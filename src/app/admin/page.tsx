@@ -21,7 +21,8 @@ export default async function AdminDashboardPage() {
     admin
       .from("inbound_emails")
       .select("id", { count: "exact", head: true })
-      .eq("status", "new"),
+      .eq("status", "new")
+      .is("deleted_at", null),
 
     admin
       .from("email_threads")

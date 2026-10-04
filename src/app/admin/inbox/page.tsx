@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import InboxRefresh from "../../../components/admin/InboxRefresh";
+import InboxList from "../../../components/admin/InboxList";
 
 const MAILBOXES = [
   { key: "all", label: "All mail", address: "" },
@@ -76,9 +77,10 @@ function getDate(row: EmailRow) {
 export default async function AdminInboxPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mailbox?: string; q?: string }>;
+  searchParams: Promise<{ mailbox?: string; q?: string; folder?: string }>;
 }) {
   const params = await searchParams;
+  const isTrash = params.folder === "trash";
   const supabase = await createClient();
 
   const {
@@ -102,6 +104,8 @@ export default async function AdminInboxPage({
     .select("*")
     .order("created_at", { ascending: false })
     .limit(100);
+
+  query = isTrash ? query.not("deleted_at", "is", null) : query.is("deleted_at", null);
 
   if (params.mailbox && params.mailbox !== "all") {
     query = query.eq("email_type", params.mailbox);
@@ -175,6 +179,16 @@ export default async function AdminInboxPage({
             })}
           </nav>
 
+          <Link
+            href="/admin/inbox?folder=trash"
+            className={`mt-2 flex items-center justify-between rounded-xl px-3 py-2.5 text-sm ${isTrash ? "bg-[#EBC6C2] font-bold" : "font-medium text-black/65 hover:bg-black/5"}`}
+          >
+            <span>Trash</span>
+            <span className="min-w-6 rounded-full bg-black/5 px-2 py-0.5 text-center text-[11px] font-bold text-black/50">
+              {isTrash ? emails.length : ""}
+            </span>
+          </Link>
+
           <div className="mt-8 rounded-2xl bg-[#E8DDD0] p-4">
             <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em]">Funkful addresses</p>
             <div className="space-y-2 text-xs text-black/65">
@@ -191,6 +205,7 @@ export default async function AdminInboxPage({
             <form className="flex flex-col gap-3 md:flex-row">
               <input name="q" defaultValue={params.q || ""} placeholder="Search sender, subject or message..." className="flex-1 rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none" />
               {params.mailbox && <input type="hidden" name="mailbox" value={params.mailbox} />}
+              {isTrash && <input type="hidden" name="folder" value="trash" />}
               <button className="rounded-2xl bg-[#111111] px-6 py-3 text-sm font-bold text-white">Search</button>
             </form>
           </div>
@@ -198,9 +213,11 @@ export default async function AdminInboxPage({
           <div className="flex items-center justify-between border-b border-black/10 px-5 py-4">
             <div>
               <h2 className="text-lg font-black uppercase">
-                {params.mailbox && params.mailbox !== "all"
-                  ? MAILBOXES.find((m) => m.key === params.mailbox)?.label
-                  : "All mail"}
+                {isTrash
+                  ? "Trash"
+                  : params.mailbox && params.mailbox !== "all"
+                    ? MAILBOXES.find((m) => m.key === params.mailbox)?.label
+                    : "All mail"}
               </h2>
               <p className="mt-0.5 text-xs text-black/45">{emails.length} message{emails.length === 1 ? "" : "s"}</p>
             </div>
@@ -214,41 +231,20 @@ export default async function AdminInboxPage({
               <p className="mt-2 max-w-sm text-sm leading-relaxed text-black/50">New messages sent to your Funkful addresses will appear here automatically.</p>
             </div>
           ) : (
-            <div className="divide-y divide-black/5">
-              {emails.map((email) => {
-                const isUnread = email.status === "new";
-                const sender = getSender(email);
-                const senderName = getSenderName(email);
-                return (
-                  <Link
-                    key={String(email.id)}
-                    href={`/admin/inbox/${email.id}`}
-                    className={`group block border-l-4 px-5 py-4 transition ${isUnread ? "border-[#EBC6C2] bg-[#FFFDFC]" : "border-transparent hover:bg-[#E8DDD0]/35"}`}
-                  >
-                    <div className="flex gap-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EBC6C2] text-sm font-black uppercase">
-                        {(senderName || sender || "?").charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
-                          <div className="flex min-w-0 items-center gap-2">
-                            {isUnread && <span className="h-2 w-2 shrink-0 rounded-full bg-[#D8741F]" />}
-                            <span className={`truncate text-sm ${isUnread ? "font-black" : "font-semibold"}`}>{senderName || sender}</span>
-                          </div>
-                          <time className="shrink-0 text-[11px] font-medium text-black/40">{formatDate(getDate(email))}</time>
-                        </div>
-                        <div className="mt-1 flex items-center gap-2">
-                          <h3 className="truncate text-sm font-semibold">{getSubject(email)}</h3>
-                          <span className="shrink-0 rounded-full bg-black/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-black/45">{getString(email, "email_type") || "unknown"}</span>
-                          {Boolean(email.has_attachments) && <span className="shrink-0 text-xs text-black/40">📎</span>}
-                        </div>
-                        <p className="mt-1 truncate text-xs text-black/45">{getPreview(email) || "No message preview available."}</p>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+            <InboxList
+              trash={isTrash}
+              emails={emails.map((email) => ({
+                id: String(email.id),
+                status: getString(email, "status") || null,
+                from: getSender(email),
+                fromName: getSenderName(email),
+                subject: getSubject(email),
+                preview: getPreview(email),
+                date: getDate(email),
+                emailType: getString(email, "email_type"),
+                hasAttachments: Boolean(email.has_attachments),
+              }))}
+            />
           )}
         </section>
       </div>

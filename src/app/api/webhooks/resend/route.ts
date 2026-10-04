@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { forwardInboundEmailToGmail } from "@/lib/inbox-forwarding";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -138,14 +139,48 @@ export async function POST(req: NextRequest) {
     // Prevent duplicate processing.
     const { data: existing } = await supabase
       .from("inbound_emails")
-      .select("id")
+      .select("id, resend_email_id, email_type, from_email, from_name, to_email, subject, text_body, html_body, message_id, received_at, forwarded_at, forwarding_error, forwarded_to")
       .eq("resend_email_id", emailId)
       .maybeSingle();
 
     if (existing) {
+      if (!existing.forwarded_at && process.env.FUNKFUL_FORWARD_EMAIL) {
+        const forwardResult = await forwardInboundEmailToGmail({
+          id: existing.id,
+          resend_email_id: existing.resend_email_id,
+          email_type: existing.email_type,
+          from_email: existing.from_email,
+          from_name: existing.from_name,
+          to_email: existing.to_email,
+          subject: existing.subject,
+          text_body: existing.text_body,
+          html_body: existing.html_body,
+          message_id: existing.message_id,
+          received_at: existing.received_at,
+        });
+
+        await supabase
+          .from("inbound_emails")
+          .update({
+            forwarded_to: forwardResult.destination,
+            forwarded_at: forwardResult.forwarded ? new Date().toISOString() : null,
+            forwarding_error: forwardResult.error,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existing.id);
+
+        if (!forwardResult.forwarded && !forwardResult.skipped) {
+          return NextResponse.json(
+            { error: "Email was already saved, but Gmail forwarding failed." },
+            { status: 500 }
+          );
+        }
+      }
+
       return NextResponse.json({
         received: true,
         duplicate: true,
+        forwarded: Boolean(existing.forwarded_at),
       });
     }
 
@@ -508,6 +543,30 @@ if (!threadId && messageId) {
       })
       .eq("id", threadId);
 
+    const forwardResult = await forwardInboundEmailToGmail({
+      id: savedEmail.id,
+      resend_email_id: emailId,
+      email_type: emailType,
+      from_email: fromEmail,
+      from_name: fromName,
+      to_email: toEmail,
+      subject: email.subject ?? null,
+      text_body: email.text ?? null,
+      html_body: email.html ?? null,
+      message_id: messageId,
+      received_at: email.created_at ?? event.created_at ?? null,
+    });
+
+    await supabase
+      .from("inbound_emails")
+      .update({
+        forwarded_to: forwardResult.destination,
+        forwarded_at: forwardResult.forwarded ? new Date().toISOString() : null,
+        forwarding_error: forwardResult.error,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", savedEmail.id);
+
     console.log(
       "Funkful inbound email processed:",
       {
@@ -516,16 +575,32 @@ if (!threadId && messageId) {
         fromEmail,
         toEmail,
         emailType,
-        hasAttachments:
-          attachments.length > 0,
+        hasAttachments: attachments.length > 0,
+        gmailForwarded: forwardResult.forwarded,
+        gmailForwardError: forwardResult.error,
       }
     );
+
+    if (!forwardResult.forwarded && !forwardResult.skipped) {
+      return NextResponse.json(
+        {
+          received: true,
+          saved: true,
+          emailId,
+          threadId,
+          forwarding: "failed",
+          error: forwardResult.error,
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       received: true,
       saved: true,
       emailId,
       threadId,
+      forwarding: forwardResult.skipped ? "skipped" : "forwarded",
     });
   } catch (error) {
     console.error(

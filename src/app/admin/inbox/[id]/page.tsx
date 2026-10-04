@@ -26,6 +26,10 @@ type EmailRow = {
   subject?: unknown;
   has_attachments?: unknown;
   status?: unknown;
+  deleted_at?: string;
+  forwarded_to?: unknown;
+  forwarded_at?: string;
+  forwarding_error?: string;
 };
 
 type Attachment = {
@@ -345,6 +349,71 @@ export default async function AdminInboxMessagePage({
               </div>
             </form>
           </div>
+          <div className="flex flex-wrap gap-2 border-t border-black/10 px-6 py-6 md:px-8">
+            {!row.deleted_at && (
+              <>
+                <form action="/api/admin/inbox/forward" method="POST">
+                  <input type="hidden" name="emailId" value={id} />
+                  <button
+                    type="submit"
+                    className="rounded-xl bg-[#D8741F] px-3 py-2 text-xs font-bold text-white"
+                  >
+                    Forward to Gmail
+                  </button>
+                </form>
+
+                <form action="/api/admin/inbox/delete" method="POST">
+                  <input type="hidden" name="action" value="trash" />
+                  <input type="hidden" name="ids" value={JSON.stringify([id])} />
+                  <button
+                    type="submit"
+                    className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold"
+                  >
+                    Move to trash
+                  </button>
+                </form>
+              </>
+            )}
+
+            {row.deleted_at && (
+              <>
+                <form action="/api/admin/inbox/delete" method="POST">
+                  <input type="hidden" name="action" value="restore" />
+                  <input type="hidden" name="ids" value={JSON.stringify([id])} />
+                  <button
+                    type="submit"
+                    className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold"
+                  >
+                    Restore from trash
+                  </button>
+                </form>
+
+                <form action="/api/admin/inbox/delete" method="POST">
+                  <input type="hidden" name="action" value="permanent" />
+                  <input type="hidden" name="ids" value={JSON.stringify([id])} />
+                  <button
+                    type="submit"
+                    className="rounded-xl bg-[#111111] px-3 py-2 text-xs font-bold text-white"
+                  >
+                    Delete permanently
+                  </button>
+                </form>
+              </>
+            )}
+
+            {row.forwarded_at && (
+              <span className="rounded-xl bg-[#A8B5A0]/30 px-3 py-2 text-xs font-bold text-[#34402F]">
+                ✓ Forwarded to {getString(row.forwarded_to) || "Gmail"}
+              </span>
+            )}
+
+            {row.forwarding_error && !row.forwarded_at && (
+              <span className="rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-700">
+                Gmail forwarding failed: {getString(row.forwarding_error)}
+              </span>
+            )}
+          </div>
+
           <div className="flex flex-wrap gap-2 px-6 py-6 md:px-8">
             <form action="/api/admin/inbox/status" method="POST">
               <input type="hidden" name="threadId" value={row.thread_id} />
