@@ -4,9 +4,83 @@ import { createAdminClient } from "@/lib/supabase/admin";
 const PREVIEWS_BUCKET = "product-previews";
 const LEGACY_BUCKET = "product-images";
 
+function getContentType(
+  blob: Blob,
+  path?: string | null,
+): string {
+  const blobType = blob.type?.trim();
+
+  if (blobType && blobType !== "application/octet-stream") {
+    return blobType;
+  }
+
+  const extension = path
+    ?.split(".")
+    .pop()
+    ?.toLowerCase();
+
+  switch (extension) {
+    case "jpg":
+    case "jpeg":
+      return "image/jpeg";
+
+    case "png":
+      return "image/png";
+
+    case "webp":
+      return "image/webp";
+
+    case "gif":
+      return "image/gif";
+
+    case "avif":
+      return "image/avif";
+
+    default:
+      return "application/octet-stream";
+  }
+}
+
+function getExtension(
+  contentType: string,
+  path?: string | null,
+): string {
+  const pathExtension = path
+    ?.split(".")
+    .pop()
+    ?.toLowerCase();
+
+  if (
+    pathExtension &&
+    ["jpg", "jpeg", "png", "webp", "gif", "avif"].includes(
+      pathExtension,
+    )
+  ) {
+    return pathExtension;
+  }
+
+  switch (contentType) {
+    case "image/png":
+      return "png";
+
+    case "image/webp":
+      return "webp";
+
+    case "image/gif":
+      return "gif";
+
+    case "image/avif":
+      return "avif";
+
+    case "image/jpeg":
+    default:
+      return "jpg";
+  }
+}
+
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -22,13 +96,16 @@ export async function GET(
     const { data: image, error: imageError } = await admin
       .from("product_images")
       .select(
-        "id,image_url,alt_text,preview_path,original_path,protection_status"
+        "id,image_url,alt_text,preview_path,original_path,protection_status",
       )
       .eq("id", id)
       .maybeSingle();
 
     if (imageError) {
-      console.error("Product image lookup failed:", imageError);
+      console.error("Product image lookup failed:", {
+        imageId: id,
+        error: imageError,
+      });
 
       return new NextResponse("Could not load image.", {
         status: 500,
@@ -41,10 +118,10 @@ export async function GET(
       });
     }
 
-    /*
-     * New protected images:
-     * Serve ONLY the watermarked preview.
-     */
+    // -----------------------------------------------------------------------
+    // Protected preview
+    // -----------------------------------------------------------------------
+
     if (image.preview_path) {
       const { data: preview, error: previewError } =
         await admin.storage
@@ -69,22 +146,38 @@ export async function GET(
         });
       }
 
+      const contentType = getContentType(
+        preview,
+        image.preview_path,
+      );
+
+      const extension = getExtension(
+        contentType,
+        image.preview_path,
+      );
+
+      console.log("Serving protected product preview:", {
+        imageId: id,
+        previewPath: image.preview_path,
+        contentType,
+        size: preview.size,
+      });
+
       return new NextResponse(preview, {
         status: 200,
         headers: {
-          "Content-Type": "image/webp",
+          "Content-Type": contentType,
+          "Content-Length": String(preview.size),
           "Cache-Control": "private, max-age=3600",
-          "Content-Disposition": `inline; filename="${id}.webp"`,
+          "Content-Disposition": `inline; filename="${id}.${extension}"`,
         },
       });
     }
 
-    /*
-     * Legacy images:
-     *
-     * Existing records may still have image_url pointing
-     * directly to the old public product-images bucket.
-     */
+    // -----------------------------------------------------------------------
+    // Legacy public image
+    // -----------------------------------------------------------------------
+
     if (image.image_url) {
       const marker =
         `/storage/v1/object/public/${LEGACY_BUCKET}/`;
@@ -94,8 +187,8 @@ export async function GET(
       if (markerIndex >= 0) {
         const legacyPath = decodeURIComponent(
           image.image_url.slice(
-            markerIndex + marker.length
-          )
+            markerIndex + marker.length,
+          ),
         );
 
         const {
@@ -105,27 +198,39 @@ export async function GET(
           .from(LEGACY_BUCKET)
           .download(legacyPath);
 
-        if (!legacyError && legacyImage) {
-          const extension =
-            legacyPath
-              .split(".")
-              .pop()
-              ?.toLowerCase();
+        if (legacyError) {
+          console.error("Legacy image download failed:", {
+            imageId: id,
+            legacyPath,
+            error: legacyError,
+          });
+        }
 
-          const contentType =
-            extension === "png"
-              ? "image/png"
-              : extension === "webp"
-                ? "image/webp"
-                : "image/jpeg";
+        if (!legacyError && legacyImage) {
+          const contentType = getContentType(
+            legacyImage,
+            legacyPath,
+          );
+
+          const extension = getExtension(
+            contentType,
+            legacyPath,
+          );
+
+          console.log("Serving legacy product image:", {
+            imageId: id,
+            legacyPath,
+            contentType,
+            size: legacyImage.size,
+          });
 
           return new NextResponse(legacyImage, {
             status: 200,
             headers: {
               "Content-Type": contentType,
-              "Cache-Control":
-                "private, max-age=3600",
-              "Content-Disposition": `inline; filename="${id}.${extension || "jpg"}"`,
+              "Content-Length": String(legacyImage.size),
+              "Cache-Control": "private, max-age=3600",
+              "Content-Disposition": `inline; filename="${id}.${extension}"`,
             },
           });
         }
@@ -136,13 +241,16 @@ export async function GET(
       "No image preview is available.",
       {
         status: 404,
-      }
+      },
     );
   } catch (error) {
     console.error("Product image GET failed:", error);
 
-    return new NextResponse("Could not load image.", {
-      status: 500,
-    });
+    return new NextResponse(
+      "Could not load image.",
+      {
+        status: 500,
+      },
+    );
   }
 }

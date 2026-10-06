@@ -90,7 +90,6 @@ export async function POST(req: NextRequest) {
   }
 
   const payload = asRecord(event.payload ?? event.data);
-  console.log("YOCO WEBHOOK EVENT:", JSON.stringify(event, null, 2));
   const nestedData = asRecord(payload.data);
 
   const metadata = asRecord(payload.metadata);
@@ -211,6 +210,10 @@ export async function POST(req: NextRequest) {
       nestedData.checkoutId,
       payload.checkout_id,
       nestedData.checkout_id,
+      metadata.checkoutId,
+      metadata.checkout_id,
+      nestedMetadata.checkoutId,
+      nestedMetadata.checkout_id,
     );
 
     const amount = firstNumber(
