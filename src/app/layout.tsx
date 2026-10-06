@@ -23,7 +23,7 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: "Funkful | Custom Gifts & Scoopful",
-  description: "Custom mugs, tumblers, apparel, plus Scoopful mystery scoopd - one cart, every brand.",
+  description: "Custom mugs, tumblers, apparel, plus Scoopful mystery scoops - one cart, every brand.",
 };
 
 export default function RootLayout({
