@@ -218,3 +218,12 @@ a.primary:hover {
 .subheader {
   font-weight: 700;
 }
+
+.shopMain {
+  border: 1px solid var(--cream);
+}
+
+.shopMain:hover {
+  background: var(--cream);
+  color: var(--black);
+}

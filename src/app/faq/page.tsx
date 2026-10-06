@@ -181,11 +181,10 @@ const faqData: FaqCategory[] = [
         id: 'delivery-time',
         question: 'How long does delivery take?',
         answer: (
-          <p>
-            Orders are typically processed within{' '}
-            <span className={styles.placeholder}>[X business days]</span> and delivered within{' '}
-            <span className={styles.placeholder}>[X–X business days]</span> depending on your
-            location. You&apos;ll receive tracking details once your order ships.
+          <p> Made-to-order and personalized products are typically prepared within <span className={styles.placeholder}>3–5 business days</span> before being dispatched. Delivery usually takes a further <span className={styles.placeholder}>2–5 business days</span>, depending on your location and courier service.
+            For ready-to-ship items, orders may be dispatched sooner.
+            Once your order has been shipped, you&apos;ll receive **tracking details** so you can follow your delivery.
+            Please note that <span className={styles.placeholder}>custom designs, large orders, busy seasons, and supplier availability</span> may occasionally affect processing times. If there is a significant delay with your order, we&apos;ll keep you updated.
           </p>
         ),
       },
@@ -256,9 +255,10 @@ const faqData: FaqCategory[] = [
         question: 'What if my order arrives damaged or incorrect?',
         answer: (
           <p>
-            Let us know within{' '}
-            <span className={styles.placeholder}>[X days]</span> of delivery, with a photo of the
-            item, and we&apos;ll sort out a replacement or refund.
+            Please contact us within <span className={styles.placeholder}>7 days of receiving your order</span> if your item arrives damaged, faulty, or is different from what you ordered.
+            Send us <span className={styles.placeholder}>a clear photo of the item and its packaging</span>, along with your order details, so we can assess the issue and help resolve it.
+            Where the issue is confirmed to be our error or damage that occurred during delivery, we&apos;ll arrange a <span className={styles.placeholder}>replacement or refund</span>, depending on the circumstances. {' '}<br />
+            For personalized or made-to-order products, please contact us as soon as possible so we can resolve the issue promptly.
           </p>
         ),
       },

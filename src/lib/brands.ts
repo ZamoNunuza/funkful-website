@@ -80,6 +80,7 @@ export const palette = {
   sage: "#A8B5A0",
   lavender: "#CFC5E8",
   gold: "#D8BE85",
+  orange: "#D8741F",
 } as const;
 
 // Scoopful's "ball system" — five rarity tiers used across the hero,
@@ -104,7 +105,7 @@ export const brandList = Object.values(brands);
 export const navLinks = [
   { label: "Funkful", href: "/originals" },
   { label: "Scoopful", href: "/scoopful" },
-  { label: "Anime Boxes ✨", href: "/#anime", soon: true },
-  { label: "About", href: "/#about" },
+  //{ label: "Anime Boxes ✨", href: "/#anime", soon: true },
+  { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" }
 ];

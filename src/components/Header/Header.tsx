@@ -1,42 +1,90 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { palette, navLinks } from "@/lib/brands";
-import { useCart } from '@/lib/cart-context';
-import { useWishlist } from '@/lib/wishlist-context';
-import styles from './Header.module.css';
-
+import { useCart } from "@/lib/cart-context";
+import { useWishlist } from "@/lib/wishlist-context";
+import styles from "./Header.module.css";
 
 export default function Header() {
   const pathname = usePathname();
   const { itemCount } = useCart();
   const { count: wishlistCount } = useWishlist();
-  const [menuOpen, setMenuOpen] = useState(false);
 
-  // Prevent background scroll while the mobile menu is open
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check whether the currently authenticated user is an admin.
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    let cancelled = false;
+
+    async function checkAdminStatus() {
+      try {
+        const response = await fetch("/api/admin/status", {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          if (!cancelled) {
+            setIsAdmin(false);
+          }
+          return;
+        }
+
+        const data: { isAdmin?: boolean } = await response.json();
+
+        if (!cancelled) {
+          setIsAdmin(data.isAdmin === true);
+        }
+      } catch {
+        if (!cancelled) {
+          setIsAdmin(false);
+        }
+      }
+    }
+
+    checkAdminStatus();
+
     return () => {
-      document.body.style.overflow = '';
+      cancelled = true;
+    };
+  }, [pathname]);
+
+  // Prevent background scroll while the mobile menu is open.
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
     };
   }, [menuOpen]);
 
-  if (pathname === '/cart') {
+  if (pathname === "/cart") {
     return null;
   }
+
+  const accountHref = isAdmin ? "/admin" : "/account";
 
   return (
     <>
       <div className={styles.shipBanner}>
-        Free shipping storewide on orders over R400{' '}
-        <span>·</span> Mix Scoopful &amp; Funkful Originals in one cart{' '}
+        Free shipping storewide on orders over R400{" "}
+        <span>·</span> Mix Scoopful &amp; Funkful Originals in one cart{" "}
         <span>·</span> Flat R99 otherwise
       </div>
 
-      <header style={{ background: palette.cream, borderBottom: "1px solid rgba(17,17,17,0.08)" }} className="sticky top-0 z-50 bg-[--brand-bg,inherit]">
+      <header
+        style={{
+          background: palette.cream,
+          borderBottom: "1px solid rgba(17,17,17,0.08)",
+        }}
+        className="sticky top-0 z-50 bg-[--brand-bg,inherit]"
+      >
         <div className={`wrap ${styles.navInner}`}>
           <Link href="/">
             <Image
@@ -52,16 +100,22 @@ export default function Header() {
           <nav className={`${styles.links} hidden md:flex gap-9`}>
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
+              const isSoon = "soon" in link && Boolean(link.soon);
+
               return (
                 <Link
                   key={link.href}
                   href={link.href}
                   className={[
-                    link.soon ? styles.soon : isActive ? styles.active : palette.black,
-                    isActive ? styles.active : "transparent",         
+                    isSoon
+                      ? styles.soon
+                      : isActive
+                        ? styles.active
+                        : palette.black,
+                    isActive ? styles.active : "transparent",
                   ]
                     .filter(Boolean)
-                    .join(' ')}
+                    .join(" ")}
                 >
                   {link.label}
                 </Link>
@@ -69,13 +123,32 @@ export default function Header() {
             })}
           </nav>
 
-           <div className={styles.navIcons}>
+          <div className={styles.navIcons}>
             <span className="hidden md:inline">Search</span>
-            <Link href="/account" className="hidden md:flex items-center gap-1"><span>Account</span></Link>
-            <Link href="/account/wishlist" className="hidden md:flex items-center gap-1" aria-label={wishlistCount ? `Wishlist, ${wishlistCount} saved` : 'Wishlist'}>
-              <span>Wishlist</span>
-              {wishlistCount > 0 && <span className={styles.cartDot}>{wishlistCount}</span>}
+
+            <Link
+              href={accountHref}
+              className="hidden md:flex items-center gap-1"
+            >
+              <span>Account</span>
             </Link>
+
+            <Link
+              href="/account/wishlist"
+              className="hidden md:flex items-center gap-1"
+              aria-label={
+                wishlistCount
+                  ? `Wishlist, ${wishlistCount} saved`
+                  : "Wishlist"
+              }
+            >
+              <span>Wishlist</span>
+
+              {wishlistCount > 0 && (
+                <span className={styles.cartDot}>{wishlistCount}</span>
+              )}
+            </Link>
+
             <Link href="/cart">
               Bag <span className={styles.cartDot}>{itemCount}</span>
             </Link>
@@ -83,17 +156,33 @@ export default function Header() {
             <button
               type="button"
               className={styles.burger}
-              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((prev) => !prev)}
             >
               {menuOpen ? (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
                   <line x1="4" y1="4" x2="20" y2="20" />
                   <line x1="20" y1="4" x2="4" y2="20" />
                 </svg>
               ) : (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
                   <line x1="3" y1="6" x2="21" y2="6" />
                   <line x1="3" y1="12" x2="21" y2="12" />
                   <line x1="3" y1="18" x2="21" y2="18" />
@@ -102,24 +191,38 @@ export default function Header() {
             </button>
           </div>
         </div>
+
         {menuOpen && (
           <nav className={styles.mobileMenu}>
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
+              const isSoon = "soon" in link && Boolean(link.soon);
+
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={[link.soon ? styles.soon : '', isActive ? styles.active : '']
+                  className={[isSoon ? styles.soon : "", isActive ? styles.active : ""]
                     .filter(Boolean)
-                    .join(' ')}
+                    .join(" ")}
+                  onClick={() => setMenuOpen(false)}
                 >
                   {link.label}
                 </Link>
               );
             })}
-            <Link href="/account">Account</Link>
-            <Link href="/account/wishlist">Wishlist{wishlistCount > 0 ? ` (${wishlistCount})` : ''}</Link>
+
+            <Link href={accountHref} onClick={() => setMenuOpen(false)}>
+              Account
+            </Link>
+
+            <Link
+              href="/account/wishlist"
+              onClick={() => setMenuOpen(false)}
+            >
+              Wishlist
+              {wishlistCount > 0 ? ` (${wishlistCount})` : ""}
+            </Link>
           </nav>
         )}
       </header>

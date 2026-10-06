@@ -25,11 +25,12 @@ const SHOP_LINKS = [
 ];
 
 const SUPPORT_LINKS = [
-  { label: 'About', href: '/#about' },
+  { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
   { label: 'Shipping & Returns', href: '/shipping' },
   { label: 'FAQ', href: '/faq' },
   { label: 'Privacy Policy', href: '/privacy-policy' },
+  { label: 'Terms & Conditions', href: '/terms-and-conditions' },
 ];
 
 export default function Footer() {
