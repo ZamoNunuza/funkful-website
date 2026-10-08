@@ -26,6 +26,18 @@ interface EventRow {
   created_at: string;
 }
 
+interface NotificationRow {
+  id: string;
+  event_type: string;
+  notification_type: string;
+  status: string;
+  provider: string | null;
+  attempts: number;
+  error_message: string | null;
+  sent_at: string | null;
+  created_at: string;
+}
+
 function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString("en-ZA", {
     day: "numeric",
@@ -42,7 +54,7 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
   await requireAdmin(`/admin/orders/${id}`);
 
   const admin = createAdminClient();
-  const [orderResult, itemsResult, eventsResult] = await Promise.all([
+  const [orderResult, itemsResult, eventsResult, notificationsResult] = await Promise.all([
     admin.from("orders").select("*").eq("id", id).maybeSingle(),
     admin
       .from("order_items")
@@ -53,6 +65,11 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
       .select("id, from_status, to_status, note, actor_email, created_at")
       .eq("order_id", id)
       .order("created_at", { ascending: false }),
+    admin
+      .from("order_notifications")
+      .select("id, event_type, notification_type, status, provider, attempts, error_message, sent_at, created_at")
+      .eq("order_id", id)
+      .order("created_at", { ascending: false }),
   ]);
 
   if (!orderResult.data) notFound();
@@ -60,6 +77,7 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
   const items = (itemsResult.data ?? []) as OrderItemRow[];
   // If the migration hasn't been run yet this simply comes back empty.
   const events = (eventsResult.data ?? []) as EventRow[];
+  const notifications = (notificationsResult.data ?? []) as NotificationRow[];
 
   const meta = orderStatusMeta(order.status, order.payment_status);
   const stage = orderStage(order.status, order.payment_status);
@@ -117,6 +135,33 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
                 <span>Total (incl. {order.shipping_cents ? formatRands(order.shipping_cents) : "free"} shipping)</span>
                 <span>{formatRands(order.total_cents)}</span>
               </div>
+            </Card>
+
+            <Card>
+              <CardTitle>Notifications</CardTitle>
+              {notifications.length === 0 ? (
+                <p className="text-sm text-neutral-600">No notification jobs recorded.</p>
+              ) : (
+                <ul className="space-y-3 text-sm">
+                  {notifications.map((notification) => (
+                    <li key={notification.id} className="flex flex-wrap justify-between gap-3 border-b border-black/10 pb-3 last:border-0 last:pb-0">
+                      <span>
+                        <span className="font-bold capitalize">{notification.event_type.replaceAll("_", " ")}</span>
+                        <span className="text-neutral-500"> · {notification.notification_type.replaceAll("_", " ")}</span>
+                        {notification.error_message && (
+                          <span className="block text-xs text-red-700 mt-1">{notification.error_message}</span>
+                        )}
+                      </span>
+                      <span className="text-right">
+                        <span className="font-bold capitalize">{notification.status}</span>
+                        <span className="block text-xs text-neutral-500">
+                          {notification.attempts} attempt{notification.attempts === 1 ? "" : "s"}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Card>
 
             <Card>
