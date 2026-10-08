@@ -66,16 +66,50 @@ export async function POST(req: NextRequest) {
                 discount_code: discountCode,
                 discount_expires_at: expiresAt,
             })
-            .select("discount_code, discount_expires_at")
+            .select("id, discount_code, discount_expires_at")
             .single();
 
         if (!error && data) {
+            // Newsletter codes are also real promo codes. Checkout validates
+            // promo_codes, while newsletter_subscribers stores the subscriber
+            // and the code/expiry shown to the customer.
+            const { error: promoError } = await supabaseAdmin
+                .from("promo_codes")
+                .insert({
+                    code: data.discount_code,
+                    description: "Newsletter welcome discount — 10% off first order",
+                    discount_type: "percentage",
+                    discount_value: 10,
+                    min_order_cents: 0,
+                    max_uses: 1,
+                    uses_count: 0,
+                    starts_at: new Date().toISOString(),
+                    expires_at: data.discount_expires_at,
+                    is_active: true,
+                });
+
+            if (promoError) {
+                console.error("Newsletter promo code creation failed:", promoError);
+
+                // Do not leave a subscriber with a code that checkout cannot
+                // validate. Best-effort cleanup keeps the two tables aligned.
+                await supabaseAdmin
+                    .from("newsletter_subscribers")
+                    .delete()
+                    .eq("id", data.id ?? "");
+
+                return NextResponse.json(
+                    { error: "Could not create your discount code. Please try again." },
+                    { status: 500 }
+                );
+            }
+
             // Send the welcome email right away. A delivery hiccup shouldn't fail
             // the signup itself — the code is already saved and the modal shows it.
             try {
                 await sendWelcomeDiscountEmail({
-                    to: email, 
-                    discountCode: data.discount_code, 
+                    to: email,
+                    discountCode: data.discount_code,
                     expiresAt: data.discount_expires_at,
                     brandInterest
                 });
