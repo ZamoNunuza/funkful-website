@@ -94,6 +94,7 @@ export default function Header() {
               height={26}
               className={styles.logoImg}
               draggable={false}
+              loading="eager"
             />
           </Link>
 

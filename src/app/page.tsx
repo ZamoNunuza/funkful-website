@@ -17,7 +17,7 @@ const shopDestinations = [
     title: "Make it yours.",
     description:
       "Personalized mugs, apparel and custom-made gifts designed around your personality.",
-    href: "/products",
+    href: "/originals",
     accent: palette.beige,
     label: "Shop Funkful Originals →",
   },
@@ -117,7 +117,7 @@ export default function HomePage() {
             </p>
 
             <div className="flex gap-3 flex-wrap">
-              <Link href="/products" className="btn primary">
+              <Link href="/originals" className="btn primary originals">
                 Shop Funkful Originals
               </Link>
 
@@ -333,7 +333,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <Link href="/products" className="btn primary">
+              <Link href="/originals" className="btn primary originals">
                 Browse Funkful Originals
               </Link>
             </div>
@@ -511,7 +511,7 @@ export default function HomePage() {
           </p>
 
           <div className="flex justify-center gap-3 flex-wrap">
-            <Link href="/products" className="btn shopMain">
+            <Link href="/originals" className="btn shopMain">
               Shop Funkful Originals
             </Link>
 

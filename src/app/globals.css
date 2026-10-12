@@ -102,7 +102,7 @@ a.primary:hover {
 }
 
 .btn.secondary:hover, .btn.primary:hover {
-  background-color: var(--black) !important;
+  background-color: var(--black);
 }
 
 .btn.primary {
@@ -226,4 +226,10 @@ a.primary:hover {
 .shopMain:hover {
   background: var(--cream);
   color: var(--black);
+}
+
+.originals:hover {
+  background: var(--cream) !important;
+  color: var(--black) !important;
+  border: 2px solid var(--black) !important;
 }
