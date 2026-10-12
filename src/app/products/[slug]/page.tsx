@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { brands, palette } from "@/lib/brands";
 import AddToCart from "./add-to-cart";
 import WishlistButton from "@/components/wishlist/WishlistButton";
+import ProductWhatsAppButton from "./ProductWhatsAppButton";
 import ProductGallery from "./ProductGallery";
 
 export const dynamic = "force-dynamic";
@@ -154,12 +155,23 @@ export default async function ProductPage({
 
           <AddToCart product={productForCart} />
 
-          <div className="mt-4">
-            <WishlistButton
-              productId={product.id}
-              productName={product.name}
-              variant="labelled"
-            />
+          {/* WhatsApp + Wishlist Actions */}
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-center">
+            <div className="min-w-0">
+              <ProductWhatsAppButton
+                productName={product.name}
+                brandName={brand.name}
+                productSlug={product.slug}
+              />
+            </div>
+
+            <div className="min-w-0">
+              <WishlistButton
+                productId={product.id}
+                productName={product.name}
+                variant="labelled"
+              />
+            </div>
           </div>
 
           <div className="mt-8 space-y-2 border-t pt-6 text-xs leading-relaxed text-neutral-600">

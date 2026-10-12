@@ -41,7 +41,7 @@ export default function WishlistButton({ productId, productName, variant = "icon
         aria-label={label}
         onClick={() => void toggle(productId)}
         style={style}
-        className={`ghost inline-flex items-center gap-2 rounded-full border-2 px-5 py-3 text-xs font-extrabold uppercase tracking-wide ${className}`}
+        className={`ghost flex w-full justify-center items-center gap-2 rounded-full border-2 px-5 py-3 text-xs font-extrabold uppercase tracking-wide ${className}`}
       >
         <Heart filled={saved} size={16} />
         {saved ? "Saved" : "Save for later"}

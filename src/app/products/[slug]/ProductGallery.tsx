@@ -69,6 +69,7 @@ export default function ProductGallery({
           unoptimized
           className="object-contain p-8 transition-opacity duration-200"
           sizes="(max-width: 768px) 100vw, 50vw"
+          loading="eager"
         />
 
         {sortedImages.length > 1 && (
