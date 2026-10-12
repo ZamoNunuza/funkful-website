@@ -5,6 +5,7 @@ import { CartProvider } from "@/lib/cart-context";
 import { WishlistProvider } from "@/lib/wishlist-context";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
+import FloatingWhatsApp from "@/components/FloatingWhatsApp/FloatingWhatsApp";
 import SiteProtection from "@/components/SiteProtection";
 import "./globals.css";
 
@@ -34,12 +35,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${montserrat.variable} ${poppins.variable} h-full antialiased`} >
       <body className="min-h-full">
-        {/*<SiteProtection />*/}
+        <SiteProtection />
         <CartProvider>
           <WishlistProvider>
             <Header />
             {children}
             <Footer />
+            <FloatingWhatsApp />
           </WishlistProvider>
         </CartProvider>
       </body>

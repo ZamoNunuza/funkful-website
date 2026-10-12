@@ -122,3 +122,31 @@
     gap: 40px;
   }
 }
+
+.whatsappLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 28px;
+  padding: 13px 18px;
+  border-radius: 999px;
+  background: #25d366;
+  color: #073b20 !important;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.whatsappLink:hover {
+  background: #20c45e;
+  transform: translateY(-1px);
+}
+
+.whatsappLink:focus-visible {
+  outline: 3px solid #111;
+  outline-offset: 4px;
+}
