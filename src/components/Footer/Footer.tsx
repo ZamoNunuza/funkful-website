@@ -21,7 +21,7 @@ const SOCIALS = [
 const SHOP_LINKS = [
   { label: 'Funkful Originals', href: '/originals' },
   { label: 'Scoopful', href: '/scoopful' },
-  { label: 'Anime Box', href: '/#anime' },
+  /*{ label: 'Anime Box', href: '/#anime' },*/
 ];
 
 const SUPPORT_LINKS = [
