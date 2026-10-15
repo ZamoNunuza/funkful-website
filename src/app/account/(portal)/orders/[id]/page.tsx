@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { palette } from "@/lib/brands";
 import { getSessionUser } from "@/lib/account-server";
 import {
@@ -15,6 +16,8 @@ import {
 } from "@/lib/account-shared";
 import { Card, CardTitle, StatusBadge, outlineButtonClass } from "@/components/account/ui";
 import ReorderButton from "./reorder-button";
+import OrderWhatsAppLink from "./order-whatsapp-link";
+import OrderReviewForm from "./order-review-form";
 
 export const metadata = { title: "Order details | Funkful" };
 
@@ -48,6 +51,18 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const meta = orderStatusMeta(order.status, order.payment_status);
   const stage = orderStage(order.status, order.payment_status);
   const canReorder = order.payment_status === "paid" && items.length > 0;
+  const isDelivered = order.payment_status === "paid" && ["delivered", "completed", "fulfilled"].includes(order.status.toLowerCase());
+  let hasReview = false;
+  if (isDelivered) {
+    const admin = createAdminClient();
+    const { data: review } = await admin
+      .from("order_reviews")
+      .select("id")
+      .eq("order_id", order.id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    hasReview = Boolean(review);
+  }
 
   const addressLines = [
     [order.first_name, order.last_name].filter(Boolean).join(" "),
@@ -185,11 +200,23 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                   }))}
                 />
               )}
+              <OrderWhatsAppLink orderNumber={order.order_number} orderStatus={meta.label} />
               <Link href="/contact" className={outlineButtonClass}>
                 Contact us
               </Link>
             </div>
           </Card>
+
+          {isDelivered && (
+            <Card>
+              <CardTitle>Review your experience</CardTitle>
+              {hasReview ? (
+                <p className="text-sm text-neutral-600">Thank you for sharing your feedback on this order.</p>
+              ) : (
+                <OrderReviewForm orderId={order.id} orderNumber={order.order_number} />
+              )}
+            </Card>
+          )}
         </div>
       </div>
     </div>
