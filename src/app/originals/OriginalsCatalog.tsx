@@ -156,34 +156,34 @@ export default function OriginalsCatalog({
     });
   }
 
+  const personalizationFilter = "__personalization__";
+
   const visible =
     activeCategory === "all"
       ? products
-      : products.filter(
-          (product) => product.category === activeCategory
-        );
+      : activeCategory === personalizationFilter
+        ? products.filter(
+            (product) =>
+              product.design_group?.trim().toLowerCase() ===
+              "personalization"
+          )
+        : products.filter(
+            (product) =>
+              product.category === activeCategory &&
+              product.design_group?.trim().toLowerCase() !==
+                "personalization"
+          );
 
   /**
-   * Group products first by category and then by design_group.
-   *
-   * Example:
-   *
-   * Apparel
-   *   ├── Hoodies
-   *   └── T-Shirts
-   *
-   * Mugs
-   *   ├── Character Mugs
-   *   └── Quote Mugs
-   *
-   * The composite key prevents a design_group with the same name
-   * from accidentally being combined across different categories.
+   * Keep Personalization as one standalone collection across all
+   * product categories. Other design groups remain separated by
+   * category so the existing catalogue structure is preserved.
    */
   const groupedProducts = useMemo(() => {
     const groups = new Map<
       string,
       {
-        category: string;
+        category: string | null;
         designGroup: string;
         products: Product[];
       }
@@ -196,12 +196,17 @@ export default function OriginalsCatalog({
           product.design_group?.trim() ||
           categoryLabel(product.category);
 
-        const groupKey = `${product.category}::${designGroup}`;
+        const isPersonalization =
+          product.design_group?.trim().toLowerCase() ===
+          "personalization";
+        const groupKey = isPersonalization
+          ? "design::personalization"
+          : `${product.category}::${designGroup}`;
 
         if (!groups.has(groupKey)) {
           groups.set(groupKey, {
-            category: product.category,
-            designGroup,
+            category: isPersonalization ? null : product.category,
+            designGroup: isPersonalization ? "Personalization" : designGroup,
             products: [],
           });
         }
@@ -222,7 +227,7 @@ export default function OriginalsCatalog({
         className="sticky top-[57px] z-40 bg-[#f8f1e6] py-4"
       >
         <div className="max-w-[1180px] mx-auto px-8 flex gap-2.5 flex-wrap">
-          {["all", ...categories].map((category) => (
+          {["all", ...categories, personalizationFilter].map((category) => (
             <button
               key={category}
               type="button"
@@ -242,7 +247,9 @@ export default function OriginalsCatalog({
             >
               {category === "all"
                 ? "All Originals"
-                : categoryLabel(category)}
+                : category === personalizationFilter
+                  ? "Personalization"
+                  : categoryLabel(category)}
             </button>
           ))}
         </div>
@@ -281,13 +288,15 @@ export default function OriginalsCatalog({
             <div className="space-y-16">
               {groupedProducts.map((group) => (
                 <section
-                  key={`${group.category}::${group.designGroup}`}
+                  key={`${group.category ?? "all"}::${group.designGroup}`}
                 >
                   {/* GROUP HEADING */}
                   <div className="mb-7">
-                    <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-neutral-400 mb-1.5">
-                      {categoryLabel(group.category)}
-                    </p>
+                    {group.category && (
+                      <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-neutral-400 mb-1.5">
+                        {categoryLabel(group.category)}
+                      </p>
+                    )}
 
                     <div className="flex items-end justify-between gap-4">
                       <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight">
