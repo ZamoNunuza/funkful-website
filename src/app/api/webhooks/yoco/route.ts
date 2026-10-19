@@ -277,6 +277,17 @@ export async function POST(req: NextRequest) {
         finalized,
       });
 
+      // Keep custom quotations in sync with the verified payment event.
+      const { error: quoteUpdateError } = await supabase
+        .from("custom_quotes")
+        .update({ status: "paid", updated_at: new Date().toISOString() })
+        .eq("order_id", orderId);
+      if (quoteUpdateError) {
+        // Do not fail payment processing or suppress customer emails if the
+        // quote table has not been migrated yet; log for operational follow-up.
+        console.error("Could not mark linked quotation paid:", { orderId, error: quoteUpdateError });
+      }
+
       // ---------------------------------------------------------------------
       // Send both emails.
       //
@@ -367,6 +378,20 @@ export async function POST(req: NextRequest) {
           });
 
           throw updateError;
+        }
+
+        // Release a custom quotation for another attempt if Yoco reports a
+        // failed payment. A later verified success will mark it paid.
+        const { error: quoteRetryError } = await supabase
+          .from("custom_quotes")
+          .update({ 
+            status: "sent", 
+            order_id: null, 
+            updated_at: new Date().toISOString() })
+          .eq("order_id", orderId)
+          .eq("status", "accepted");
+        if (quoteRetryError) {
+          console.error("Could not reopen quotation after failed payment:", { orderId, error: quoteRetryError });
         }
       }
 
