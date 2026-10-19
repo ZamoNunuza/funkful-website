@@ -43,7 +43,18 @@ function firstNumber(...values: unknown[]): number | null {
 }
 
 export async function POST(req: NextRequest) {
-  const secret = process.env.YOCO_WEBHOOK_SECRET;
+  const secret = process.env.YOCO_WEBHOOK_SECRET ?? "";
+
+  const encoded = secret.startsWith("whsec_")
+  ? secret.slice(6)
+  : "";
+
+console.log("Yoco secret check:", {
+  present: Boolean(secret),
+  hasPrefix: secret.startsWith("whsec_"),
+  encodedLength: encoded.length,
+  validBase64Characters: /^[A-Za-z0-9+/]*={0,2}$/.test(encoded),
+});
 
   if (!secret) {
     console.error("YOCO_WEBHOOK_SECRET is not configured.");
