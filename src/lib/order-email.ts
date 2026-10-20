@@ -34,8 +34,31 @@ export interface OrderEmailOrder {
   tracking_url?: string | null;
 }
 
+export interface SendOptions {
+  /**
+   * Overrides the default Resend idempotency key. The notification queue passes
+   * a key that changes on every attempt, so a retry after a rejected send is
+   * never mistaken for a repeat of the original request.
+   */
+  idempotencyKey?: string;
+}
+
 function money(cents: number) { return `R${(cents / 100).toFixed(2)}`; }
 function escapeHtml(value: string) { return value.replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]!)); }
+function validatedEmail(value: unknown, field: string): string {
+  if (typeof value !== "string") {
+    throw new Error(`${field} is missing or is not a string.`);
+  }
+
+  const email = value.trim();
+  const emailPattern = /^[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+$/;
+
+  if (!emailPattern.test(email)) {
+    throw new Error(`${field} contains an invalid email address.`);
+  }
+
+  return email;
+}
 
 function shell(title: string, preview: string, body: string) {
   return `<!doctype html><html><body style="margin:0;background:#f4f1ea;font-family:Arial,Helvetica,sans-serif;color:#171717"><div style="display:none;max-height:0;overflow:hidden">${escapeHtml(preview)}</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ea;padding:32px 12px"><tr><td align="center"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:24px;overflow:hidden"><tr><td style="background:${palette.cream};padding:28px 32px;text-align:center"><img src="${SITE_URL}/assets/funkful-logo.png" width="110" alt="Funkful" style="display:inline-block;max-width:110px;height:auto"><p style="margin:14px 0 0;color:${palette.gold};font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase">${escapeHtml(title)}</p></td></tr><tr><td style="padding:32px">${body}</td></tr><tr><td style="padding:20px 32px;background:#faf8f4;text-align:center;color:#777;font-size:11px;line-height:1.6">Funkful · Personalized gifts, mystery scoops, and everything in between.<br><a href="${SITE_URL}" style="color:#171717">funkful.co.za</a></td></tr></table></td></tr></table></body></html>`;
@@ -49,33 +72,55 @@ function address(order: OrderEmailOrder) {
   return [order.shipping_address, order.shipping_city, order.shipping_province, order.shipping_postal_code, order.shipping_country].filter(Boolean).map((v) => escapeHtml(String(v))).join("<br>");
 }
 
-export async function sendOrderConfirmation(order: OrderEmailOrder, items: OrderEmailItem[]) {
+export async function sendOrderConfirmation(order: OrderEmailOrder, items: OrderEmailItem[], options: SendOptions = {}) {
   if (!process.env.RESEND_API_KEY) throw new Error("RESEND_API_KEY is not set.");
   const resend = new Resend(process.env.RESEND_API_KEY);
+  const to = validatedEmail(order.email, "Order customer email");
   const greeting = order.first_name ? `Hey ${escapeHtml(order.first_name)},` : "Hey there,";
   const html = shell("Order confirmed", `Thanks for your Funkful order ${order.order_number}.`, `<p style="font-size:16px;margin:0 0 10px">${greeting}</p><h1 style="font-size:28px;margin:0 0 12px;text-transform:uppercase">We got your order.</h1><p style="color:#666;line-height:1.6;margin:0 0 24px">Your payment has been confirmed and we're getting your order ready. Your order number is <strong>${escapeHtml(order.order_number)}</strong>.</p><table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px"><thead><tr><th align="left" style="padding:10px 0;color:#777">Item</th><th style="color:#777">Qty</th><th align="right" style="color:#777">Total</th></tr></thead><tbody>${itemRows(items)}</tbody></table><table width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;font-size:14px"><tr><td style="padding:5px 0">Subtotal</td><td align="right">${money(order.subtotal_cents)}</td></tr>${order.discount_cents ? `<tr><td style="padding:5px 0">Discount${order.promo_code ? ` (${escapeHtml(order.promo_code)})` : ""}</td><td align="right">-${money(order.discount_cents)}</td></tr>` : ""}<tr><td style="padding:5px 0">Shipping</td><td align="right">${order.shipping_cents ? money(order.shipping_cents) : "Free"}</td></tr><tr><td style="border-top:2px solid #111;padding:12px 0;font-weight:800;font-size:17px">Total</td><td align="right" style="border-top:2px solid #111;padding:12px 0;font-weight:800;font-size:17px">${money(order.total_cents)}</td></tr></table><div style="margin-top:26px;background:#f4f1ea;border-radius:14px;padding:16px"><strong style="font-size:12px;text-transform:uppercase">Delivering to</strong><div style="font-size:13px;line-height:1.6;margin-top:6px">${address(order)}</div></div>`);
-  return resend.emails.send({ from: FROM, to: order.email, subject: `Order ${order.order_number} confirmed 🎉`, html }, { idempotencyKey: `order-confirmation/${order.id}` });
+  return resend.emails.send(
+    {
+      from: FROM,
+      to,
+      subject: `Order ${order.order_number} confirmed 🎉`,
+      html,
+    },
+    {
+      idempotencyKey:
+        options.idempotencyKey ?? `order-confirmation/${order.id}`,
+    }
+  );
 }
 
-export async function sendOrderNotification(order: OrderEmailOrder, items: OrderEmailItem[]) {
+export async function sendOrderNotification(
+  order: OrderEmailOrder, 
+  items: OrderEmailItem[], 
+  options: SendOptions = {}
+) {
   if (!process.env.RESEND_API_KEY || !ADMIN_TO) return { skipped: true };
+  const to = validatedEmail(
+    ADMIN_TO,
+    "Order notification recipient",
+  );
   const resend = new Resend(process.env.RESEND_API_KEY);
   const html = shell("New paid order", `${order.order_number} · ${money(order.total_cents)}`, `<h1 style="font-size:26px;margin:0 0 10px;text-transform:uppercase">New paid order</h1><p style="color:#666;line-height:1.6">${escapeHtml(order.order_number)} has been paid. Customer: <strong>${escapeHtml([order.first_name, order.last_name].filter(Boolean).join(" ") || order.email)}</strong>.</p><table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px"><tbody>${itemRows(items)}</tbody></table><p style="margin-top:20px;font-size:17px;font-weight:800">Total: ${money(order.total_cents)}</p><div style="margin-top:20px;background:#f4f1ea;border-radius:14px;padding:16px;font-size:13px;line-height:1.6">${address(order)}<br>${escapeHtml(order.email)}</div><p style="margin-top:24px"><a href="${SITE_URL}/admin/orders/${order.id}" style="display:inline-block;background:${palette.black};color:${palette.cream};padding:13px 20px;border-radius:999px;text-decoration:none;font-size:12px;font-weight:800;text-transform:uppercase">Open order</a></p>`);
-  return resend.emails.send({ from: FROM, to: ADMIN_TO, subject: `New paid order · ${order.order_number}`, html }, { idempotencyKey: `order-admin/${order.id}` });
+  return resend.emails.send(
+    { from: FROM, to, subject: `New paid order · ${order.order_number}`, html }, { idempotencyKey: options.idempotencyKey ?? `order-admin/${order.id}` });
 }
 
-export async function sendPaymentFailedEmail(order: OrderEmailOrder) {
+export async function sendPaymentFailedEmail(order: OrderEmailOrder, options: SendOptions = {}) {
   if (!process.env.RESEND_API_KEY) throw new Error("RESEND_API_KEY is not set.");
   const resend = new Resend(process.env.RESEND_API_KEY);
+  const to = validatedEmail(order.email, "Order customer email");
   const html = shell("Payment not completed", `Your payment for ${order.order_number} was not completed.`, `<h1 style="font-size:28px;margin:0 0 12px;text-transform:uppercase">Payment not completed</h1><p style="color:#666;line-height:1.6">We couldn't confirm payment for order <strong>${escapeHtml(order.order_number)}</strong>. Your bag is still available, so you can return to checkout and try again.</p><p style="margin-top:26px"><a href="${SITE_URL}/cart" style="display:inline-block;background:${palette.black};color:${palette.cream};padding:14px 22px;border-radius:999px;text-decoration:none;font-size:12px;font-weight:800;text-transform:uppercase">Return to bag</a></p>`);
-  return resend.emails.send({ from: FROM, to: order.email, subject: `Payment not completed · ${order.order_number}`, html }, { idempotencyKey: `payment-failed/${order.id}` });
+  return resend.emails.send({ from: FROM, to, subject: `Payment not completed · ${order.order_number}`, html }, { idempotencyKey: options.idempotencyKey ?? `payment-failed/${order.id}` });
 }
 
 // ---------------------------------------------------------------------------
 // Fulfilment emails: shipped + delivered
 // ---------------------------------------------------------------------------
 
-interface FulfilmentEmailOptions {
+interface FulfilmentEmailOptions extends SendOptions {
   /**
    * Manual "resend" from the admin page. Normally the Resend idempotency key
    * makes a repeat send a no-op; force gives it a fresh key so it really sends.
@@ -99,6 +144,7 @@ function safeHttpUrl(value?: string | null) {
 }
 
 function fulfilmentKey(prefix: string, order: OrderEmailOrder, options: FulfilmentEmailOptions) {
+  if (options.idempotencyKey) return options.idempotencyKey;
   return options.force ? `${prefix}/${order.id}/resend-${Date.now()}` : `${prefix}/${order.id}`;
 }
 
@@ -108,6 +154,7 @@ function greetingFor(order: OrderEmailOrder) {
 
 export async function sendOrderShipped(order: OrderEmailOrder, items: OrderEmailItem[], options: FulfilmentEmailOptions = {}) {
   if (!process.env.RESEND_API_KEY) throw new Error("RESEND_API_KEY is not set.");
+   const to = validatedEmail(order.email, "Order customer email");
   const resend = new Resend(process.env.RESEND_API_KEY);
   const courier = order.courier?.trim() || "";
   const trackUrl = safeHttpUrl(order.tracking_url);
@@ -124,7 +171,7 @@ export async function sendOrderShipped(order: OrderEmailOrder, items: OrderEmail
   );
 
   return resend.emails.send(
-    { from: FROM, to: order.email, subject: `Order ${order.order_number} is on its way 🚚`, html },
+    { from: FROM, to, subject: `Order ${order.order_number} is on its way 🚚`, html },
     { idempotencyKey: fulfilmentKey("order-shipped", order, options) },
   );
 }

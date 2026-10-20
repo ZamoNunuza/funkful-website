@@ -14,6 +14,7 @@ import {
 } from "@/lib/account-shared";
 import { Card, CardTitle, StatusBadge } from "@/components/account/ui";
 import FulfilmentPanel from "../fulfilment-panel";
+import RetryNotificationButton from "../retry-notification-button";
 
 export const metadata = { title: "Order | Funkful admin", robots: { index: false, follow: false } };
 
@@ -138,7 +139,7 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
             </Card>
 
             <Card>
-              <CardTitle>Notifications</CardTitle>
+              <CardTitle>Email notifications</CardTitle>
               {notifications.length === 0 ? (
                 <p className="text-sm text-neutral-600">No notification jobs recorded.</p>
               ) : (
@@ -150,6 +151,9 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
                         <span className="text-neutral-500"> · {notification.notification_type.replaceAll("_", " ")}</span>
                         {notification.error_message && (
                           <span className="block text-xs text-red-700 mt-1">{notification.error_message}</span>
+                        )}
+                        {notification.status === "failed" && notification.notification_type !== "whatsapp" && (
+                          <RetryNotificationButton notificationId={notification.id} orderId={order.id} />
                         )}
                       </span>
                       <span className="text-right">

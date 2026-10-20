@@ -11,6 +11,7 @@ import {
   updateTrackingDetails,
   type FulfilmentResult,
 } from "@/lib/order-fulfilment";
+import { recoverUnsentNotifications, retryOrderNotification } from "@/lib/order-notifications";
 
 export type FulfilmentState = { success?: string; warning?: string; error?: string } | null;
 
@@ -53,4 +54,49 @@ export async function fulfilmentAction(_prev: FulfilmentState, formData: FormDat
   revalidatePath(`/admin/orders/${orderId}`);
 
   return result.ok ? { success: result.message, warning: result.warning } : { error: result.error };
+}
+
+export type NotificationState = { success?: string; error?: string } | null;
+
+/** Retries one failed email job from the order page. */
+export async function retryNotificationAction(_prev: NotificationState, formData: FormData): Promise<NotificationState> {
+  // Server actions are public endpoints — re-check admin here, not just on the page.
+  await requireAdmin();
+
+  const notificationId = String(formData.get("notificationId") ?? "");
+  const orderId = String(formData.get("orderId") ?? "");
+  if (!isUuid(notificationId) || !isUuid(orderId)) return { error: "Invalid notification." };
+
+  try {
+    const result = await retryOrderNotification(notificationId);
+    revalidatePath(`/admin/orders/${orderId}`);
+    revalidatePath("/admin/orders");
+    return result.ok ? { success: "Email sent." } : { error: `Still failing: ${result.error ?? "unknown error"}` };
+  } catch (error) {
+    console.error("Retry notification failed:", error);
+    return { error: "Could not retry this email. Check the server logs." };
+  }
+}
+
+/** Sends every email that never went out (e.g. after verifying the sending domain). */
+export async function recoverUnsentNotificationsAction(
+  _prev: NotificationState,
+  _formData: FormData,
+): Promise<NotificationState> {
+  await requireAdmin();
+
+  try {
+    const result = await recoverUnsentNotifications();
+    revalidatePath("/admin/orders");
+    if (result.considered === 0) return { success: "Nothing to recover — no unsent emails found." };
+    if (result.failed > 0) {
+      return {
+        error: `Sent ${result.sent} of ${result.considered}. ${result.failed} still failing: ${result.firstError ?? "unknown error"}`,
+      };
+    }
+    return { success: `Sent ${result.sent} email${result.sent === 1 ? "" : "s"}.` };
+  } catch (error) {
+    console.error("Recover unsent notifications failed:", error);
+    return { error: "Could not recover unsent emails. Check the server logs." };
+  }
 }

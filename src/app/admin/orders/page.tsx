@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { palette } from "@/lib/brands";
 import { formatDate, formatRands, orderStage, orderStatusMeta } from "@/lib/account-shared";
 import { Card, EmptyState, StatusBadge } from "@/components/account/ui";
+import RecoverEmailsPanel from "./recover-emails-panel";
 
 export const metadata = { title: "Orders | Funkful admin", robots: { index: false, follow: false } };
 
@@ -71,6 +72,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
 
   return (
     <Shell>
+      <RecoverEmailsPanel />
       <nav aria-label="Order views" className="flex flex-wrap gap-2 mb-6">
         {VIEWS.map((v) => {
           const active = v.key === view.key;

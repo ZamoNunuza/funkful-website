@@ -2,12 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
-  sendOrderConfirmation,
-  sendOrderNotification,
-  sendPaymentFailedEmail,
-  type OrderEmailItem,
-  type OrderEmailOrder,
-} from "@/lib/order-email";
+  enqueueAndProcessOrderNotification,
+  type ProcessResult,
+} from "@/lib/order-notifications";
 
 export const runtime = "nodejs";
 
@@ -40,6 +37,26 @@ function firstNumber(...values: unknown[]): number | null {
         typeof value === "number" && Number.isFinite(value),
     ) ?? null
   );
+}
+
+function logNotification(
+  label: string,
+  orderId: string,
+  settled: PromiseSettledResult<ProcessResult>,
+) {
+  if (settled.status === "rejected") {
+    console.error(`${label} could not be queued or processed:`, { orderId, error: settled.reason });
+    return;
+  }
+  const result = settled.value;
+  if (result.ok) {
+    console.log(`${label} sent:`, { orderId });
+  } else if (result.alreadyProcessed) {
+    console.log(`${label} already handled; not sending again:`, { orderId });
+  } else {
+    // Saved on the order_notifications row; retry it from the admin order page.
+    console.error(`${label} failed (saved for retry):`, { orderId, error: result.error });
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -175,35 +192,6 @@ console.log("Yoco secret check:", {
     }
 
     // -----------------------------------------------------------------------
-    // Load order items
-    // -----------------------------------------------------------------------
-
-    const { data: lines, error: linesError } = await supabase
-      .from("order_items")
-      .select(
-        "product_name,variant,quantity,unit_price_cents,product_id",
-      )
-      .eq("order_id", orderId);
-
-    if (linesError) {
-      console.error("Failed loading order items:", {
-        orderId,
-        error: linesError,
-      });
-
-      throw linesError;
-    }
-
-    const emailOrder: OrderEmailOrder = order;
-
-    const emailItems: OrderEmailItem[] = (lines ?? []).map((item) => ({
-      product_name: item.product_name,
-      variant: item.variant,
-      quantity: item.quantity,
-      unit_price_cents: item.unit_price_cents,
-    }));
-
-    // -----------------------------------------------------------------------
     // Extract Yoco payment information
     // -----------------------------------------------------------------------
 
@@ -308,64 +296,21 @@ console.log("Yoco secret check:", {
       } 
 
       // ---------------------------------------------------------------------
-      // Send both emails.
+      // Send both emails through the notification queue.
       //
-      // These functions use stable Resend idempotency keys, so retrying this
-      // webhook is safe.
+      // Each send is recorded in order_notifications, so a failure (for example
+      // an unverified sending domain) is saved and can be retried from the
+      // admin order page instead of only appearing in the logs. A webhook retry
+      // can't double-send: already-sent jobs are not claimed again.
       // ---------------------------------------------------------------------
 
-      const results = await Promise.allSettled([
-        sendOrderConfirmation(emailOrder, emailItems),
-        sendOrderNotification(emailOrder, emailItems),
+      const [customerEmail, adminEmail] = await Promise.allSettled([
+        enqueueAndProcessOrderNotification(orderId, "payment_confirmed", "customer_email"),
+        enqueueAndProcessOrderNotification(orderId, "payment_confirmed", "admin_email"),
       ]);
 
-      const confirmationResult = results[0];
-      const notificationResult = results[1];
-
-      if (confirmationResult.status === "rejected") {
-        console.error("Customer order confirmation email failed:", {
-          orderId,
-          error: confirmationResult.reason,
-        });
-      } else if (confirmationResult.value?.error) {
-        console.error("Customer order confirmation email returned an error:", {
-          orderId,
-          error: confirmationResult.value.error,
-        });
-      } else {
-        console.log("Customer order confirmation email sent:", {
-          orderId,
-        });
-      }
-
-      if (notificationResult.status === "rejected") {
-        console.error("Admin order notification email failed:", {
-          orderId,
-          error: notificationResult.reason,
-        });
-      } else if (
-        "error" in notificationResult.value &&
-        notificationResult.value.error
-      ) {
-        console.error("Admin order notification email returned an error:", {
-          orderId,
-          error: notificationResult.value.error,
-        });
-      } else if (
-        "skipped" in notificationResult.value &&
-        notificationResult.value.skipped
-      ) {
-        console.warn(
-          "Admin order notification email was skipped because ORDER_NOTIFICATION_EMAIL is not configured.",
-          {
-            orderId,
-          },
-        );
-      } else {
-        console.log("Admin order notification email sent:", {
-          orderId,
-        });
-      }
+      logNotification("Customer order confirmation", orderId, customerEmail);
+      logNotification("Admin order notification", orderId, adminEmail);
 
       return NextResponse.json({
         received: true,
@@ -414,18 +359,10 @@ console.log("Yoco secret check:", {
         }
       }
 
-      const result = await sendPaymentFailedEmail(emailOrder);
-
-      if (result?.error) {
-        console.error("Payment-failed email returned an error:", {
-          orderId,
-          error: result.error,
-        });
-      } else {
-        console.log("Payment-failed email sent:", {
-          orderId,
-        });
-      }
+      const [failedEmail] = await Promise.allSettled([
+        enqueueAndProcessOrderNotification(orderId, "payment_failed", "customer_email"),
+      ]);
+      logNotification("Payment-failed email", orderId, failedEmail);
 
       return NextResponse.json({
         received: true,

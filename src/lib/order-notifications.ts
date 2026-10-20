@@ -138,33 +138,54 @@ async function sendJob(job: NotificationRow, order: OrderEmailOrder, items: Orde
     throw new Error("WhatsApp notifications are not configured yet. Add a WhatsApp provider before enabling this channel.");
   }
 
+  // A fresh key per attempt: Resend remembers keys, so reusing one could make a
+  // retry look like a duplicate of a request that was rejected earlier.
+  const options = { idempotencyKey: `notification/${job.id}/attempt-${job.attempts}` };
+
   if (job.notification_type === "admin_email") {
     if (job.event_type !== "payment_confirmed") {
       // The current admin email templates are intentionally limited to the
       // paid-order notification. Other lifecycle emails are customer-facing.
       return { skipped: true };
     }
-    return sendOrderNotification(order, items);
+    return sendOrderNotification(order, items, options);
   }
 
   switch (job.event_type) {
     case "payment_confirmed":
-      return sendOrderConfirmation(order, items);
+      return sendOrderConfirmation(order, items, options);
     case "payment_failed":
-      return sendPaymentFailedEmail(order);
+      return sendPaymentFailedEmail(order, options);
     case "shipped":
-      return sendOrderShipped(order, items);
+      return sendOrderShipped(order, items, options);
     case "delivered":
-      return sendOrderDelivered(order, items);
+      return sendOrderDelivered(order, items, options);
     default:
       throw new Error(`Unsupported order notification event: ${job.event_type}`);
   }
 }
 
-export async function processOrderNotification(id: string): Promise<{ ok: boolean; skipped?: boolean; error?: string }> {
+export type ProcessResult = { ok: boolean; skipped?: boolean; alreadyProcessed?: boolean; error?: string };
+
+/**
+ * Errors that retrying cannot fix: a missing config value or an unverified
+ * sending domain. The cron skips these; an admin can still retry by hand once
+ * the cause is fixed. "Legacy" jobs were created before this queue sent real
+ * emails, so they must never be sent automatically (they'd email old customers).
+ */
+const NO_AUTO_RETRY_PATTERN =
+  /domain is not verified|not configured|RESEND_API_KEY is not set|API key is invalid|^Legacy notification job/i;
+
+export function isNoAutoRetryError(message?: string | null) {
+  return Boolean(message && NO_AUTO_RETRY_PATTERN.test(message));
+}
+
+export async function processOrderNotification(id: string): Promise<ProcessResult> {
   const admin = createAdminClient();
   const job = await claimJob(admin, id);
-  if (!job) return { ok: false, error: "Notification is already being processed or is no longer pending." };
+  if (!job) {
+    return { ok: false, alreadyProcessed: true, error: "Notification is already being processed or is no longer pending." };
+  }
 
   try {
     const { order, items } = await loadOrderAndItems(admin, job.order_id);
@@ -243,7 +264,7 @@ export async function enqueueAndProcessOrderNotification(
   orderId: string,
   eventType: OrderNotificationEvent,
   notificationType: NotificationType = "customer_email",
-) {
+): Promise<ProcessResult> {
   const id = await enqueueOrderNotification(orderId, eventType, notificationType);
   if (!id) return { ok: false, error: "Could not create or locate the notification job." };
   return processOrderNotification(id);
@@ -253,26 +274,127 @@ export async function processPendingOrderNotifications(limit = 20) {
   const admin = createAdminClient();
   const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
+  // A job stuck in "sending" means a send was interrupted (e.g. the function
+  // timed out). We can't know whether the email left, so surface it as failed
+  // for an admin to check in Resend rather than risk a silent duplicate.
+  const staleCutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  await admin
+    .from("order_notifications")
+    .update({
+      status: "failed",
+      error_message: "Interrupted while sending. Check the Resend logs before retrying, in case it was delivered.",
+    })
+    .eq("status", "sending")
+    .lt("last_attempt_at", staleCutoff);
+
+  // Over-fetch, then drop jobs that retrying can't fix (see isNoAutoRetryError)
+  // so they can't crowd real work out of the batch.
   const { data, error } = await admin
     .from("order_notifications")
-    .select("id")
+    .select("id,error_message")
     .in("status", ["pending", "failed"])
+    .neq("notification_type", "whatsapp")
     .lt("attempts", 5)
     .or(`last_attempt_at.is.null,last_attempt_at.lt.${cutoff}`)
     .order("created_at", { ascending: true })
-    .limit(limit);
+    .limit(limit * 5);
 
   if (error) throw error;
 
+  const due = (data ?? []).filter((row) => !isNoAutoRetryError(row.error_message)).slice(0, limit);
+
   let sent = 0;
   let failed = 0;
-  for (const row of data ?? []) {
+  for (const row of due) {
     const result = await processOrderNotification(row.id);
     if (result.ok) sent++;
-    else failed++;
+    else if (!result.alreadyProcessed) failed++;
   }
 
-  return { considered: data?.length ?? 0, sent, failed };
+  return { considered: due.length, sent, failed };
+}
+
+/** Admin: retry one failed notification. Keeps the attempt count so history stays honest. */
+export async function retryOrderNotification(id: string): Promise<ProcessResult> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("order_notifications")
+    .update({ status: "pending", error_message: null, last_attempt_at: null })
+    .eq("id", id)
+    .eq("status", "failed")
+    .neq("notification_type", "whatsapp")
+    .select("id")
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return { ok: false, error: "Only failed email notifications can be retried." };
+  return processOrderNotification(id);
+}
+
+/**
+ * Admin: deliberately send an email again, even if it was sent before
+ * (e.g. the customer lost it). Creates the job if it doesn't exist yet.
+ */
+export async function resendOrderNotification(
+  orderId: string,
+  eventType: OrderNotificationEvent,
+  notificationType: NotificationType = "customer_email",
+): Promise<ProcessResult> {
+  const id = await enqueueOrderNotification(orderId, eventType, notificationType);
+  if (!id) return { ok: false, error: "Could not create or locate the notification job." };
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("order_notifications")
+    .update({ status: "pending", error_message: null, last_attempt_at: null })
+    .eq("id", id)
+    .in("status", ["pending", "sent", "failed"]);
+  if (error) throw error;
+
+  return processOrderNotification(id);
+}
+
+/**
+ * Admin: recover emails that never went out (for example everything that failed
+ * while the sending domain was unverified). Skips WhatsApp, legacy jobs and
+ * payment-failed notices, which would be confusing to send days later.
+ */
+export async function recoverUnsentNotifications(limit = 50) {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("order_notifications")
+    .select("id,error_message")
+    .in("status", ["pending", "failed"])
+    .in("event_type", ["payment_confirmed", "shipped", "delivered"])
+    .neq("notification_type", "whatsapp")
+    .order("created_at", { ascending: true })
+    .limit(limit * 3);
+
+  if (error) throw error;
+
+  const rows = (data ?? [])
+    .filter((row) => !/^Legacy notification job/i.test(row.error_message ?? ""))
+    .slice(0, limit);
+
+  let sent = 0;
+  let failed = 0;
+  let firstError: string | null = null;
+  for (const row of rows) {
+    // Failed jobs need flipping back to pending before they can be claimed.
+    await admin
+      .from("order_notifications")
+      .update({ status: "pending", error_message: null, last_attempt_at: null })
+      .eq("id", row.id)
+      .eq("status", "failed");
+    const result = await processOrderNotification(row.id);
+    if (result.ok) sent++;
+    else if (!result.alreadyProcessed) {
+      failed++;
+      firstError ??= result.error ?? null;
+    }
+  }
+
+  return { considered: rows.length, sent, failed, firstError };
 }
 
 export async function retryFailedOrderNotifications(orderId: string) {

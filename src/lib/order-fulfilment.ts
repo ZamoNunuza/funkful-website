@@ -10,16 +10,16 @@
 //      two admins can't send the same email twice,
 //   3. writes a row to order_status_events,
 //   4. emails the customer. A failed email never undoes the status change; it's
-//      reported back so the admin can use "Resend email".
+//      reported back and kept as a failed notification the admin can retry.
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { orderStage } from "@/lib/account-shared";
+import type { OrderEmailOrder } from "@/lib/order-email";
 import {
-  sendOrderDelivered,
-  sendOrderShipped,
-  type OrderEmailItem,
-  type OrderEmailOrder,
-} from "@/lib/order-email";
+  enqueueAndProcessOrderNotification,
+  resendOrderNotification,
+  type ProcessResult,
+} from "@/lib/order-notifications";
 
 export type FulfilmentResult =
   | { ok: true; message: string; warning?: string }
@@ -75,15 +75,6 @@ async function loadOrder(admin: AdminClient, orderId: string) {
   return { order: data as (OrderEmailOrder & { status: string; payment_status: string }) | null, failed: Boolean(error) };
 }
 
-async function loadItems(admin: AdminClient, orderId: string): Promise<OrderEmailItem[]> {
-  const { data, error } = await admin
-    .from("order_items")
-    .select("product_name,variant,quantity,unit_price_cents")
-    .eq("order_id", orderId);
-  if (error) console.error("Fulfilment: could not load order items:", error);
-  return (data ?? []) as OrderEmailItem[];
-}
-
 async function logEvent(
   admin: AdminClient,
   orderId: string,
@@ -99,23 +90,19 @@ async function logEvent(
   if (error) console.error("Fulfilment: could not write status event:", error);
 }
 
-/** Returns an error message if the email failed, otherwise null. */
-async function sendFulfilmentEmail(
-  kind: EmailKind,
-  order: OrderEmailOrder,
-  items: OrderEmailItem[],
-  force = false,
-): Promise<string | null> {
+/**
+ * Sends the shipped/delivered email through the notification queue, so a failure
+ * is saved on the order (visible, with a Retry button) rather than only logged.
+ * Returns an error message if the email failed, otherwise null.
+ */
+async function sendFulfilmentEmail(kind: EmailKind, orderId: string, resend = false): Promise<string | null> {
   try {
-    const result =
-      kind === "shipped"
-        ? await sendOrderShipped(order, items, { force })
-        : await sendOrderDelivered(order, items, { force });
-    if (result.error) {
-      console.error(`Fulfilment: ${kind} email rejected:`, result.error);
-      return result.error.message || "The email provider rejected the message.";
-    }
-    return null;
+    const result: ProcessResult = resend
+      ? await resendOrderNotification(orderId, kind)
+      : await enqueueAndProcessOrderNotification(orderId, kind);
+    if (result.ok || result.alreadyProcessed) return null;
+    console.error(`Fulfilment: ${kind} email failed:`, result.error);
+    return result.error || "The email provider rejected the message.";
   } catch (error) {
     console.error(`Fulfilment: ${kind} email failed:`, error);
     return error instanceof Error ? error.message : "The email could not be sent.";
@@ -160,12 +147,12 @@ export async function markOrderShipped(
 
   await logEvent(admin, orderId, order.status, "shipped", actor, shipment.courier);
 
-  const emailError = await sendFulfilmentEmail("shipped", updated as OrderEmailOrder, await loadItems(admin, orderId));
+  const emailError = await sendFulfilmentEmail("shipped", orderId);
   return emailError
     ? {
         ok: true,
         message: `${order.order_number} is marked as shipped.`,
-        warning: `The customer email did not send (${emailError}). Use “Resend email” once that's fixed.`,
+        warning: `The customer email did not send (${emailError}). It's saved on this order. Use “Retry” in Email notifications once that's fixed.`,
       }
     : { ok: true, message: `${order.order_number} is marked as shipped and the customer has been emailed.` };
 }
@@ -198,12 +185,12 @@ export async function markOrderDelivered(orderId: string, actor: string): Promis
 
   await logEvent(admin, orderId, order.status, "delivered", actor);
 
-  const emailError = await sendFulfilmentEmail("delivered", updated as OrderEmailOrder, await loadItems(admin, orderId));
+  const emailError = await sendFulfilmentEmail("delivered", orderId);
   return emailError
     ? {
         ok: true,
         message: `${order.order_number} is marked as delivered.`,
-        warning: `The customer email did not send (${emailError}). Use “Resend email” once that's fixed.`,
+        warning: `The customer email did not send (${emailError}). It's saved on this order. Use “Retry” in Email notifications once that's fixed.`,
       }
     : { ok: true, message: `${order.order_number} is marked as delivered and the customer has been emailed.` };
 }
@@ -252,7 +239,7 @@ export async function resendFulfilmentEmail(orderId: string): Promise<Fulfilment
   if (stage !== 2 && stage !== 3) return { ok: false, error: "There's no shipping or delivery email to resend yet." };
 
   const kind: EmailKind = stage === 2 ? "shipped" : "delivered";
-  const emailError = await sendFulfilmentEmail(kind, order, await loadItems(admin, orderId), true);
+  const emailError = await sendFulfilmentEmail(kind, orderId, true);
   return emailError
     ? { ok: false, error: `The email did not send: ${emailError}` }
     : { ok: true, message: `The ${kind} email was sent to ${order.email}.` };
