@@ -50,7 +50,7 @@ export default function CartPage() {
                 {items.map((item) => {
                   const brand = brands[item.brand];
                   return <div key={item.id} className="py-5 grid grid-cols-[72px_1fr_auto] sm:grid-cols-[92px_1fr_auto] gap-4 items-center">
-                    <div style={{ background: brand.accent }} className="w-[72px] h-[72px] sm:w-[92px] sm:h-[92px] rounded-2xl flex items-center justify-center p-4"><Image src={brand.logo} alt="" width={54} height={54} className="object-contain" /></div>
+                    <div style={{ background: brand.accent }} className="w-[72px] h-[72px] sm:w-[92px] sm:h-[92px] rounded-2xl flex items-center justify-center p-4"><Image src={item.imageUrl || brand.logo} alt="" width={54} height={54} className="object-contain" /></div>
                     <div className="min-w-0">
                       <p style={{ color: "#8a4a45" }} className="text-[10px] font-bold uppercase tracking-wide">{brand.name}</p>
                       <h2 className="font-bold text-sm sm:text-base mt-1">{item.name}</h2>

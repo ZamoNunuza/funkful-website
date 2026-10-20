@@ -18,6 +18,7 @@ export interface CartItem {
   variant?: string;
   priceCents: number;
   quantity: number;
+  imageUrl?: string | null;
   productType?: "made-to-order" | "personalize" | "mystery" | "addon";
 }
 

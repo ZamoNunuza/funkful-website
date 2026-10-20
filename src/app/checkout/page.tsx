@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/lib/cart-context";
@@ -25,6 +25,9 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
   const [loading, setLoading] = useState(false);
+  // State updates are async, so two quick clicks can both pass a `loading` check.
+  // A ref blocks the second click immediately.
+  const submitting = useRef(false);
 
   const shippingCents = useMemo(() => Math.max(0, subtotalCents - discountCents) >= 40000 ? 0 : items.length ? 9900 : 0, [subtotalCents, discountCents, items.length]);
   const totalCents = Math.max(0, subtotalCents - discountCents + shippingCents);
@@ -33,6 +36,20 @@ export default function CheckoutPage() {
     if (!hydrated) return;
     if (!items.length) window.location.replace("/cart");
   }, [hydrated, items.length]);
+
+  // Pressing Back from the Yoco page can restore this page from the browser's
+  // back/forward cache with the button still stuck on "Opening secure payment…".
+  // Reset it so the customer can continue; the server resumes the same order.
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        submitting.current = false;
+        setLoading(false);
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
 
   async function applyPromo() {
     if (!promoCode.trim()) return;
@@ -51,16 +68,27 @@ export default function CheckoutPage() {
     if (!items.length) return setError("Your bag is empty.");
     if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email.trim())) return setError("Enter a valid email address.");
     if (!firstName.trim() || !lastName.trim() || !address.trim() || !city.trim() || !postalCode.trim()) return setError("Please complete your delivery details.");
+    if (submitting.current) return;
+    submitting.current = true;
     setLoading(true);
     try {
-      const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+      const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, signal: AbortSignal.timeout(35000), body: JSON.stringify({
         email, shipping: { firstName, lastName, phone, address, city, province, postalCode, country: "South Africa" }, promoCode: appliedPromo,
         items: items.map((i) => ({ id: i.id, name: i.name, variant: i.variant, quantity: i.quantity })),
       }) });
       const data = await res.json();
+      // This exact bag was paid moments ago. Show that order instead of charging again.
+      if (data.alreadyPaid && data.orderId) { window.location.assign(`/checkout/success?order=${data.orderId}`); return; }
       if (!res.ok || !data.redirectUrl) throw new Error(data.error ?? "Could not start secure payment.");
       window.location.assign(data.redirectUrl);
-    } catch (e) { setError(e instanceof Error ? e.message : "Checkout failed. Please try again."); setLoading(false); }
+    } catch (e) {
+      // A timeout here is safe to retry: the server resumes the same order and
+      // Yoco checkout, so pressing the button again cannot create a second charge.
+      const timedOut = e instanceof DOMException && (e.name === "TimeoutError" || e.name === "AbortError");
+      setError(timedOut ? "That took longer than expected. You have not been charged. Please try again." : e instanceof Error ? e.message : "Checkout failed. Please try again.");
+      submitting.current = false;
+      setLoading(false);
+    }
   }
 
   if (!hydrated) return <CheckoutShell><div className="py-24 text-center text-sm text-neutral-500">Loading secure checkout…</div></CheckoutShell>;
@@ -91,7 +119,41 @@ export default function CheckoutPage() {
               <p className="text-xs text-neutral-600 leading-relaxed mt-1">Funkful Originals take 5–7 working days to complete before packaging and shipping.</p>
             </div>
           )}
-          <div className="space-y-4 mb-5">{items.map((item) => <div key={item.id} className="flex gap-3 items-start"><div style={{ background: brands[item.brand].accent }} className="w-12 h-12 rounded-xl p-2 flex items-center justify-center shrink-0"><Image src={brands[item.brand].logo} alt="" width={32} height={32} className="object-contain" /></div><div className="min-w-0 flex-1"><p className="font-bold text-sm">{item.name}</p><p className="text-xs text-neutral-500">Qty {item.quantity}{item.variant ? ` · ${item.variant}` : ""}</p></div><span className="font-bold text-sm">{formatRands(item.priceCents * item.quantity)}</span></div>)}</div>
+          <div className="space-y-4 mb-5">
+            {items.map((item) => {
+              const brand = brands[item.brand];
+              const productImage = item.imageUrl || brand.logo;
+
+              return (
+                <div key={item.id} className="flex gap-3 items-start">
+                  <div
+                    style={{ background: brand.accent }}
+                    className="w-12 h-12 rounded-xl p-1 flex items-center justify-center shrink-0"
+                  >
+                    <Image
+                      src={productImage}
+                      alt={item.imageUrl ? item.name : `${item.brand} logo`}
+                      width={48}
+                      height={48}
+                      className="w-full h-full object-contain rounded-lg"
+                    />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-sm">{item.name}</p>
+                    <p className="text-xs text-neutral-500">
+                      Qty {item.quantity}
+                      {item.variant ? ` · ${item.variant}` : ""}
+                    </p>
+                  </div>
+
+                  <span className="font-bold text-sm">
+                    {formatRands(item.priceCents * item.quantity)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
           <SummaryRow label="Subtotal" value={formatRands(subtotalCents)} /><SummaryRow label="Discount" value={discountCents ? `-${formatRands(discountCents)}` : "—"} /><SummaryRow label="Shipping" value={shippingCents === 0 ? <span style={{ color: "#4a6b3c" }}>Free</span> : formatRands(shippingCents)} />
           <div className="border-t mt-3 pt-4 flex justify-between font-black text-lg"><span>Total</span><span>{formatRands(totalCents)}</span></div>
           <button type="button" onClick={placeOrder} disabled={loading} style={{ background: palette.black, color: palette.cream }} className="w-full py-4 rounded-full mt-6 text-xs font-black uppercase disabled:opacity-60">{loading ? "Opening secure payment…" : "Continue to secure payment"}</button>

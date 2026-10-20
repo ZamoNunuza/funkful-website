@@ -2,8 +2,18 @@ import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import {
+  buildCheckoutKey,
+  CHECKOUT_REUSE_WINDOW_MS,
+  createYocoCheckout,
+  isFresh,
+  RECENTLY_PAID_WINDOW_MS,
+  sortYocoLineItems,
+} from "@/lib/yoco-checkout";
 
 export const runtime = "nodejs";
+// Yoco creation retries up to 3 times (7s each) with the same idempotency key.
+export const maxDuration = 30;
 
 interface CheckoutLineItem {
   id: string;
@@ -224,7 +234,6 @@ const allProducts = catalogue ?? [];
     return NextResponse.json({ error: "Order total is below the minimum payable amount." }, { status: 400 });
   }
 
-  const orderId = randomUUID();
   let userId: string | null = null;
   try {
     const authClient = await createClient();
@@ -232,68 +241,187 @@ const allProducts = catalogue ?? [];
     userId = data.user?.id ?? null;
   } catch { /* guest checkout */ }
 
-  const { error: orderError } = await supabase.from("orders").insert({
-    id: orderId,
-    user_id: userId,
-    order_number: makeOrderNumber(),
+  const shippingDetails = {
+    firstName: clean(body.shipping?.firstName),
+    lastName: clean(body.shipping?.lastName),
+    phone: clean(body.shipping?.phone),
+    address: clean(body.shipping?.address),
+    city: clean(body.shipping?.city),
+    province: clean(body.shipping?.province),
+    postalCode: clean(body.shipping?.postalCode),
+    country: clean(body.shipping?.country) || "South Africa",
+  };
+
+  // Identical basket + customer + delivery details => identical key. This is what
+  // lets a double click, a network retry or a "back" from Yoco find the order that
+  // is already open instead of creating a second payable one.
+  const checkoutKey = buildCheckoutKey({
+    userId,
     email,
-    first_name: clean(body.shipping?.firstName) || null,
-    last_name: clean(body.shipping?.lastName) || null,
-    phone: clean(body.shipping?.phone) || null,
-    shipping_address: clean(body.shipping?.address) || null,
-    shipping_city: clean(body.shipping?.city) || null,
-    shipping_province: clean(body.shipping?.province) || null,
-    shipping_postal_code: clean(body.shipping?.postalCode) || null,
-    shipping_country: clean(body.shipping?.country) || "South Africa",
-    subtotal_cents: subtotal,
-    discount_cents: discount,
-    shipping_cents: shipping,
-    total_cents: total,
-    promo_code: promoCode,
-    status: "pending",
-    payment_status: "pending",
+    items: normalizedItems,
+    shipping: shippingDetails,
+    promoCode,
+    totalCents: total,
   });
 
-  if (orderError) {
-    console.error(orderError);
-    return NextResponse.json({ error: "Could not save your order." }, { status: 500 });
+  // 1. The same basket was paid moments ago (the customer pressed back after
+  //    paying, or the cart was never cleared): never charge it again.
+  const { data: recentlyPaid } = await supabase
+    .from("orders")
+    .select("id")
+    .eq("checkout_key", checkoutKey)
+    .eq("payment_status", "paid")
+    .gte("payment_confirmed_at", new Date(Date.now() - RECENTLY_PAID_WINDOW_MS).toISOString())
+    .limit(1)
+    .maybeSingle();
+  if (recentlyPaid) {
+    return NextResponse.json({ alreadyPaid: true, orderId: recentlyPaid.id });
   }
 
-  const { error: itemsError } = await supabase.from("order_items").insert(
-    normalizedItems.map((item) => ({ order_id: orderId, ...item }))
-  );
+  type OpenOrder = { id: string; created_at: string; yoco_checkout_id: string | null; yoco_redirect_url: string | null };
+  const findOpenOrder = async (): Promise<OpenOrder | null> => {
+    const { data } = await supabase
+      .from("orders")
+      .select("id,created_at,yoco_checkout_id,yoco_redirect_url")
+      .eq("checkout_key", checkoutKey)
+      .eq("status", "pending")
+      .eq("payment_status", "pending")
+      .maybeSingle();
+    return (data as OpenOrder | null) ?? null;
+  };
 
-  if (itemsError) {
-    await supabase.from("orders").delete().eq("id", orderId);
-    return NextResponse.json({ error: "Could not save your order items." }, { status: 500 });
+  // 2. An unpaid order for this exact basket is already open: resume it.
+  let orderId: string = randomUUID();
+  let resuming = false;
+  const existing = await findOpenOrder();
+
+  if (existing) {
+    if (!isFresh(existing.created_at, CHECKOUT_REUSE_WINDOW_MS)) {
+      // Too old to trust the stored Yoco page. Release it and start fresh. If it
+      // is paid late, the webhook still finalises it (finalize_paid_order does
+      // not depend on the order being pending).
+      await supabase.from("orders").update({ status: "cancelled" })
+        .eq("id", existing.id).eq("status", "pending").eq("payment_status", "pending");
+    } else if (existing.yoco_checkout_id && existing.yoco_redirect_url) {
+      return NextResponse.json({ redirectUrl: existing.yoco_redirect_url, orderId: existing.id, resumed: true });
+    } else {
+      orderId = existing.id;
+      resuming = true;
+    }
   }
 
-  const yocoRes = await fetch("https://payments.yoco.com/api/checkouts", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${secretKey}` },
-    body: JSON.stringify({
+  if (!resuming) {
+    const { error: orderError } = await supabase.from("orders").insert({
+      id: orderId,
+      user_id: userId,
+      order_number: makeOrderNumber(),
+      email,
+      first_name: shippingDetails.firstName || null,
+      last_name: shippingDetails.lastName || null,
+      phone: shippingDetails.phone || null,
+      shipping_address: shippingDetails.address || null,
+      shipping_city: shippingDetails.city || null,
+      shipping_province: shippingDetails.province || null,
+      shipping_postal_code: shippingDetails.postalCode || null,
+      shipping_country: shippingDetails.country,
+      subtotal_cents: subtotal,
+      discount_cents: discount,
+      shipping_cents: shipping,
+      total_cents: total,
+      promo_code: promoCode,
+      checkout_key: checkoutKey,
+      status: "pending",
+      payment_status: "pending",
+    });
+
+    if (orderError) {
+      if (orderError.code === "23505" && orderError.message?.includes("orders_open_checkout_key_idx")) {
+        // A simultaneous request for the same basket won the race (double click).
+        // Resume its order rather than creating a second one.
+        const winner = await findOpenOrder();
+        if (winner?.yoco_checkout_id && winner.yoco_redirect_url) {
+          return NextResponse.json({ redirectUrl: winner.yoco_redirect_url, orderId: winner.id, resumed: true });
+        }
+        return NextResponse.json(
+          { error: "Your order is already being prepared. Please wait a moment and try again.", retryable: true },
+          { status: 409 },
+        );
+      }
+      console.error(orderError);
+      return NextResponse.json({ error: "Could not save your order." }, { status: 500 });
+    }
+
+    const { error: itemsError } = await supabase.from("order_items").insert(
+      normalizedItems.map((item) => ({ order_id: orderId, ...item }))
+    );
+
+    if (itemsError) {
+      await supabase.from("orders").delete().eq("id", orderId);
+      return NextResponse.json({ error: "Could not save your order items." }, { status: 500 });
+    }
+  }
+
+  // Always build the Yoco request from the SAVED order rows, whether this is the
+  // first attempt or a resume, so the body is identical every time. Yoco refuses
+  // (422) a reused idempotency key with a different body.
+  const { data: savedItems } = await supabase
+    .from("order_items")
+    .select("product_name,variant,unit_price_cents,quantity")
+    .eq("order_id", orderId);
+
+  if (!savedItems?.length) {
+    return NextResponse.json(
+      { error: "Your order is still being saved. Please try again in a moment.", retryable: true },
+      { status: 409 },
+    );
+  }
+
+  const checkout = await createYocoCheckout(
+    secretKey,
+    {
       amount: total,
       currency: "ZAR",
-      lineItems: normalizedItems.map((item) => ({
-        displayName: item.variant ? `${item.product_name} (${item.variant})` : item.product_name,
-        quantity: item.quantity,
-        pricingDetails: { price: item.unit_price_cents },
-      })),
+      lineItems: sortYocoLineItems(
+        savedItems.map((item) => ({
+          displayName: item.variant ? `${item.product_name} (${item.variant})` : item.product_name,
+          quantity: item.quantity,
+          pricingDetails: { price: item.unit_price_cents },
+        })),
+      ),
       successUrl: `${siteUrl}/checkout/success?order=${orderId}`,
       cancelUrl: `${siteUrl}/cart`,
       failureUrl: `${siteUrl}/checkout/failed?order=${orderId}`,
       metadata: { orderId, email },
-    }),
-  });
+    },
+    // One key per order: a retry for this order can only ever get the same checkout.
+    `funkful-checkout-${orderId}`,
+  );
 
-  if (!yocoRes.ok) {
-    await supabase.from("orders").update({ status: "cancelled" }).eq("id", orderId);
-    console.error("Yoco checkout creation failed:", await yocoRes.text());
-    return NextResponse.json({ error: "Could not start checkout. Please try again." }, { status: 502 });
+  if (!checkout.ok) {
+    if (!checkout.retryable) {
+      // Yoco definitively refused, so no payable checkout exists: release the order.
+      await supabase.from("orders").update({ status: "cancelled" }).eq("id", orderId).eq("payment_status", "pending");
+      return NextResponse.json({ error: "Could not start checkout. Please try again." }, { status: 502 });
+    }
+    // Outcome unknown (timeout / network / 5xx). Yoco may have created a checkout,
+    // so do NOT cancel. The order stays open and the customer's next click resumes
+    // it with the same idempotency key, which returns that same checkout.
+    return NextResponse.json(
+      { error: "Our payment provider is not responding. You have not been charged. Please try again in a moment.", retryable: true },
+      { status: 503 },
+    );
   }
 
-  const data: { id: string; redirectUrl: string } = await yocoRes.json();
-  await supabase.from("orders").update({ yoco_checkout_id: data.id }).eq("id", orderId);
+  const { error: saveError } = await supabase
+    .from("orders")
+    .update({ yoco_checkout_id: checkout.id, yoco_redirect_url: checkout.redirectUrl })
+    .eq("id", orderId);
 
-  return NextResponse.json({ redirectUrl: data.redirectUrl, orderId });
+  if (saveError) {
+    // Not fatal: the webhook matches on metadata.orderId, and a later retry gets
+    // this same checkout back from Yoco and saves it again.
+    console.error("Could not save Yoco checkout on order:", { orderId, checkoutId: checkout.id, error: saveError });
+  }
+
+  return NextResponse.json({ redirectUrl: checkout.redirectUrl, orderId });
 }

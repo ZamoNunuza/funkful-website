@@ -69,6 +69,7 @@ export default async function ProductPage({
 
   const productForCart = {
     ...product,
+    imageUrl: images?.[0]?.image_url ?? null,
     variantGroups: [...groups.entries()].map(
       ([name, options]) => ({
         name,

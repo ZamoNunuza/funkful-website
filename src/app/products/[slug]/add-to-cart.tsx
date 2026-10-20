@@ -7,6 +7,7 @@ type Product = {
   id: string;
   brand: "funkful" | "scoopful" | "anime-box";
   name: string;
+  imageUrl?: string | null;
   product_type: "ready-made" | "made-to-order" | "personalize" | "mystery" | "addon";
   base_price_cents: number;
   personalization_prompt: string | null;
@@ -35,7 +36,24 @@ export default function AddToCart({ product }: { product: Product }) {
       if (product.product_type === "personalize" && !personalization.trim()) return;
       if (personalization.trim()) parts.push(`"${personalization.trim()}"`);
     }
-    addItem({ id: `${product.id}-${parts.join("-")}`.toLowerCase().replace(/[^a-z0-9-]+/g, "-"), brand: product.brand, name: product.name, variant: parts.join(" · ") || undefined, priceCents: price, productType: product.product_type === "addon" ? "addon" : product.product_type === "mystery" ? "mystery" : product.product_type === "personalize" ? "personalize" : "made-to-order" });
+    addItem({
+      id: `${product.id}-${parts.join("-")}`
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, "-"),
+      brand: product.brand,
+      name: product.name,
+      imageUrl: product.imageUrl ?? null,
+      variant: parts.join(" · ") || undefined,
+      priceCents: price,
+      productType:
+        product.product_type === "addon"
+          ? "addon"
+          : product.product_type === "mystery"
+            ? "mystery"
+            : product.product_type === "personalize"
+              ? "personalize"
+              : "made-to-order",
+    });
   }
 
   return <div>
