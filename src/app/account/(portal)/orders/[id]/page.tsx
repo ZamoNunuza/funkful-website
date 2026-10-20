@@ -187,7 +187,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <p className="text-sm text-neutral-600 leading-relaxed mb-4">
               Quote <span className="font-bold text-black">{order.order_number}</span> when you get in touch and we&apos;ll find it straight away.
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap [&>*]:flex [&>*]:min-h-11 [&>*]:w-full [&>*]:items-center [&>*]:justify-center sm:[&>*]:w-auto sm:[&>*]:min-w-36">
               {canReorder && (
                 <ReorderButton
                   lines={items.map((i) => ({
@@ -201,7 +201,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 />
               )}
               <OrderWhatsAppLink orderNumber={order.order_number} orderStatus={meta.label} />
-              <Link href="/contact" className={outlineButtonClass}>
+              <Link href="/contact" className={`${outlineButtonClass} text-center`}>
                 Contact us
               </Link>
             </div>

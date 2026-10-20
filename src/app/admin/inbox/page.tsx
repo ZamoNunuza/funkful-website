@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import InboxRefresh from "../../../components/admin/InboxRefresh";
 import InboxList from "../../../components/admin/InboxList";
 
 const MAILBOXES = [
@@ -136,7 +135,6 @@ export default async function AdminInboxPage({
 
   return (
     <main className="min-h-screen bg-[#F7F4EF] text-[#111111]">
-      <InboxRefresh />
       <header className="border-b border-black/10 bg-[#FAF8F4]">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-5">
           <div className="flex items-center gap-4">

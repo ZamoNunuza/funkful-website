@@ -37,6 +37,42 @@ export default function CheckoutPage() {
     if (!items.length) window.location.replace("/cart");
   }, [hydrated, items.length]);
 
+  // Signed-in customers can check out with their saved profile and default address.
+  // Guests receive a 401 from this endpoint, which is intentionally ignored.
+  useEffect(() => {
+    let cancelled = false;
+    async function loadSavedDetails() {
+      try {
+        const response = await fetch("/api/account/checkout-default", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (cancelled) return;
+        if (data.email) setEmail((current: string) => current || data.email);
+        if (data.profile) {
+          setFirstName((current: string) => current || data.profile.firstName || "");
+          setLastName((current: string) => current || data.profile.lastName || "");
+          setPhone((current: string) => current || data.profile.phone || "");
+        }
+        const savedAddress = Array.isArray(data.addresses)
+          ? data.addresses.find((item: { isDefault?: boolean }) => item.isDefault) ?? data.addresses[0]
+          : null;
+        if (savedAddress) {
+          setFirstName((current: string) => current || savedAddress.firstName || "");
+          setLastName((current: string) => current || savedAddress.lastName || "");
+          setPhone((current: string) => current || savedAddress.phone || "");
+          setAddress((current: string) => current || savedAddress.street || "");
+          setCity((current: string) => current || savedAddress.city || "");
+          setProvince((current: string) => current || savedAddress.province || "");
+          setPostalCode((current: string) => current || savedAddress.postalCode || "");
+        }
+      } catch {
+        // Saved details are a convenience; checkout remains usable if loading fails.
+      }
+    }
+    void loadSavedDetails();
+    return () => { cancelled = true; };
+  }, []);
+
   // Pressing Back from the Yoco page can restore this page from the browser's
   // back/forward cache with the button still stuck on "Opening secure payment…".
   // Reset it so the customer can continue; the server resumes the same order.

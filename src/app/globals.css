@@ -233,3 +233,13 @@ a.primary:hover {
   color: var(--black) !important;
   border: 2px solid var(--black) !important;
 }
+
+ .relative input{
+    border-radius: var(--radius-xl);
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+    padding-inline: calc(var(--spacing) * 3.5);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    padding-block: calc(var(--spacing) * 3);
+  }

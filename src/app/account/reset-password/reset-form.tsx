@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { updatePassword, type ResetPasswordState } from "@/app/account/actions";
 import { PASSWORD_MIN_LENGTH } from "@/lib/account-shared";
 import { Field, FormMessage, inputClass, inputStyle, primaryButtonClass, primaryButtonStyle } from "@/components/account/ui";
+import PasswordInput from "@/components/account/PasswordInput";
 
 export default function ResetPasswordForm() {
   const [state, action, pending] = useActionState<ResetPasswordState, FormData>(updatePassword, null);
@@ -18,10 +19,10 @@ export default function ResetPasswordForm() {
       </div>
 
       <Field label="New password">
-        <input name="password" type="password" required minLength={PASSWORD_MIN_LENGTH} autoComplete="new-password" style={inputStyle} className={inputClass} />
+        <PasswordInput name="password" required minLength={PASSWORD_MIN_LENGTH} autoComplete="new-password" inputStyle={inputStyle} inputClassName={inputClass} />
       </Field>
       <Field label="Confirm new password">
-        <input name="confirmPassword" type="password" required minLength={PASSWORD_MIN_LENGTH} autoComplete="new-password" style={inputStyle} className={inputClass} />
+        <PasswordInput name="confirmPassword" required minLength={PASSWORD_MIN_LENGTH} autoComplete="new-password" inputStyle={inputStyle} inputClassName={inputClass} />
       </Field>
 
       <FormMessage error={state?.error} />

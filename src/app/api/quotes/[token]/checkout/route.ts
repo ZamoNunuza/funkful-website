@@ -205,7 +205,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     return NextResponse.json({ error: "Could not link your order to the quotation. Please try again." }, { status: 500 });
   }
 
-  const { error: itemError } = await supabase.from("order_items").insert(items.map((item) => ({
+  // Quote line items are custom-quoted items, not catalogue products. Give each
+  // line a recognisable, unique quote-prefixed identifier instead of a null ID.
+  const { error: itemError } = await supabase.from("order_items").insert(items.map((item, index) => ({
     order_id: orderId, product_id: null, product_name: item.description, brand: "funkful",
     variant: item.details || null, personalization_text: item.details || null,
     unit_price_cents: item.unitPriceCents, quantity: item.quantity,

@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { signIn, signUp, forgotPassword } from "@/app/account/actions";
 import { brands, palette } from "@/lib/brands";
+import PasswordInput from "@/components/account/PasswordInput";
 
 type AuthState = { error?: string } | null;
 type ForgotPasswordState = { error?: string; success?: string } | null;
@@ -150,7 +151,7 @@ return (
               </Field>
 
               <Field label="Password">
-                <input type="password" name="password" required placeholder="••••••••" style={inputStyle} className="w-full" />
+                <PasswordInput name="password" required placeholder="••••••••" inputStyle={inputStyle} inputClassName="w-full" />
               </Field>
 
               <button
@@ -196,7 +197,7 @@ return (
               </Field>
 
               <Field label="Password">
-                <input type="password" name="password" required minLength={8} placeholder="8+ characters, with a letter and number" autoComplete="new-password" style={inputStyle} className="w-full" />
+                <PasswordInput name="password" required minLength={8} placeholder="8+ characters, with a letter and number" autoComplete="new-password" inputStyle={inputStyle} inputClassName="w-full" />
               </Field>
 
               {signUpState?.error && (
