@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { brands } from "@/lib/brands";
+import FunkfulEmblem from "@/components/FunkfulEmblem";
 import styles from './Footer.module.css';
 
 const CONTACT = {
@@ -122,10 +123,10 @@ export default function Footer() {
             </div>
 
             <div className={`max-w-[1180px] ${styles.bottom}`}>
-                <span>
+                <span className="inline-flex items-center gap-2">
+                    <FunkfulEmblem size={18} alt="" />
                     © {new Date().getFullYear()} Funkful (Pty) Ltd. All rights reserved.
                 </span>
-
                 <span>funkful.co.za</span>
             </div>
         </footer>

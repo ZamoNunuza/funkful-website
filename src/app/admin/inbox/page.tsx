@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import InboxList from "../../../components/admin/InboxList";
+import FunkfulEmblem from "@/components/FunkfulEmblem";
 
 const MAILBOXES = [
   { key: "all", label: "All mail", address: "" },
@@ -138,8 +139,8 @@ export default async function AdminInboxPage({
       <header className="border-b border-black/10 bg-[#FAF8F4]">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-5">
           <div className="flex items-center gap-4">
-            <Link href="/admin/">
-              <img src="/assets/funkful-logo.png" alt="Funkful" className="h-7 w-auto" />
+           <Link href="/admin/">
+              <FunkfulEmblem size={32} />
             </Link>
             <div className="h-7 w-px bg-black/10" />
             <div>

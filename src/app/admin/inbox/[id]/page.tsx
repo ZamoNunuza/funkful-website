@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import FunkfulEmblem from "@/components/FunkfulEmblem";
 
 type EmailRow = {
   id?: string;
@@ -186,12 +187,8 @@ export default async function AdminInboxMessagePage({
       <header className="border-b border-black/10 bg-[#FAF8F4]">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-5">
           <div className="flex items-center gap-4">
-            <Link href="/admin/inbox">
-              <img
-                src="/assets/funkful-logo.png"
-                alt="Funkful"
-                className="h-7 w-auto"
-              />
+             <Link href="/admin/inbox">
+              <FunkfulEmblem size={32} />
             </Link>
 
             <div className="h-7 w-px bg-black/10" /><div>

@@ -10,6 +10,7 @@ import { palette } from "@/lib/brands";
 import { signOut } from "@/app/account/actions";
 import { getProfile, getSessionUser } from "@/lib/account-server";
 import AccountNav from "@/components/account/AccountNav";
+import FunkfulEmblem from "@/components/FunkfulEmblem";
 
 export default async function AccountPortalLayout({ children }: { children: ReactNode }) {
   const user = await getSessionUser();
@@ -23,9 +24,17 @@ export default async function AccountPortalLayout({ children }: { children: Reac
   return (
     <main style={{ background: palette.cream, color: palette.black }} className="min-h-screen">
       <div className="max-w-[1180px] mx-auto px-5 sm:px-8 py-10 sm:py-14">
-        <span style={{ color: "#8a4a45" }} className="text-xs font-bold uppercase tracking-wide">
-          Your account
-        </span>
+        <div className="flex items-center gap-3">
+          <span
+            style={{ background: "white", borderColor: "rgba(17,17,17,0.08)" }}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border"
+          >
+            <FunkfulEmblem size={26} alt="" />
+          </span>
+          <span style={{ color: "#8a4a45" }} className="text-xs font-bold uppercase tracking-wide">
+            Your account
+          </span>
+        </div>
         <h1 className="text-3xl sm:text-4xl font-black uppercase mt-2 mb-1">
           {profile?.first_name ? `Hey, ${profile.first_name}` : "Welcome back"}
         </h1>

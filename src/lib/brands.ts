@@ -18,6 +18,12 @@ export interface Brand {
   description: string;
   /** Path under /public, e.g. "/assets/scoopful-logo.png" */
   logo: string;
+  /**
+   * Square mark for compact spaces (favicons, avatars, tiles, placeholders).
+   * Use `logo` for headers, packaging and other branding material. Brands
+   * without their own emblem fall back to `logo` via `brandMark()`.
+   */
+  emblem?: string;
   /** Brand accent color (hex) — background for cards, badges, etc. */
   accent: string;
   /** Ink/text color that reads well on top of `accent` */
@@ -26,6 +32,9 @@ export interface Brand {
   /** Route to the brand's landing page */
   href: string;
 }
+
+/** Funkful's square emblem. Compact spaces only; the wide logo handles headers. */
+export const FUNKFUL_EMBLEM = "/assets/funkful-emblem.png";
 
 export const brands: Record<BrandSlug, Brand> = {
   funkful: {
@@ -36,6 +45,7 @@ export const brands: Record<BrandSlug, Brand> = {
     description:
       "Custom mugs, tumblers and apparel — bespoke, affordable lifestyle goods that trigger a little self-expression every day.",
     logo: "/assets/funkful-logo.png",
+    emblem: FUNKFUL_EMBLEM,
     accent: "#E8DDD0", // beige
     accentInk: "#111111",
     status: "live",
@@ -93,6 +103,11 @@ export const ballColors = {
   red: "#A6564B",
   orange: "#D98A42",
 } as const;
+
+/** Best image for a compact, roughly square space: emblem if the brand has one, else its logo. */
+export function brandMark(brand: Brand): string {
+  return brand.emblem ?? brand.logo;
+}
 
 export function getBrand(slug: BrandSlug): Brand {
   return brands[slug];
