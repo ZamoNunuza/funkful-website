@@ -240,7 +240,7 @@ export default function AboutPage() {
 
           <div className="mt-8">
             <Link
-              href="/products"
+              href="/originals"
               className="inline-flex rounded-full bg-white px-7 py-3.5 text-sm font-bold text-black transition-transform hover:scale-[1.02]"
             >
               Shop Funkful

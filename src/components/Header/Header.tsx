@@ -125,7 +125,7 @@ export default function Header() {
           </nav>
 
           <div className={styles.navIcons}>
-            <span className="hidden md:inline">Search</span>
+            {/*<span className="hidden md:inline">Search</span>*/}
 
             <Link
               href={accountHref}
