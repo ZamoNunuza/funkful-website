@@ -155,6 +155,7 @@ export default function HomePage() {
                   width={260}
                   height={260}
                   className="w-[190px] sm:w-[230px] h-auto object-contain mx-auto"
+                  loading="eager"
                 />
 
                 <p

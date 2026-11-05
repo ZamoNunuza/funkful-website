@@ -18,7 +18,8 @@ const montserrat = Montserrat({
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  // Keep only the Poppins weights used by the site to avoid downloading an unused font file.
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 })
 
