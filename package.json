@@ -9,7 +9,8 @@
     "lint": "eslint",
     "verify:checkout-env": "node scripts/verify-checkout-env.mjs",
     "setup:resend-templates": "node scripts/setup-resend-templates.mjs",
-    "setup:yoco-webhook": "node scripts/create-yoco-webhook.mjs"
+    "setup:yoco-webhook": "node scripts/create-yoco-webhook.mjs",
+    "regenerate:product-previews": "node scripts/regenerate-product-previews.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
@@ -19,7 +20,8 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "resend": "^6.25.0",
-    "svix": "^1.99.1"
+    "svix": "^1.99.1",
+    "sharp": "^0.35.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

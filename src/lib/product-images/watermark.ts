@@ -9,15 +9,38 @@ function escapeXml(value: string) {
 
 function watermarkSvg(width: number, height: number, text: string) {
   const safe = escapeXml(text);
+
   return Buffer.from(`
     <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <pattern id="watermark" width="360" height="220" patternUnits="userSpaceOnUse" patternTransform="rotate(-28)">
-          <text x="0" y="105" fill="white" fill-opacity="0.22" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" letter-spacing="4">${safe}</text>
+        <pattern id="watermark"
+          width="460"
+          height="280"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(-28)">
+          <text
+            x="0"
+            y="105"
+            fill="#ffffff"
+            fill-opacity="0.16"
+            stroke="#111111"
+            stroke-opacity="0.10"
+            stroke-width="1"
+            stroke-linejoin="round"
+            paint-order="stroke"
+            font-family="Arial, Helvetica, sans-serif"
+            font-size="22"
+            font-weight="600"
+            letter-spacing="3"
+          >${safe}</text>
         </pattern>
       </defs>
-      <rect width="100%" height="100%" fill="url(#watermark)" />
-      <rect x="16" y="16" width="${Math.max(0, width - 32)}" height="${Math.max(0, height - 32)}" fill="none" stroke="white" stroke-opacity="0.18" stroke-width="2" rx="18" />
+
+      <rect
+        width="100%"
+        height="100%"
+        fill="url(#watermark)"
+      />
     </svg>
   `);
 }
