@@ -67,6 +67,40 @@ function slugPart(value: string) {
     .replace(/^-|-$/g, "");
 }
 
+
+const collectionDetails: Record<
+  string,
+  {
+    tagline: string;
+    blurb: string;
+    description: string;
+    seo: { title: string; description: string };
+  }
+> = {
+  "funkful emblem": {
+    tagline: "Wear the mark.",
+    blurb: "One emblem. A signature statement.",
+    description:
+      "The Funkful Emblem is our signature monogram, a distinctive arrangement of interlocking lines within a circular crest. This collection brings the emblem to life across our apparel range, celebrating the mark through wearable pieces designed for everyday expression.",
+    seo: {
+      title: "Funkful Emblem Collection | Apparel & Accessories | Funkful",
+      description:
+        "Discover the Funkful Emblem collection, featuring apparel and accessories with our signature circular monogram crest. Designed in South Africa.",
+    },
+  },
+  "funkful logo": {
+    tagline: "Wear the name.",
+    blurb: "The Funkful identity, made wearable.",
+    description:
+      "The Funkful Logo collection celebrates our brand identity through apparel featuring the distinctive Funkful wordmark. From casual everyday pieces to comfortable wardrobe staples, each item brings the Funkful name into your everyday style.",
+    seo: {
+      title: "Funkful Logo Collection | Branded Apparel | Funkful",
+      description:
+        "Shop the Funkful Logo collection, featuring apparel with the distinctive Funkful wordmark. Bring the Funkful name into your everyday style.",
+    },
+  },
+};
+
 export default function OriginalsCatalog({
   products,
 }: {
@@ -175,37 +209,43 @@ export default function OriginalsCatalog({
           );
 
   /**
-   * Keep Personalization as one standalone collection across all
-   * product categories. Other design groups remain separated by
-   * category so the existing catalogue structure is preserved.
+   * Design groups are collections, not category-specific buckets.
+   * This lets apparel, accessories and other products carrying the same
+   * design appear together on the All Originals storefront.
    */
+
+
   const groupedProducts = useMemo(() => {
     const groups = new Map<
       string,
-      {
-        category: string | null;
-        designGroup: string;
-        products: Product[];
-      }
+      { category: string | null; designGroup: string; products: Product[] }
     >();
 
     [...visible]
       .sort((a, b) => a.sort_order - b.sort_order)
       .forEach((product) => {
-        const designGroup =
-          product.design_group?.trim() ||
-          categoryLabel(product.category);
+        const rawDesignGroup = product.design_group?.trim();
+        const normalizedGroup = rawDesignGroup?.toLowerCase() ?? "";
+        const isPersonalization = normalizedGroup === "personalization";
 
-        const isPersonalization =
-          product.design_group?.trim().toLowerCase() ===
-          "personalization";
+        // Keep Funkful Emblem and Funkful Logo as distinct collections.
+        // Matching is case-insensitive, while the storefront uses canonical names.
+        const canonicalDesignGroup =
+          normalizedGroup === "funkful emblem"
+            ? "Funkful Emblem"
+            : normalizedGroup === "funkful logo"
+              ? "Funkful Logo"
+              : rawDesignGroup;
+
+        const designGroup =
+          canonicalDesignGroup || categoryLabel(product.category);
         const groupKey = isPersonalization
           ? "design::personalization"
-          : `${product.category}::${designGroup}`;
+          : `design::${designGroup.toLowerCase()}`;
 
         if (!groups.has(groupKey)) {
           groups.set(groupKey, {
-            category: isPersonalization ? null : product.category,
+            category: null,
             designGroup: isPersonalization ? "Personalization" : designGroup,
             products: [],
           });
@@ -214,7 +254,10 @@ export default function OriginalsCatalog({
         groups.get(groupKey)!.products.push(product);
       });
 
-    return [...groups.values()];
+    return [...groups.values()].map((group) => ({
+      ...group,
+      details: collectionDetails[group.designGroup.toLowerCase()] ?? null,
+    }));
   }, [visible]);
 
   return (
@@ -312,6 +355,17 @@ export default function OriginalsCatalog({
                     </div>
 
                     <div className="mt-4 h-px bg-black/10" />
+                    {group.details && (
+                      <div className="mt-5 max-w-3xl">
+                        <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-neutral-500">
+                          {group.details.tagline}
+                        </p>
+                        <p className="mt-1 text-lg font-black">{group.details.blurb}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-neutral-600">
+                          {group.details.description}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* PRODUCTS IN GROUP */}
