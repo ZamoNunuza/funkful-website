@@ -16,7 +16,6 @@ export default function robots(): MetadataRoute.Robots {
         "/quote/",
       ],
     },
-    sitemap: `${siteUrl}/sitemap.xml`,
-    host: siteUrl,
+    sitemap: `${siteUrl}/sitemap.xml`
   };
 }
