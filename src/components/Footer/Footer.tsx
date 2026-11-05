@@ -70,7 +70,7 @@ export default function Footer() {
                 </div>
 
                 <div className={styles.linkCol}>
-                    <h5>Shop</h5>
+                    <h2>Shop</h2>
 
                     {SHOP_LINKS.map((l) => {
                         const isActive = pathname === l.href;
@@ -88,7 +88,7 @@ export default function Footer() {
                 </div>
 
                 <div className={styles.linkCol}>
-                    <h5>Support</h5>
+                    <h2>Support</h2>
 
                     {SUPPORT_LINKS.map((l) => {
                         const isActive = pathname === l.href;
@@ -106,7 +106,7 @@ export default function Footer() {
                 </div>
 
                 <div className={styles.linkCol}>
-                    <h5>Get in touch</h5>
+                    <h2>Get in touch</h2>
 
                     <a href={`mailto:${CONTACT.email}`}>
                         {CONTACT.email}

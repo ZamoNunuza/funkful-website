@@ -26,7 +26,7 @@
 
 .blurb {
   font-size: 13px;
-  color: #6a6255;
+  color: #5b5448;
   line-height: 1.55;
   max-width: 260px;
 }
@@ -65,14 +65,14 @@
   flex-direction: column;
   gap: 10px;
 }
-.linkCol h5 {
+.linkCol h2 {
   font-family: var(--font-montserrat), sans-serif;
   font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--blush-ink);
-  margin-bottom: 4px;
+  color: var(--brand-ink);
+  margin: 0 0 4px;
 }
 .linkCol a,
 .linkCol .address {
@@ -93,7 +93,7 @@
   justify-content: space-between;
   align-items: center;
   font-size: 12px;
-  color: #666;
+  color: #555555;
 }
 
 @media (max-width: 900px) {

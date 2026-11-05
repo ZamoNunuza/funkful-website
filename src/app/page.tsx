@@ -126,7 +126,7 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <div className="flex flex-wrap gap-x-6 gap-y-2 mt-8 text-xs font-bold uppercase tracking-wide text-neutral-500">
+            <div className="flex flex-wrap gap-x-6 gap-y-2 mt-8 text-xs font-bold uppercase tracking-wide text-neutral-600">
               <span>✓ Personalized</span>
               <span>✓ Made to order</span>
               <span>✓ Packed with care</span>
@@ -155,7 +155,6 @@ export default function HomePage() {
                   width={260}
                   height={260}
                   className="w-[190px] sm:w-[230px] h-auto object-contain mx-auto"
-                  loading="eager"
                 />
 
                 <p
@@ -234,7 +233,7 @@ export default function HomePage() {
                 className="group rounded-[28px] p-8 md:p-10 min-h-[310px] flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl"
               >
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.14em] opacity-60">
+                  <span className="text-[10px] font-black uppercase tracking-[0.14em]">
                     {destination.eyebrow}
                   </span>
 
@@ -354,7 +353,7 @@ export default function HomePage() {
             <div>
               <span
                 style={{
-                  color: "#8a4a45",
+                  color: scoopful.accentInk,
                 }}
                 className="text-xs font-bold uppercase tracking-[0.14em] block mb-3"
               >
