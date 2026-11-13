@@ -55,7 +55,7 @@ export default async function AdminDashboardPage() {
             </h1>
 
             <p className="mt-2 text-sm text-neutral-600">
-              Manage orders, customer communications, products and images.
+              Manage orders, customer communications, products, images and craft-supply inventory.
             </p>
           </div>
 
@@ -139,6 +139,19 @@ export default async function AdminDashboardPage() {
             <h2 className="mt-2 text-2xl font-black uppercase">Custom quotations</h2>
             <p className="mt-2 max-w-md text-sm leading-6 text-neutral-600">Create personalised quotations and send customers a secure, quote-specific payment link.</p>
             <span className="mt-8 inline-block text-sm font-black">Manage quotations →</span>
+          </Link>
+
+          {/* Inventory */}
+          <Link
+            href="/admin/inventory"
+            className="rounded-3xl border border-black/10 bg-[#FAF8F4] p-7 transition hover:-translate-y-0.5 hover:shadow-sm"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-black/45">Workshop</p>
+            <h2 className="mt-2 text-2xl font-black uppercase">Inventory</h2>
+            <p className="mt-2 max-w-md text-sm leading-6 text-neutral-600">
+              Craft supplies stock: HTV, vinyl, DTF and sublimation. Stock in and out, stock counts, QR labels and reports.
+            </p>
+            <span className="mt-8 inline-block text-sm font-black">Open inventory →</span>
           </Link>
 
           {/* Products & Images */}
