@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -17,7 +18,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Check whether the currently authenticated user is an admin.
+  // Check whether the authenticated user is an admin.
   useEffect(() => {
     let cancelled = false;
 
@@ -30,9 +31,7 @@ export default function Header() {
         });
 
         if (!response.ok) {
-          if (!cancelled) {
-            setIsAdmin(false);
-          }
+          if (!cancelled) setIsAdmin(false);
           return;
         }
 
@@ -42,9 +41,7 @@ export default function Header() {
           setIsAdmin(data.isAdmin === true);
         }
       } catch {
-        if (!cancelled) {
-          setIsAdmin(false);
-        }
+        if (!cancelled) setIsAdmin(false);
       }
     }
 
@@ -55,12 +52,33 @@ export default function Header() {
     };
   }, [pathname]);
 
-  // Prevent background scroll while the mobile menu is open.
+  // Prevent background scrolling while the menu is open.
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? "hidden" : "";
+    const previousOverflow = document.body.style.overflow;
+
+    if (menuOpen) {
+      document.body.style.overflow = "hidden";
+    }
 
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [menuOpen]);
+
+  // Allow the Escape key to close the menu.
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [menuOpen]);
 
@@ -70,23 +88,53 @@ export default function Header() {
 
   const accountHref = isAdmin ? "/admin" : "/account";
 
+  const renderNavigationLinks = () =>
+    navLinks.map((link) => {
+      const isActive = pathname === link.href;
+      const isSoon = "soon" in link && Boolean(link.soon);
+
+      return (
+        <Link
+          key={link.href}
+          href={link.href}
+          className={[
+            isSoon ? styles.soon : "",
+            isActive ? styles.active : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          aria-current={isActive ? "page" : undefined}
+          onClick={() => setMenuOpen(false)}
+        >
+          {link.label}
+        </Link>
+      );
+    });
+
   return (
     <>
       <div className={styles.shipBanner}>
-        Free shipping storewide on orders over R400{" "}
-        <span>·</span> Mix Scoopful &amp; Funkful Originals in one cart{" "}
-        <span>·</span> Flat R99 otherwise
+        <span className={styles.shippingMessage}>
+          Free shipping storewide on orders over R400
+        </span>
+        <span className={styles.shippingSeparator}>·</span>
+        <span className={styles.shippingMessage}>
+          Mix Scoopful &amp; Funkful Originals in one cart
+        </span>
+        <span className={styles.shippingSeparator}>·</span>
+        <span className={styles.shippingMessage}>
+          Flat R99 otherwise
+        </span>
       </div>
 
-      <header
-        style={{
-          background: palette.cream,
-          borderBottom: "1px solid rgba(17,17,17,0.08)",
-        }}
-        className="sticky top-0 z-50 bg-[--brand-bg,inherit]"
-      >
+      <header className={styles.header}>
         <div className={`wrap ${styles.navInner}`}>
-          <Link href="/">
+          {/* Logo */}
+          <Link
+            href="/"
+            className={styles.logoLink}
+            aria-label="Funkful homepage"
+          >
             <Image
               src="/assets/funkful-logo.png"
               alt="Funkful"
@@ -94,95 +142,88 @@ export default function Header() {
               height={26}
               className={styles.logoImg}
               draggable={false}
-              loading="eager"
+              priority
             />
           </Link>
 
-          <nav className={`${styles.links} hidden md:flex gap-9`}>
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              const isSoon = "soon" in link && Boolean(link.soon);
-
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={[
-                    isSoon
-                      ? styles.soon
-                      : isActive
-                        ? styles.active
-                        : palette.black,
-                    isActive ? styles.active : "transparent",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
+          {/* Desktop and tablet-landscape navigation */}
+          <nav
+            className={styles.links}
+            aria-label="Main navigation"
+          >
+            {renderNavigationLinks()}
           </nav>
 
+          {/* Header actions */}
           <div className={styles.navIcons}>
-            {/*<span className="hidden md:inline">Search</span>*/}
-
             <Link
               href={accountHref}
-              className="hidden md:flex items-center gap-1"
+              className={styles.desktopAction}
             >
-              <span>Account</span>
+              Account
             </Link>
 
             <Link
               href="/account/wishlist"
-              className="hidden md:flex items-center gap-1"
+              className={styles.desktopAction}
               aria-label={
                 wishlistCount
                   ? `Wishlist, ${wishlistCount} saved`
                   : "Wishlist"
               }
             >
-              <span>Wishlist</span>
-
+              Wishlist
               {wishlistCount > 0 && (
-                <span className={styles.cartDot}>{wishlistCount}</span>
+                <span className={styles.cartDot}>
+                  {wishlistCount}
+                </span>
               )}
             </Link>
 
-            <Link href="/cart">
-              Bag <span className={styles.cartDot}>{itemCount}</span>
+            <Link
+              href="/cart"
+              className={styles.bagLink}
+              aria-label={`Shopping bag, ${itemCount} items`}
+            >
+              Bag
+              <span className={styles.cartDot}>
+                {itemCount}
+              </span>
             </Link>
 
+            {/* Responsive menu toggle */}
             <button
               type="button"
               className={styles.burger}
               aria-label={menuOpen ? "Close menu" : "Open menu"}
               aria-expanded={menuOpen}
+              aria-controls="funkful-mobile-menu"
               onClick={() => setMenuOpen((prev) => !prev)}
             >
               {menuOpen ? (
                 <svg
-                  width="22"
-                  height="22"
+                  width="23"
+                  height="23"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
                   strokeLinecap="round"
+                  aria-hidden="true"
                 >
                   <line x1="4" y1="4" x2="20" y2="20" />
                   <line x1="20" y1="4" x2="4" y2="20" />
                 </svg>
               ) : (
                 <svg
-                  width="22"
-                  height="22"
+                  width="23"
+                  height="23"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
                   strokeLinecap="round"
+                  aria-hidden="true"
                 >
                   <line x1="3" y1="6" x2="21" y2="6" />
                   <line x1="3" y1="12" x2="21" y2="12" />
@@ -193,37 +234,33 @@ export default function Header() {
           </div>
         </div>
 
+        {/* Tablet portrait and mobile navigation */}
         {menuOpen && (
-          <nav className={styles.mobileMenu}>
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              const isSoon = "soon" in link && Boolean(link.soon);
+          <nav
+            id="funkful-mobile-menu"
+            className={styles.mobileMenu}
+            aria-label="Mobile navigation"
+          >
+            <div className={styles.mobileMenuInner}>
+              {renderNavigationLinks()}
 
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={[isSoon ? styles.soon : "", isActive ? styles.active : ""]
-                    .filter(Boolean)
-                    .join(" ")}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
+              {/*<div className={styles.mobileMenuDivider} />*/}
 
-            <Link href={accountHref} onClick={() => setMenuOpen(false)}>
-              Account
-            </Link>
+              <Link
+                href={accountHref}
+                onClick={() => setMenuOpen(false)}
+              >
+                Account
+              </Link>
 
-            <Link
-              href="/account/wishlist"
-              onClick={() => setMenuOpen(false)}
-            >
-              Wishlist
-              {wishlistCount > 0 ? ` (${wishlistCount})` : ""}
-            </Link>
+              <Link
+                href="/account/wishlist"
+                onClick={() => setMenuOpen(false)}
+              >
+                Wishlist
+                {wishlistCount > 0 && ` (${wishlistCount})`}
+              </Link>
+            </div>
           </nav>
         )}
       </header>

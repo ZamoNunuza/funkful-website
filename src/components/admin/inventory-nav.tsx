@@ -60,7 +60,7 @@ export default function InventoryNav() {
       </nav>
       <Link
         href="/admin/inventory/scan"
-        className="print-hide fixed right-4 z-40 flex h-14 items-center gap-2 rounded-full bg-black px-5 text-sm font-black text-white shadow-lg"
+        className="print-hide hidden fixed right-4 z-40 flex h-14 items-center gap-2 rounded-full bg-black px-5 text-sm font-black text-white shadow-lg"
         style={{ bottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
       >
         📷 Scan

@@ -1,17 +1,39 @@
+
+/* =========================================
+   SHIPPING ANNOUNCEMENT
+========================================= */
+
 .shipBanner {
- background:var(--black);
-  color:var(--cream);
-  text-align:center;
-  padding:9px 12px;
-  font-family:var(--font-montserrat),sans-serif;
-  font-weight:700;
-  font-size:12px;
-  letter-spacing:.04em;
-  text-transform:uppercase;
+  background: var(--black);
+  color: var(--cream);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px 9px;
+  text-align: center;
+  padding: 9px 16px;
+  font-family: var(--font-montserrat), sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
-.shipBanner span {
+
+.shippingMessage {
+  display: inline;
+}
+
+.shippingSeparator {
   color: var(--gold);
+  flex-shrink: 0;
 }
+
+
+/* =========================================
+   HEADER
+========================================= */
 
 .header {
   background: var(--cream);
@@ -19,67 +41,194 @@
   position: sticky;
   top: 0;
   z-index: 50;
+  width: 100%;
 }
 
 .navInner {
+  box-sizing: border-box;
   display: flex;
-  max-width: 1180px;
+  width: 100%;
+  max-width: 1240px;
+  min-height: 72px;
   margin-inline: auto;
+  padding: 12px 28px;
   align-items: center;
   justify-content: space-between;
-  padding-block: calc(var(--spacing) * 4);
-  padding-inline: calc(var(--spacing) * 8)
+  gap: 24px;
+}
+
+.logoLink {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .logoImg {
-  width: auto;
+  display: block;
+  width: 110px;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
 }
 
+
+/* =========================================
+   DESKTOP NAVIGATION
+========================================= */
+
 .links {
-  gap: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  flex: 1;
+  min-width: 0;
 }
+
 .links a {
   font-family: var(--font-montserrat), sans-serif;
   font-weight: 600;
-  font-size: 13.5px;
+  font-size: 12.5px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  padding: 4px 0;
+  white-space: nowrap;
+  padding: 7px 0;
   border-bottom: 2px solid transparent;
+  transition: color 180ms ease, border-color 180ms ease;
 }
+
 .links a.active {
   color: var(--blush-ink);
-  /*border-color: var(--blush-ink);*/
 }
+
 .links a.soon {
   color: #7d6da3;
 }
 
-.burger {
-  display: none;
-  background: none;
-  border: none;
-  padding: 6px;
-  cursor: pointer;
-  color: var(--black);
+.links a:hover {
+  color: var(--blush-ink);
 }
 
+
+/* =========================================
+   HEADER ACTIONS
+========================================= */
+
+.navIcons {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: var(--font-montserrat), sans-serif;
+}
+
+.desktopAction,
+.bagLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  gap: 3px;
+}
+
+.desktopAction:hover,
+.bagLink:hover {
+  color: var(--blush-ink);
+}
+
+.cartDot {
+  background: var(--black);
+  color: var(--cream);
+  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  padding-inline: 3px;
+  box-sizing: border-box;
+  font-size: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 3px;
+  line-height: 1;
+}
+
+
+/* =========================================
+   HAMBURGER
+========================================= */
+
+.burger {
+  display: none;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 0;
+  cursor: pointer;
+  color: var(--black);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.burger:hover {
+  background: rgba(17, 17, 17, 0.05);
+}
+
+.burger:focus-visible,
+.links a:focus-visible,
+.mobileMenu a:focus-visible {
+  outline: 2px solid var(--blush-ink);
+  outline-offset: 4px;
+}
+
+
+/* =========================================
+   TABLET / MOBILE MENU
+========================================= */
+
 .mobileMenu {
+  display: block;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-height: calc(100dvh - 110px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--cream);
   border-top: 1px solid rgba(17, 17, 17, 0.08);
   border-bottom: 1px solid rgba(17, 17, 17, 0.08);
+  box-shadow: 0 12px 24px rgba(17, 17, 17, 0.08);
+  z-index: 60;
+  animation: menuReveal 180ms ease-out;
+}
+
+.mobileMenuInner {
   display: flex;
   flex-direction: column;
-  padding: 4px 12px 16px;
+  max-width: 700px;
+  margin-inline: auto;
+  padding: 12px 24px 20px;
 }
 
 .mobileMenu a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 12px 4px;
   font-family: var(--font-montserrat), sans-serif;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 14px 4px;
+  letter-spacing: 0.04em;
   border-bottom: 1px solid rgba(17, 17, 17, 0.06);
 }
 
@@ -91,32 +240,218 @@
   color: #7d6da3;
 }
 
-.navIcons {
-  display: flex;
-  gap: 20px;
-  font-size: 13.5px;
-  font-weight: 600;
-  font-family: var(--font-montserrat), sans-serif;
-  align-items: center;
+.mobileMenuDivider {
+  height: 1px;
+  background: rgba(17, 17, 17, 0.12);
+  margin: 10px 0;
 }
 
-.cartDot {
-  background: var(--black);
-  color: var(--cream);
-  border-radius: 50%;
-  width: 17px;
-  height: 17px;
-  font-size: 9.5px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 4px;
+@keyframes menuReveal {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
+
+/* =========================================
+   SMALL DESKTOP / TABLET LANDSCAPE
+   901px – 1100px
+========================================= */
+
+@media (min-width: 901px) and (max-width: 1100px) {
+  .navInner {
+    min-height: 66px;
+    padding-inline: 20px;
+    gap: 14px;
+  }
+
+  .logoImg {
+    width: 94px;
+  }
+
+  .links {
+    gap: 14px;
+  }
+
+  .links a {
+    font-size: 10.5px;
+  }
+
+  .navIcons {
+    gap: 12px;
+    font-size: 11px;
+  }
+}
+
+
+/* =========================================
+   TABLET PORTRAIT
+   601px – 900px
+========================================= */
 
 @media (max-width: 900px) {
+  .navInner {
+    min-height: 66px;
+    padding: 9px 24px;
+    gap: 12px;
+  }
+
+  .links {
+    display: none;
+  }
+
+  .navIcons {
+    margin-left: auto;
+    gap: 14px;
+  }
+
+  .desktopAction {
+    display: none;
+  }
+
   .burger {
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
+  }
+
+  .logoImg {
+    width: 105px;
+  }
+
+  .shipBanner {
+    font-size: 10px;
+    gap: 3px 7px;
+    padding: 8px 14px;
+  }
+}
+
+
+/* =========================================
+   MOBILE
+   600px and below
+========================================= */
+
+@media (max-width: 600px) {
+  .navInner {
+    min-height: 60px;
+    padding: 8px 15px;
+    gap: 8px;
+  }
+
+  .logoImg {
+    width: 94px;
+  }
+
+  .navIcons {
+    gap: 12px;
+    font-size: 12px;
+  }
+
+  .burger {
+    width: 42px;
+    height: 42px;
+  }
+
+  .cartDot {
+    min-width: 17px;
+    height: 17px;
+    font-size: 8.5px;
+  }
+
+  .shipBanner {
+    font-size: 9px;
+    line-height: 1.45;
+    padding: 7px 10px;
+    gap: 2px 5px;
+  }
+
+  .mobileMenuInner {
+    padding: 8px 18px 18px;
+  }
+
+  .mobileMenu a {
+    min-height: 46px;
+    font-size: 12px;
+  }
+}
+
+
+/* =========================================
+   EXTRA SMALL MOBILE
+   380px and below
+========================================= */
+
+@media (max-width: 380px) {
+  .navInner {
+    padding-inline: 10px;
+  }
+
+  .logoImg {
+    width: 82px;
+  }
+
+  .navIcons {
+    gap: 8px;
+    font-size: 11px;
+  }
+
+  .burger {
+    width: 38px;
+    height: 40px;
+  }
+
+  .shipBanner {
+    font-size: 8px;
+  }
+}
+
+
+/* =========================================
+   LANDSCAPE TABLETS / SHORT VIEWPORTS
+========================================= */
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .navInner {
+    min-height: 58px;
+    padding-block: 6px;
+  }
+
+  .logoImg {
+    width: 94px;
+  }
+
+  .mobileMenu {
+    max-height: calc(100dvh - 90px);
+  }
+
+  .mobileMenuInner {
+    padding-block: 6px 12px;
+  }
+
+  .mobileMenu a {
+    min-height: 40px;
+    padding-block: 8px;
+  }
+}
+
+
+/* =========================================
+   ACCESSIBILITY / REDUCED MOTION
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .mobileMenu {
+    animation: none;
+  }
+
+  .links a,
+  .desktopAction,
+  .bagLink {
+    transition: none;
   }
 }

@@ -27,6 +27,7 @@ export interface Material {
   quantity_on_hand: number;
   notes: string | null;
   is_active: boolean;
+  image_key: string | null;
   brand: { id: string; name: string } | null;
   category: { id: string; name: string; slug: string } | null;
   type: { id: string; name: string } | null;

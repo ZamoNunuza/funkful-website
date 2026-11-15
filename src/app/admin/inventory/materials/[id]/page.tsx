@@ -6,6 +6,7 @@ import { labelUrl, qrSvg } from "@/lib/inventory/inventory-qr";
 import { formatQty, formatRand, materialTitle, REASON_LABEL } from "@/lib/inventory/inventory-shared";
 import { createAdminClient } from "@/lib/supabase/admin";
 import MaterialForm from "../../material-form";
+import { MaterialPhoto } from "../../material-photo";
 import MovementForm from "../../movement-form";
 import { toPicker } from "../../picker-data";
 import { ToggleMaterial } from "../../setup-forms";
@@ -101,13 +102,16 @@ export default async function MaterialPage({
           </dl>
         </Card>
 
-        <Card className="text-center">
-          <p className="text-xs font-black uppercase tracking-wider text-black/45">QR label</p>
-          <div className="mx-auto mt-3 w-40" dangerouslySetInnerHTML={{ __html: svg }} />
-          <p className="mt-2 text-lg font-black">{material.code}</p>
-          <p className="text-xs text-neutral-600">{materialTitle(material)}</p>
-          <Link href={`/admin/inventory/labels?ids=${material.id}`} className={`${btnPrimary} mt-4`}>Print this label</Link>
-        </Card>
+        <div className="space-y-5">
+          <MaterialPhoto materialId={material.id} imageKey={material.image_key} title={materialTitle(material)} />
+          <Card className="text-center">
+            <p className="text-xs font-black uppercase tracking-wider text-black/45">QR label</p>
+            <div className="mx-auto mt-3 w-40" dangerouslySetInnerHTML={{ __html: svg }} />
+            <p className="mt-2 text-lg font-black">{material.code}</p>
+            <p className="text-xs text-neutral-600">{materialTitle(material)}</p>
+            <Link href={`/admin/inventory/labels?ids=${material.id}`} className={`${btnPrimary} mt-4`}>Print this label</Link>
+          </Card>
+        </div>
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
