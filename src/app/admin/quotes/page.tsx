@@ -28,7 +28,17 @@ export default async function AdminQuotesPage() {
                 <td className="px-4 py-3 font-bold">{q.quote_number}</td>
                 <td className="px-4 py-3">{q.customer_name}<div className="text-xs text-neutral-500">{q.customer_email || q.customer_phone || "No contact saved"}</div></td>
                 <td className="px-4 py-3">R{(q.total_cents/100).toFixed(2)}</td><td className="px-4 py-3 capitalize">{q.status}</td>
-                <td className="px-4 py-3">{new Date(q.expires_at).toLocaleDateString("en-ZA")}</td>
+                <td className="px-4 py-3 font-medium whitespace-nowrap">
+                    {q.expires_at
+                        ? new Intl.DateTimeFormat("en-ZA", {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                            timeZone: "Africa/Johannesburg",
+                        }).format(new Date(q.expires_at))
+                        : "Not specified"
+                    }
+                </td>
                 <td className="px-4 py-3"><a className="font-bold underline" href={`/quote/${q.public_token}`} target="_blank" rel="noreferrer">Open link</a></td></tr>)}
             </tbody>
         </table>{!data?.length && <p className="p-5 text-sm text-neutral-500">No quotations yet. Create your first one above.</p>}</div>

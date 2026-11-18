@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { ADDRESS_COLUMNS, addressStreetLine, type AddressRow } from "@/lib/account-shared";
+import { ADDRESS_COLUMNS, type AddressRow } from "@/lib/account-shared";
 
 export const runtime = "nodejs";
 
@@ -41,7 +41,8 @@ export async function GET() {
         firstName: a.first_name,
         lastName: a.last_name,
         phone: a.phone,
-        street: addressStreetLine(a),
+        street: [a.street_address, a.complex_unit].filter(Boolean).join(", "),
+        suburb: a.suburb,
         city: a.city,
         province: a.province,
         postalCode: a.postal_code,

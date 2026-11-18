@@ -154,6 +154,18 @@ export default async function AdminDashboardPage() {
             <span className="mt-8 inline-block text-sm font-black">Open inventory →</span>
           </Link>
 
+
+          {/* Shipping & Packaging */}
+          <Link
+            href="/admin/shipping"
+            className="rounded-3xl border border-black/10 bg-[#FAF8F4] p-7 transition hover:-translate-y-0.5 hover:shadow-sm"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-black/45">Fulfilment</p>
+            <h2 className="mt-2 text-2xl font-black uppercase">Shipping & packaging</h2>
+            <p className="mt-2 max-w-md text-sm leading-6 text-neutral-600">Configure Bob Go, the R500 free-delivery threshold, collection address and product parcel measurements.</p>
+            <span className="mt-8 inline-block text-sm font-black">Configure shipping →</span>
+          </Link>
+
           {/* Products & Images */}
           <Link
             href="/admin/products"

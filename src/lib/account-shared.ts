@@ -248,6 +248,7 @@ export interface OrderRow {
   last_name: string | null;
   phone: string | null;
   shipping_address: string | null;
+  shipping_suburb?: string | null;
   shipping_city: string | null;
   shipping_province: string | null;
   shipping_postal_code: string | null;

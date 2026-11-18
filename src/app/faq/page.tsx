@@ -161,8 +161,7 @@ const faqData: FaqCategory[] = [
         question: 'How much does shipping cost?',
         answer: (
           <p>
-            Shipping is free storewide on orders over R400. Below that, it&apos;s a flat R99 — no
-            matter how many items or which brands are in your cart.
+            Free standard delivery applies to orders of R500 or more after discounts. Orders below R500 are charged the live Bob Go standard delivery quote calculated at checkout. The quote is based on your delivery address and the packed items in your order.
           </p>
         ),
       },

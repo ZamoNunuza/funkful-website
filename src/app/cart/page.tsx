@@ -9,8 +9,9 @@ function formatRands(cents: number) { return `R${(cents / 100).toFixed(2)}`; }
 
 export default function CartPage() {
   const { items, hydrated, setQuantity, removeItem, subtotalCents, itemCount } = useCart();
-  const shippingCents = subtotalCents >= 40000 ? 0 : items.length ? 9900 : 0;
-  const totalCents = subtotalCents + shippingCents;
+  const qualifiesForFreeShipping = subtotalCents >= 50000;
+  const shippingLabel = qualifiesForFreeShipping ? <span className="font-semibold" style={{ color: "#4a6b3c" }}>Free standard delivery</span> : "Calculated at checkout";
+  const totalCents = subtotalCents;
   const brandsInCart = new Set(items.map((item) => item.brand));
 
   if (!hydrated) return <CartShell><div className="py-20 text-center text-sm text-neutral-500">Loading your bag…</div></CartShell>;
@@ -74,10 +75,10 @@ export default function CartPage() {
             <aside style={{ background: palette.beige }} className="rounded-[24px] p-6 sm:p-7 lg:sticky lg:top-24">
               <h2 className="text-sm font-black uppercase mb-4">Order summary</h2>
               <SummaryRow label={`Subtotal (${itemCount} ${itemCount === 1 ? "item" : "items"})`} value={formatRands(subtotalCents)} />
-              <SummaryRow label="Shipping" value={shippingCents === 0 ? <span className="font-semibold" style={{ color: "#4a6b3c" }}>Free</span> : formatRands(shippingCents)} />
-              <div className="border-t mt-3 pt-4 flex justify-between font-black"><span>Total</span><span>{formatRands(totalCents)}</span></div>
+              <SummaryRow label="Shipping" value={shippingLabel} />
+              <div className="border-t mt-3 pt-4 flex justify-between font-black"><span>Merchandise subtotal</span><span>{formatRands(totalCents)}</span></div>
               <Link href="/checkout" style={{ background: palette.black, color: palette.cream }} className="block text-center w-full py-4 rounded-full mt-6 text-xs font-extrabold uppercase tracking-wide">Continue to checkout</Link>
-              <p className="text-xs text-neutral-500 leading-relaxed mt-4">Free delivery on orders over R400. Secure payment is handled by Yoco.</p>
+              <p className="text-xs text-neutral-500 leading-relaxed mt-4">Free standard delivery on orders of R500 or more. Orders below R500 receive a live Bob Go standard delivery quote at checkout. Secure payment is handled by Yoco.</p>
             </aside>
           </div>
         )}

@@ -67,6 +67,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const addressLines = [
     [order.first_name, order.last_name].filter(Boolean).join(" "),
     order.shipping_address,
+    order.shipping_suburb,
     [order.shipping_city, order.shipping_province].filter(Boolean).join(", "),
     order.shipping_postal_code,
     order.shipping_country,

@@ -8,7 +8,14 @@ const blank = (): Line => ({ description: "", quantity: 1, price: "", details: "
 export default function QuoteManager() {
   const [customerName, setCustomerName] = useState(""); const [customerEmail, setCustomerEmail] = useState(""); const [customerPhone, setCustomerPhone] = useState("");
   const [shipping, setShipping] = useState("0"); const [notes, setNotes] = useState(""); const [items, setItems] = useState<Line[]>([{ ...blank() }]);
-  const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [result, setResult] = useState<{ quoteNumber: string; url: string; total: number } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [result, setResult] = useState<{
+    quoteNumber: string;
+    url: string;
+    total: number;
+    expiresAt: string;
+  } | null>(null);
   const total = items.reduce((sum, i) => sum + Math.max(0, Number(i.price) || 0) * Math.max(1, Number(i.quantity) || 1), 0) + Math.max(0, Number(shipping) || 0);
   
   function update(index: number, patch: Partial<Line>) { 
@@ -19,7 +26,12 @@ export default function QuoteManager() {
     try {
       const response = await fetch("/api/admin/quotes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ customerName, customerEmail, customerPhone, shippingCents: Math.round(Number(shipping) * 100), notes, items: items.map(i => ({ description: i.description, quantity: Number(i.quantity), unitPriceCents: Math.round(Number(i.price) * 100), details: i.details })) }) });
       const payload = await response.json(); if (!response.ok) throw new Error(payload.error || "Could not create quotation.");
-      setResult({ quoteNumber: payload.quote.quote_number, url: payload.quote.url, total: payload.quote.total_cents / 100 });
+      setResult({
+        quoteNumber: payload.quote.quote_number,
+        url: payload.quote.url,
+        total: payload.quote.total_cents / 100,
+        expiresAt: payload.quote.expires_at,
+      });
     } catch (e) { setError(e instanceof Error ? e.message : "Could not create quotation."); } finally { setBusy(false); }
   }
   return <form onSubmit={submit} className="rounded-3xl border border-black/10 bg-white p-5 sm:p-7"><h2 className="text-xl font-black">Create a quotation</h2><p className="mt-1 text-sm text-neutral-600">Enter prices in rand. The customer will receive a unique link to review the quote and pay online.</p>
@@ -48,6 +60,26 @@ export default function QuoteManager() {
         <p className="text-lg font-black">Total: R{total.toFixed(2)}</p>
         <button disabled={busy} className="rounded-full bg-black px-6 py-3 text-sm font-black text-white disabled:opacity-50">{busy?"Creating…":"Create quotation link"}</button>
     </div>
-    {error && <p role="alert" className="mt-4 text-sm font-bold text-red-700">{error}</p>}{result && <div className="mt-4 rounded-xl bg-green-50 p-4 text-sm"><p className="font-bold">Created {result.quoteNumber} · R{result.total.toFixed(2)}</p><a className="break-all underline" href={result.url}>{result.url}</a></div>}
+    {error && <p role="alert" className="mt-4 text-sm font-bold text-red-700">{error}</p>}
+    {result && (
+      <div className="mt-4 rounded-xl bg-green-50 p-4 text-sm space-y-2">
+        <p className="font-bold">
+          Created {result.quoteNumber} · R{result.total.toFixed(2)}
+        </p>
+
+        <p className="font-semibold text-green-900">
+          Expires on:{" "}
+          {new Date(result.expiresAt).toLocaleDateString("en-ZA", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          })}
+        </p>
+
+        <a className="break-all underline" href={result.url}>
+          {result.url}
+        </a>
+      </div>
+    )}
   </form>;
 }

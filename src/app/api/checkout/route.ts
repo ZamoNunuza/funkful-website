@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getBobGoCheckoutRates, ShippingConfigurationError } from "@/lib/shipping/bobgo";
 import {
   buildCheckoutKey,
   CHECKOUT_REUSE_WINDOW_MS,
@@ -31,12 +32,14 @@ interface CheckoutRequestBody {
     lastName?: string;
     phone?: string;
     address?: string;
+    suburb?: string;
     city?: string;
     province?: string;
     postalCode?: string;
     country?: string;
   };
   promoCode?: string;
+  shippingQuote?: { rateId?: number; totalPriceCents?: number };
 }
 
 function clean(value: unknown) {
@@ -226,14 +229,6 @@ const allProducts = catalogue ?? [];
     promoCode = promo.code;
   }
 
-  // Free delivery above R400, otherwise R99, matching the site banner.
-  const shipping = subtotal - discount >= 40000 ? 0 : 9900;
-  const total = Math.max(0, subtotal - discount + shipping);
-
-  if (total < 200) {
-    return NextResponse.json({ error: "Order total is below the minimum payable amount." }, { status: 400 });
-  }
-
   let userId: string | null = null;
   try {
     const authClient = await createClient();
@@ -246,11 +241,51 @@ const allProducts = catalogue ?? [];
     lastName: clean(body.shipping?.lastName),
     phone: clean(body.shipping?.phone),
     address: clean(body.shipping?.address),
+    suburb: clean(body.shipping?.suburb),
     city: clean(body.shipping?.city),
     province: clean(body.shipping?.province),
     postalCode: clean(body.shipping?.postalCode),
     country: clean(body.shipping?.country) || "South Africa",
   };
+
+  const { data: shippingSettings, error: shippingSettingsError } = await supabase
+    .from("shipping_settings")
+    .select("free_shipping_threshold_cents")
+    .eq("id", 1)
+    .single();
+  if (shippingSettingsError || !shippingSettings) {
+    return NextResponse.json({ error: "Shipping is temporarily unavailable. Please try again shortly." }, { status: 503 });
+  }
+
+  const qualifiesForFreeShipping = subtotal - discount >= shippingSettings.free_shipping_threshold_cents;
+  let shipping = 0;
+  let bobgoQuote: { id: number; service_name: string; service_code: string; total_price: number; description?: string } | null = null;
+  if (!qualifiesForFreeShipping) {
+    try {
+      const result = await getBobGoCheckoutRates(supabase, {
+        delivery: {
+          streetAddress: shippingDetails.address,
+          suburb: shippingDetails.suburb,
+          city: shippingDetails.city,
+          province: shippingDetails.province,
+          postalCode: shippingDetails.postalCode,
+        },
+        items: normalizedItems.map((item) => ({ id: item.product_id, quantity: item.quantity, unitPriceCents: item.unit_price_cents })),
+        orderTotalCents: subtotal - discount,
+      });
+      bobgoQuote = result.rate;
+      shipping = Math.round(result.rate.total_price * 100);
+      if (!body.shippingQuote?.rateId || Number(body.shippingQuote.rateId) !== result.rate.id || Number(body.shippingQuote.totalPriceCents) !== shipping) {
+        return NextResponse.json({ error: "Your delivery quote has changed. Please refresh the quote before continuing to payment." }, { status: 409, headers: { "X-Shipping-Quote-Refresh": "required" } });
+      }
+    } catch (error) {
+      const message = error instanceof ShippingConfigurationError ? error.message : "We couldn't calculate delivery. Please try again.";
+      if (!(error instanceof ShippingConfigurationError)) console.error("Bob Go checkout validation failed:", error);
+      return NextResponse.json({ error: message }, { status: 503 });
+    }
+  }
+  const total = Math.max(0, subtotal - discount + shipping);
+  if (total < 200) return NextResponse.json({ error: "Order total is below the minimum payable amount." }, { status: 400 });
 
   // Identical basket + customer + delivery details => identical key. This is what
   // lets a double click, a network retry or a "back" from Yoco find the order that
@@ -320,6 +355,7 @@ const allProducts = catalogue ?? [];
       last_name: shippingDetails.lastName || null,
       phone: shippingDetails.phone || null,
       shipping_address: shippingDetails.address || null,
+      shipping_suburb: shippingDetails.suburb || null,
       shipping_city: shippingDetails.city || null,
       shipping_province: shippingDetails.province || null,
       shipping_postal_code: shippingDetails.postalCode || null,
@@ -328,6 +364,10 @@ const allProducts = catalogue ?? [];
       discount_cents: discount,
       shipping_cents: shipping,
       total_cents: total,
+      bobgo_rate_id: bobgoQuote?.id ?? null,
+      bobgo_service_code: bobgoQuote?.service_code ?? null,
+      bobgo_service_name: bobgoQuote?.service_name ?? (qualifiesForFreeShipping ? "Free standard delivery" : null),
+      bobgo_quote_snapshot: bobgoQuote ? { ...bobgoQuote, quoted_at: new Date().toISOString() } : null,
       promo_code: promoCode,
       checkout_key: checkoutKey,
       status: "pending",

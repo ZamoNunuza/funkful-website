@@ -115,7 +115,7 @@ export default function Header() {
     <>
       <div className={styles.shipBanner}>
         <span className={styles.shippingMessage}>
-          Free shipping storewide on orders over R400
+          Free standard delivery on orders of R500+
         </span>
         <span className={styles.shippingSeparator}>·</span>
         <span className={styles.shippingMessage}>
@@ -123,7 +123,7 @@ export default function Header() {
         </span>
         <span className={styles.shippingSeparator}>·</span>
         <span className={styles.shippingMessage}>
-          Flat R99 otherwise
+          Live Bob Go standard rates below R500
         </span>
       </div>
 
