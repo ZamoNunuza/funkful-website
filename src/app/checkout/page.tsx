@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/lib/cart-context";
@@ -16,12 +16,16 @@ export default function CheckoutPage() {
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [suburb, setSuburb] = useState("");
   const [city, setCity] = useState("");
   const [province, setProvince] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromo, setAppliedPromo] = useState("");
   const [discountCents, setDiscountCents] = useState(0);
+  const [shippingCents, setShippingCents] = useState<number | null>(null);
+  const [shippingQuote, setShippingQuote] = useState<{ rateId?: number; totalPriceCents?: number; serviceName?: string } | null>(null);
+  const [shippingLoading, setShippingLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -29,8 +33,7 @@ export default function CheckoutPage() {
   // A ref blocks the second click immediately.
   const submitting = useRef(false);
 
-  const shippingCents = useMemo(() => Math.max(0, subtotalCents - discountCents) >= 40000 ? 0 : items.length ? 9900 : 0, [subtotalCents, discountCents, items.length]);
-  const totalCents = Math.max(0, subtotalCents - discountCents + shippingCents);
+  const totalCents = Math.max(0, subtotalCents - discountCents + (shippingCents ?? 0));
 
   useEffect(() => {
     if (!hydrated) return;
@@ -61,6 +64,7 @@ export default function CheckoutPage() {
           setLastName((current: string) => current || savedAddress.lastName || "");
           setPhone((current: string) => current || savedAddress.phone || "");
           setAddress((current: string) => current || savedAddress.street || "");
+          setSuburb((current: string) => current || savedAddress.suburb || "");
           setCity((current: string) => current || savedAddress.city || "");
           setProvince((current: string) => current || savedAddress.province || "");
           setPostalCode((current: string) => current || savedAddress.postalCode || "");
@@ -94,22 +98,42 @@ export default function CheckoutPage() {
       const res = await fetch("/api/promo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: promoCode, subtotalCents }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not apply promo code.");
-      setAppliedPromo(data.code); setPromoCode(data.code); setDiscountCents(data.discountCents);
-    } catch (e) { setAppliedPromo(""); setDiscountCents(0); setError(e instanceof Error ? e.message : "Could not apply promo code."); }
+      setAppliedPromo(data.code); setPromoCode(data.code); setDiscountCents(data.discountCents); setShippingCents(null); setShippingQuote(null);
+    } catch (e) { setAppliedPromo(""); setDiscountCents(0); setShippingCents(null); setShippingQuote(null); setError(e instanceof Error ? e.message : "Could not apply promo code."); }
     finally { setPromoLoading(false); }
+  }
+
+  async function getShippingQuote() {
+    setShippingLoading(true); setError(null); setShippingCents(null); setShippingQuote(null);
+    try {
+      const response = await fetch("/api/shipping/quote", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((item) => ({ id: item.id, variant: item.variant, quantity: item.quantity })),
+          promoCode: appliedPromo,
+          delivery: { address, suburb, city, province, postalCode },
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Could not calculate delivery.");
+      setShippingCents(Number(data.shippingCents));
+      setShippingQuote(data.isFree ? { serviceName: data.serviceName } : { rateId: data.rateId, totalPriceCents: Number(data.shippingCents), serviceName: data.serviceName });
+    } catch (e) { setError(e instanceof Error ? e.message : "Could not calculate delivery."); }
+    finally { setShippingLoading(false); }
   }
 
   async function placeOrder() {
     setError(null);
     if (!items.length) return setError("Your bag is empty.");
     if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email.trim())) return setError("Enter a valid email address.");
-    if (!firstName.trim() || !lastName.trim() || !address.trim() || !city.trim() || !postalCode.trim()) return setError("Please complete your delivery details.");
+    if (!firstName.trim() || !lastName.trim() || !address.trim() || !suburb.trim() || !city.trim() || !province.trim() || !postalCode.trim()) return setError("Please complete your delivery details.");
+    if (shippingCents === null || !shippingQuote) return setError("Please calculate your standard delivery quote before continuing.");
     if (submitting.current) return;
     submitting.current = true;
     setLoading(true);
     try {
       const res = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, signal: AbortSignal.timeout(35000), body: JSON.stringify({
-        email, shipping: { firstName, lastName, phone, address, city, province, postalCode, country: "South Africa" }, promoCode: appliedPromo,
+        email, shipping: { firstName, lastName, phone, address, suburb, city, province, postalCode, country: "South Africa" }, promoCode: appliedPromo, shippingQuote,
         items: items.map((i) => ({ id: i.id, name: i.name, variant: i.variant, quantity: i.quantity })),
       }) });
       const data = await res.json();
@@ -141,7 +165,7 @@ export default function CheckoutPage() {
 
           <div className="space-y-8">
             <fieldset><legend className="text-xs font-black uppercase tracking-wide mb-4">Contact</legend><div className="grid sm:grid-cols-2 gap-4"><Field label="Email" value={email} onChange={setEmail} type="email" placeholder="you@email.com" /><Field label="Phone (optional)" value={phone} onChange={setPhone} placeholder="082 123 4567" /></div></fieldset>
-            <fieldset><legend className="text-xs font-black uppercase tracking-wide mb-4">Shipping address</legend><div className="grid sm:grid-cols-2 gap-4"><Field label="First name" value={firstName} onChange={setFirstName} placeholder="Thabo" /><Field label="Last name" value={lastName} onChange={setLastName} placeholder="Mokoena" /></div><div className="mt-4"><Field label="Street address" value={address} onChange={setAddress} placeholder="12 Vilakazi Street" /></div><div className="grid sm:grid-cols-3 gap-4 mt-4"><Field label="City" value={city} onChange={setCity} placeholder="Johannesburg" /><Field label="Province" value={province} onChange={setProvince} placeholder="Gauteng" /><Field label="Postal code" value={postalCode} onChange={setPostalCode} placeholder="2001" /></div></fieldset>
+            <fieldset><legend className="text-xs font-black uppercase tracking-wide mb-4">Shipping address</legend><div className="grid sm:grid-cols-2 gap-4"><Field label="First name" value={firstName} onChange={setFirstName} placeholder="Thabo" /><Field label="Last name" value={lastName} onChange={setLastName} placeholder="Mokoena" /></div><div className="mt-4"><Field label="Street address" value={address} onChange={(v) => { setAddress(v); setShippingCents(null); setShippingQuote(null); }} placeholder="12 Vilakazi Street" /></div><div className="grid sm:grid-cols-2 gap-4 mt-4"><Field label="Suburb" value={suburb} onChange={(v) => { setSuburb(v); setShippingCents(null); setShippingQuote(null); }} placeholder="e.g. Rosebank" /><Field label="City" value={city} onChange={(v) => { setCity(v); setShippingCents(null); setShippingQuote(null); }} placeholder="Johannesburg" /></div><div className="grid sm:grid-cols-2 gap-4 mt-4"><Field label="Province" value={province} onChange={(v) => { setProvince(v); setShippingCents(null); setShippingQuote(null); }} placeholder="Gauteng" /><Field label="Postal code" value={postalCode} onChange={(v) => { setPostalCode(v); setShippingCents(null); setShippingQuote(null); }} placeholder="2001" /></div></fieldset>
             <fieldset><legend className="text-xs font-black uppercase tracking-wide mb-4">Promo code</legend><div className="flex gap-2"><input value={promoCode} onChange={(e) => setPromoCode(e.target.value.toUpperCase())} className={inputClass} placeholder="Enter code" /><button type="button" onClick={applyPromo} disabled={promoLoading} style={{ background: palette.black, color: palette.cream }} className="px-5 rounded-xl text-xs font-black uppercase disabled:opacity-50">{promoLoading ? "Checking" : appliedPromo ? "Applied" : "Apply"}</button></div></fieldset>
           </div>
           {error && <div role="alert" className="mt-7 rounded-xl border border-red-200 bg-red-50 text-red-800 px-4 py-3 text-sm">{error}</div>}
@@ -190,10 +214,12 @@ export default function CheckoutPage() {
               );
             })}
           </div>
-          <SummaryRow label="Subtotal" value={formatRands(subtotalCents)} /><SummaryRow label="Discount" value={discountCents ? `-${formatRands(discountCents)}` : "—"} /><SummaryRow label="Shipping" value={shippingCents === 0 ? <span style={{ color: "#4a6b3c" }}>Free</span> : formatRands(shippingCents)} />
-          <div className="border-t mt-3 pt-4 flex justify-between font-black text-lg"><span>Total</span><span>{formatRands(totalCents)}</span></div>
-          <button type="button" onClick={placeOrder} disabled={loading} style={{ background: palette.black, color: palette.cream }} className="w-full py-4 rounded-full mt-6 text-xs font-black uppercase disabled:opacity-60">{loading ? "Opening secure payment…" : "Continue to secure payment"}</button>
-          <p className="text-xs text-neutral-500 leading-relaxed mt-4 text-center">You will be redirected to Yoco to complete payment. We only treat a verified payment webhook as confirmation of payment.</p>
+          <SummaryRow label="Subtotal" value={formatRands(subtotalCents)} /><SummaryRow label="Discount" value={discountCents ? `-${formatRands(discountCents)}` : "—"} /><SummaryRow label="Shipping" value={shippingCents === null ? "Calculate quote" : shippingCents === 0 ? <span style={{ color: "#4a6b3c" }}>Free</span> : formatRands(shippingCents)} />
+          {shippingQuote?.serviceName && <p className="text-xs text-neutral-600">{shippingQuote.serviceName}</p>}
+          <button type="button" onClick={getShippingQuote} disabled={shippingLoading || !address.trim() || !suburb.trim() || !city.trim() || !province.trim() || !postalCode.trim()} className="w-full rounded-full border border-black/20 py-3 mt-4 text-xs font-black uppercase disabled:opacity-50">{shippingLoading ? "Calculating delivery…" : shippingCents === null ? "Calculate standard delivery" : "Refresh delivery quote"}</button>
+          <div className="border-t mt-3 pt-4 flex justify-between font-black text-lg"><span>Total</span><span>{shippingCents === null ? "Calculate delivery" : formatRands(totalCents)}</span></div>
+          <button type="button" onClick={placeOrder} disabled={loading || shippingCents === null || !shippingQuote} style={{ background: palette.black, color: palette.cream }} className="w-full py-4 rounded-full mt-6 text-xs font-black uppercase disabled:opacity-60">{loading ? "Opening secure payment…" : "Continue to secure payment"}</button>
+          <p className="text-xs text-neutral-500 leading-relaxed mt-4 text-center">Your standard delivery quote is confirmed. You will be redirected to Yoco to complete payment. We only treat a verified payment webhook as confirmation of payment.</p>
         </aside>
       </div>
     </div>
