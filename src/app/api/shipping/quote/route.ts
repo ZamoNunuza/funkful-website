@@ -45,6 +45,14 @@ export async function POST(request: Request) {
       const product = resolve(item.id);
       if (!product) return NextResponse.json({ error: "One or more products are unavailable." }, { status: 400 });
       const optionParts = clean(item.variant).split(" · ").map((value) => value.trim()).filter(Boolean);
+      const isGlassCup = product.id === "original-glass-personalize-bamboo";
+      const glassDesign = isGlassCup ? optionParts.find((value) => value.startsWith("Design: "))?.slice("Design: ".length) : undefined;
+      if (isGlassCup) {
+        const finish = optionParts.find((value) => value.startsWith("Finish: "))?.slice("Finish: ".length);
+        const colour = optionParts.find((value) => value.startsWith("Colour: "))?.slice("Colour: ".length);
+        if (!finish || !glassDesign || !colour) return NextResponse.json({ error: "Please review your glass cup finish, design and colour selections." }, { status: 400 });
+        optionParts.push(finish, glassDesign, colour);
+      }
       let unitPrice = Number(product.base_price_cents);
       const productVariants = (variants ?? []).filter((variant) => variant.product_id === product.id);
       const groups = [...new Set(productVariants.map((variant) => variant.group_name))];
@@ -55,7 +63,24 @@ export async function POST(request: Request) {
         else if (options.length) unitPrice += Number(options.find((option) => option.price_delta_cents === 0)?.price_delta_cents ?? 0);
       }
       const personalization = optionParts.find((value) => value.startsWith('"') && value.endsWith('"'))?.slice(1, -1);
-      if (product.product_type === "personalize" && !personalization) return NextResponse.json({ error: `${product.name} needs personalization details.` }, { status: 400 });
+      if (isGlassCup) {
+        const requiredOptions = [
+          { group: "Finish", value: optionParts.find((value) => value.startsWith("Finish: "))?.slice("Finish: ".length) },
+          { group: "Design", value: glassDesign },
+          { group: "Colour", value: optionParts.find((value) => value.startsWith("Colour: "))?.slice("Colour: ".length) },
+        ];
+        if (requiredOptions.some(({ group, value }) => !value || !productVariants.some((variant) => variant.group_name === group && variant.option_name === value))) {
+          return NextResponse.json({ error: "One or more glass cup options are unavailable. Please refresh and choose again." }, { status: 400 });
+        }
+      }
+      const needsCaricaturePhoto = ["original-hoodie-caricature-personalize", "original-mug-personalize", "original-tshirt-caricature-personalize"].includes(product.id);
+      if (needsCaricaturePhoto || (isGlassCup && glassDesign === "Custom design")) {
+        const reference = optionParts.find((value) => value.startsWith("Reference image: "))?.slice("Reference image: ".length);
+        if (!reference || !/^pending\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(reference)) return NextResponse.json({ error: needsCaricaturePhoto ? "A photo is required to create your caricature." : "A reference image is required for your custom glass cup design." }, { status: 400 });
+        const { data: uploaded, error: uploadCheckError } = await admin.storage.from("personalization-uploads").exists(reference);
+        if (uploadCheckError || !uploaded) return NextResponse.json({ error: "Your uploaded image could not be found. Please upload it again." }, { status: 400 });
+      }
+      if (isGlassCup && !personalization) return NextResponse.json({ error: `${product.name} needs your name or text.` }, { status: 400 });
       if (personalization) {
         if (!product.allow_personalization || personalization.length > Number(product.personalization_max_length ?? 80)) return NextResponse.json({ error: `Personalization details for ${product.name} are invalid.` }, { status: 400 });
         unitPrice += Number(product.personalization_price_delta_cents ?? 0);

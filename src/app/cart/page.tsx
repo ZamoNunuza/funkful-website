@@ -69,7 +69,7 @@ export default function CartPage() {
                   </div>;
                 })}
               </div>
-              <Link href="/shop" className="inline-block mt-6 text-xs font-bold uppercase underline">← Continue shopping</Link>
+              <Link href="/originals" className="inline-block mt-6 text-xs font-bold uppercase underline">← Continue shopping</Link>
             </section>
 
             <aside style={{ background: palette.beige }} className="rounded-[24px] p-6 sm:p-7 lg:sticky lg:top-24">

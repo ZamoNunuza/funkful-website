@@ -139,6 +139,13 @@ export default async function ProductPage({
             {product.description}
           </p>
 
+          {product.product_type === "personalize" && (
+            <div className="mb-7 rounded-2xl border border-black/10 bg-white/70 px-4 py-4">
+              <p className="text-xs font-extrabold uppercase tracking-wide">Made especially for you</p>
+              <p className="mt-1 text-xs leading-relaxed text-neutral-600">Choose your customisation options below. Your selected finish updates the price, and the live preview helps you see how your wording could look before you add it to your bag.</p>
+            </div>
+          )}
+
           {product.product_type === "made-to-order" && (
             <div className="mb-7 rounded-2xl border border-black/10 bg-white/60 px-4 py-3">
               <p className="text-xs font-extrabold uppercase tracking-wide">
@@ -177,7 +184,7 @@ export default async function ProductPage({
 
           <div className="mt-8 space-y-2 border-t pt-6 text-xs leading-relaxed text-neutral-600">
             <p>✓ Secure checkout through Yoco</p>
-            <p>✓ Free delivery on orders over R400</p>
+            <p>✓ Free delivery on orders over R500</p>
             <p>
               ✓ Your order is confirmed by our payment webhook
               before fulfilment

@@ -88,6 +88,17 @@ const collectionDetails: Record<
         "Discover the Funkful Emblem collection, featuring apparel and accessories with our signature circular monogram crest. Designed in South Africa.",
     },
   },
+  "personalization": {
+    tagline: "Make it yours.",
+    blurb: "Personal pieces, made to mean more.",
+    description:
+      "Discover personalised Funkful Originals made especially for you. Choose a finish, select a design direction, add your wording and share a reference when your idea needs something custom. Each piece is made to order with your details in mind.",
+    seo: {
+      title: "Personalised Gifts & Custom Originals | Funkful",
+      description:
+        "Make it yours with personalised Funkful Originals. Choose your finish, design and details on custom-made gifts and everyday pieces.",
+    },
+  },
   "funkful logo": {
     tagline: "Wear the name.",
     blurb: "The Funkful identity, made wearable.",
@@ -180,6 +191,8 @@ export default function OriginalsCatalog({
       .filter(Boolean)
       .join("-");
 
+    const primaryImage = product.images.find((image) => image.primary) ?? product.images[0];
+
     addItem({
       id: suffix ? `${product.id}-${suffix}` : product.id,
       brand: "funkful",
@@ -187,6 +200,7 @@ export default function OriginalsCatalog({
       variant: parts.join(" · ") || undefined,
       priceCents: price(product),
       productType: product.product_type,
+      imageUrl: primaryImage?.url,
     });
   }
 
@@ -308,10 +322,7 @@ export default function OriginalsCatalog({
             </p>
 
             <p className="text-xs text-neutral-600 leading-relaxed mt-1">
-              Most Originals can be personalized for an additional R50.
-              Enter the wording exactly as you want it produced. Design
-              artwork itself is not changed unless the product specifically
-              says otherwise.
+              Selected pieces can be customised with your wording, colours or a reference design. Open a product to see its available options, live preview and exact price before adding it to your bag.
             </p>
           </div>
 
@@ -466,8 +477,8 @@ export default function OriginalsCatalog({
                               </p>
                             )}
 
-                            {/* VARIANT OPTIONS */}
-                            {product.variantGroups.map((group) => (
+                            {/* Product customisation happens on the dedicated product page. */}
+                            {product.product_type !== "personalize" && product.variantGroups.map((group) => (
                               <label
                                 key={group.name}
                                 className="flex flex-col gap-1 mb-3 text-xs"
@@ -514,7 +525,7 @@ export default function OriginalsCatalog({
                             ))}
 
                             {/* PERSONALIZATION */}
-                            {product.allow_personalization && (
+                            {product.product_type !== "personalize" && product.allow_personalization && (
                               <label className="flex flex-col gap-1 mb-4 text-xs">
                                 <span className="font-semibold uppercase tracking-wide text-[10.5px] text-neutral-700">
                                   {product.personalization_prompt ||
@@ -577,17 +588,26 @@ export default function OriginalsCatalog({
                                 </span>
                               )}
 
-                              <button
-                                type="button"
-                                onClick={() => add(product)}
-                                style={{
-                                  background: palette.black,
-                                  color: palette.cream,
-                                }}
-                                className="text-[11.5px] font-bold uppercase tracking-wide px-4 py-2.5 rounded-full"
-                              >
-                                Add to bag
-                              </button>
+                              {product.product_type === "personalize" ? (
+                                product.slug ? (
+                                  <Link
+                                    href={`/products/${product.slug}`}
+                                    style={{ background: palette.black, color: palette.cream }}
+                                    className="text-[11.5px] font-bold uppercase tracking-wide px-4 py-2.5 rounded-full"
+                                  >
+                                    Customise
+                                  </Link>
+                                ) : null
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => add(product)}
+                                  style={{ background: palette.black, color: palette.cream }}
+                                  className="text-[11.5px] font-bold uppercase tracking-wide px-4 py-2.5 rounded-full"
+                                >
+                                  Add to bag
+                                </button>
+                              )}
                             </div>
                           </div>
                         </article>

@@ -55,7 +55,8 @@ export async function getBobGoCheckoutRates(
   const productById = new Map<string, (typeof products)[number]>(
     (products ?? []).map((product) => [product.id, product] as const),
   );
-  const profileCodes = [...new Set((products ?? []).map((product) => product.shipping_profile_code).filter((code): code is string => Boolean(code)))];
+  const productProfileCodes = [...new Set((products ?? []).map((product) => product.shipping_profile_code).filter((code): code is string => Boolean(code)))];
+  const profileCodes = [...productProfileCodes, ...(productProfileCodes.length > 1 ? ["mixed_order_box"] : [])];
   if (profileCodes.length === 0 || (products ?? []).some((product) => !product.shipping_profile_code)) {
     throw new ShippingConfigurationError("Some products still need a packaging profile. Funkful is configuring accurate parcel measurements; please contact us to arrange delivery.");
   }
@@ -70,13 +71,37 @@ export async function getBobGoCheckoutRates(
   const profileByCode = new Map<string, (typeof profiles)[number]>(
     (profiles ?? []).map((profile) => [profile.code, profile] as const),
   );
-  const bobItems = input.items.map((item) => {
+  const resolvedItems = input.items.map((item) => {
     const product = productById.get(item.id);
     const profile = product?.shipping_profile_code ? profileByCode.get(product.shipping_profile_code) : null;
     if (!product || !profile || !profile.length_cm || !profile.width_cm || !profile.height_cm || !profile.weight_kg) {
       throw new ShippingConfigurationError(`Packaging measurements are incomplete for ${product?.name ?? "one of your products"}. Please contact Funkful to arrange delivery.`);
     }
-    return {
+    return { item, product, profile };
+  });
+
+  // When a basket combines different packaging profiles, rate it as one
+  // configured mixed-order parcel. Do not send several unrelated parcel boxes
+  // to Bob Go for what Funkful will pack together in the mixed-order carton.
+  const distinctProfiles = new Set(resolvedItems.map(({ profile }) => profile.code));
+  let bobItems: Array<Record<string, string | number>>;
+  if (distinctProfiles.size > 1) {
+    const mixedProfile = (profiles ?? []).find((profile) => profile.code === "mixed_order_box");
+    if (!mixedProfile?.length_cm || !mixedProfile.width_cm || !mixedProfile.height_cm || !mixedProfile.weight_kg) {
+      throw new ShippingConfigurationError("The mixed-order parcel profile needs complete measurements before this basket can be shipped. Please contact Funkful.");
+    }
+    bobItems = [{
+      description: "Funkful mixed-order parcel",
+      vendor: "Funkful",
+      price: input.items.reduce((sum, item) => sum + item.unitPriceCents * item.quantity, 0) / 100,
+      quantity: 1,
+      length_cm: Number(mixedProfile.length_cm),
+      width_cm: Number(mixedProfile.width_cm),
+      height_cm: Number(mixedProfile.height_cm),
+      weight_kg: Number(mixedProfile.weight_kg),
+    }];
+  } else {
+    bobItems = resolvedItems.map(({ item, product, profile }) => ({
       description: product.name,
       vendor: product.brand,
       price: item.unitPriceCents / 100,
@@ -85,8 +110,8 @@ export async function getBobGoCheckoutRates(
       width_cm: Number(profile.width_cm),
       height_cm: Number(profile.height_cm),
       weight_kg: Number(profile.weight_kg),
-    };
-  });
+    }));
+  }
 
   const payload = {
     collection_address: {

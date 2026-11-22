@@ -152,6 +152,15 @@ const allProducts = catalogue ?? [];
     }
 
     const optionParts = clean(item.variant).split(" · ").map((v) => v.trim()).filter(Boolean);
+    const isGlassCup = product.id === "original-glass-personalize-bamboo";
+    const glassDesign = isGlassCup ? optionParts.find((v) => v.startsWith("Design: "))?.slice("Design: ".length) : undefined;
+    if (isGlassCup) {
+      const finish = optionParts.find((v) => v.startsWith("Finish: "))?.slice("Finish: ".length);
+      const design = glassDesign;
+      const colour = optionParts.find((v) => v.startsWith("Colour: "))?.slice("Colour: ".length);
+      if (!finish || !design || !colour) return NextResponse.json({ error: "Please review your glass cup finish, design and colour selections." }, { status: 400 });
+      optionParts.push(finish, design, colour);
+    }
     let unitPrice = product.base_price_cents;
     const productVariants = (variants ?? []).filter((v) => v.product_id === product.id);
     const groups = [...new Set(productVariants.map((v) => v.group_name))];
@@ -164,7 +173,26 @@ const allProducts = catalogue ?? [];
     }
 
     const personalization = optionParts.find((v) => v.startsWith('"') && v.endsWith('"'))?.slice(1, -1);
-    if (product.product_type === "personalize" && !personalization) {
+    if (isGlassCup) {
+      const requiredOptions = [
+        { group: "Finish", value: optionParts.find((v) => v.startsWith("Finish: "))?.slice("Finish: ".length) },
+        { group: "Design", value: glassDesign },
+        { group: "Colour", value: optionParts.find((v) => v.startsWith("Colour: "))?.slice("Colour: ".length) },
+      ];
+      if (requiredOptions.some(({ group, value }) => !value || !productVariants.some((v) => v.group_name === group && v.option_name === value))) {
+        return NextResponse.json({ error: "One or more glass cup options are unavailable. Please refresh and choose again." }, { status: 400 });
+      }
+    }
+    const needsCaricaturePhoto = ["original-hoodie-caricature-personalize", "original-mug-personalize", "original-tshirt-caricature-personalize"].includes(product.id);
+    if (needsCaricaturePhoto || (isGlassCup && glassDesign === "Custom design")) {
+      const reference = optionParts.find((v) => v.startsWith("Reference image: "))?.slice("Reference image: ".length);
+      if (!reference || !/^pending\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(reference)) {
+        return NextResponse.json({ error: needsCaricaturePhoto ? "A photo is required to create your caricature." : "A reference image is required for your custom glass cup design." }, { status: 400 });
+      }
+      const { data: uploaded, error: uploadCheckError } = await supabase.storage.from("personalization-uploads").exists(reference);
+      if (uploadCheckError || !uploaded) return NextResponse.json({ error: "Your uploaded image could not be found. Please upload it again." }, { status: 400 });
+    }
+    if (isGlassCup && !personalization) {
       return NextResponse.json({ error: `${product.name} needs personalization details.` }, { status: 400 });
     }
 
@@ -423,7 +451,7 @@ const allProducts = catalogue ?? [];
       currency: "ZAR",
       lineItems: sortYocoLineItems(
         savedItems.map((item) => ({
-          displayName: item.variant ? `${item.product_name} (${item.variant})` : item.product_name,
+          displayName: item.variant ? `${item.product_name} (${item.variant.replace(/Reference image: pending\/[0-9a-f-]{36}\.(?:jpg|png|webp)/g, "Reference image attached")})` : item.product_name,
           quantity: item.quantity,
           pricingDetails: { price: item.unit_price_cents },
         })),

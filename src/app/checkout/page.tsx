@@ -203,7 +203,7 @@ export default function CheckoutPage() {
                     <p className="font-bold text-sm">{item.name}</p>
                     <p className="text-xs text-neutral-500">
                       Qty {item.quantity}
-                      {item.variant ? ` · ${item.variant}` : ""}
+                      {item.variant ? ` · ${item.variant?.replace(/Reference image: pending\/[0-9a-f-]{36}\.(?:jpg|png|webp)/g, "Reference image attached")}` : ""}
                     </p>
                   </div>
 
