@@ -288,7 +288,7 @@ const allProducts = catalogue ?? [];
   let courierRate: { rate: string | number; service_level: { id: number; code: string; name: string; description?: string }; rate_revision_id?: number } | null = null;
   try {
     const rateResult = deliveryMethod === "locker"
-      ? await getLockerRates(supabase, String(locker?.code ?? ""), normalizedItems.map((item) => ({ id: item.product_id, quantity: item.quantity, unitPriceCents: item.unit_price_cents })))
+      ? await getLockerRates(supabase, String(locker?.code), normalizedItems.map((item) => ({ id: item.product_id, quantity: item.quantity, unitPriceCents: item.unit_price_cents })))
       : await getStandardRates(supabase, { streetAddress: shippingDetails.address, suburb: shippingDetails.suburb, city: shippingDetails.city, province: shippingDetails.province, postalCode: shippingDetails.postalCode }, normalizedItems.map((item) => ({ id: item.product_id, quantity: item.quantity, unitPriceCents: item.unit_price_cents })), subtotal - discount);
     courierRate = rateResult.rate;
     shipping = qualifiesForFreeShipping ? 0 : Math.round(Number(rateResult.rate.rate) * 100);

@@ -17,8 +17,8 @@ export type CourierGuyRate = {
 export class ShippingConfigurationError extends Error {}
 
 const shipLogicBase = () => (process.env.TCG_SHIPLOGIC_BASE_URL || "https://api.portal.thecourierguy.co.za").replace(/\/$/, "");
-const pudoBase = () => (process.env.TCG_PUDO_BASE_URL || "https://api-pudo.co.za").replace(/\/$/, "");
-const pudoWaybillBase = () => (process.env.TCG_PUDO_WAYBILL_BASE_URL || "https://api-tcg.co.za").replace(/\/$/, "");
+const pudoBase = () => (process.env.TCG_PUDO_BASE_URL || "https://wqvdmjybt6.execute-api.af-south-1.amazonaws.com").replace(/\/$/, "");
+const pudoWaybillBase = () => (process.env.TCG_PUDO_WAYBILL_BASE_URL || "https://wqvdmjybt6.execute-api.af-south-1.amazonaws.com").replace(/\/$/, "");
 function pudoUrl(path: string) {
   const url = new URL(`${pudoBase()}${path}`);
   const key = process.env.TCG_PUDO_API_KEY;
@@ -88,10 +88,42 @@ export async function getStandardRates(admin: SupabaseClient, delivery: Shipping
   return { rate: [...matches].sort((a, b) => Number(a.rate) - Number(b.rate))[0] };
 }
 
+const PUBLIC_PUDO_LOCKERS_URL = "https://api-pudo.co.za/api/v1/guest/lockers-data";
+
+async function fetchPublicLockerDirectory(): Promise<Locker[]> {
+  // The public directory is a separate guest endpoint. It does not use the
+  // authenticated shipment/rates API host or require an API key.
+  const response = await fetch(PUBLIC_PUDO_LOCKERS_URL, {
+    headers: { Accept: "application/json" },
+    cache: "force-cache",
+    next: { revalidate: 43200 },
+    signal: AbortSignal.timeout(20000),
+  });
+  if (!response.ok) {
+    throw new Error(`Public PUDO locker directory returned HTTP ${response.status}`);
+  }
+  const payload = await response.json() as Locker[] | { data?: Locker[]; lockers?: Locker[] };
+  const lockers = Array.isArray(payload) ? payload : (payload.data ?? payload.lockers ?? []);
+  if (!Array.isArray(lockers) || lockers.length === 0) {
+    throw new Error("Public PUDO locker directory returned no locker records");
+  }
+  return lockers;
+}
+
 export async function searchLockers(search: string) {
-  const data = await pudoRequest<Locker[]>("/lockers-data");
+  let data: Locker[];
+  try {
+    data = await fetchPublicLockerDirectory();
+  } catch (publicError) {
+    // Backwards-compatible fallback for accounts/environments where the
+    // authenticated production directory endpoint is enabled.
+    console.warn("Public PUDO locker directory unavailable; trying authenticated directory endpoint", {
+      message: publicError instanceof Error ? publicError.message : "Unknown error",
+    });
+    data = await pudoRequest<Locker[]>("/lockers-data");
+  }
   const term = search.trim().toLowerCase();
-  return (Array.isArray(data) ? data : []).filter((locker) => locker.code && locker.name && (!term || [locker.code, locker.name, locker.address, locker.place?.town, locker.place?.postalCode].some((v) => String(v ?? "").toLowerCase().includes(term)))).slice(0, 40);
+  return data.filter((locker) => locker.code && locker.name && (!term || [locker.code, locker.name, locker.address, locker.place?.town, locker.place?.postalCode].some((v) => String(v ?? "").toLowerCase().includes(term)))).slice(0, 40);
 }
 
 export async function getLockerRates(admin: SupabaseClient, lockerCode: string, items: Array<{ id: string; quantity: number; unitPriceCents: number }>) {
