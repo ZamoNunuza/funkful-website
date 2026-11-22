@@ -28,8 +28,7 @@ export type SelectedShippingQuote = {
 
 /**
  * Finds the customer's chosen option inside a freshly fetched list.
- * Rate ids are tried first; if Bob Go has issued new ids for the same services,
- * the service code AND name must both match. Price is checked by the caller.
+ * Service-level code and name identify the selected courier option. Price is checked by the caller.
  */
 export function findSelectedOption(options: DeliveryOption[], selection: SelectedShippingQuote | null | undefined) {
   if (!selection) return null;
@@ -52,7 +51,7 @@ function formatDate(value: string) {
   return Number.isNaN(date.getTime()) ? null : dateFormatter.format(date);
 }
 
-/** "Tue, 24 Nov – Thu, 26 Nov", "Tue, 24 Nov", or null when Bob Go gave no dates. */
+/** "Tue, 24 Nov – Thu, 26 Nov", "Tue, 24 Nov", or null when the courier API provides no dates. */
 export function formatDeliveryWindow(min: string | null | undefined, max: string | null | undefined) {
   const from = min ? formatDate(min) : null;
   const to = max ? formatDate(max) : null;

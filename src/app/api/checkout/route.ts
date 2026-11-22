@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { getBobGoCheckoutRates, ShippingConfigurationError } from "@/lib/shipping/bobgo";
+import { getLockerRates, getStandardRates, ShippingConfigurationError } from "@/lib/shipping/the-courier-guy";
 import {
   buildCheckoutKey,
   CHECKOUT_REUSE_WINDOW_MS,
@@ -39,12 +39,15 @@ interface CheckoutRequestBody {
     country?: string;
   };
   promoCode?: string;
-  shippingQuote?: { rateId?: number; totalPriceCents?: number };
+  deliveryMethod?: "door" | "locker";
+  locker?: { code?: string; name?: string; address?: string; latitude?: string; longitude?: string; place?: { town?: string; postalCode?: string } } | null;
+  shippingQuote?: { deliveryMethod?: "door" | "locker"; serviceLevelCode?: string; totalPriceCents?: number };
 }
 
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
+function shippingDetailsPhone(value: unknown) { return typeof value === "string" && value.trim().length >= 7; }
 
 function makeOrderNumber() {
   return `FUNK-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
@@ -265,52 +268,37 @@ const allProducts = catalogue ?? [];
   } catch { /* guest checkout */ }
 
   const shippingDetails = {
-    firstName: clean(body.shipping?.firstName),
-    lastName: clean(body.shipping?.lastName),
-    phone: clean(body.shipping?.phone),
-    address: clean(body.shipping?.address),
-    suburb: clean(body.shipping?.suburb),
-    city: clean(body.shipping?.city),
-    province: clean(body.shipping?.province),
-    postalCode: clean(body.shipping?.postalCode),
-    country: clean(body.shipping?.country) || "South Africa",
+    firstName: clean(body.shipping?.firstName), lastName: clean(body.shipping?.lastName), phone: clean(body.shipping?.phone),
+    address: clean(body.shipping?.address), suburb: clean(body.shipping?.suburb), city: clean(body.shipping?.city),
+    province: clean(body.shipping?.province), postalCode: clean(body.shipping?.postalCode), country: clean(body.shipping?.country) || "South Africa",
   };
 
+  const deliveryMethod = body.deliveryMethod === "locker" ? "locker" : "door";
+  const locker = deliveryMethod === "locker" ? body.locker : null;
+  if (deliveryMethod === "locker" && !shippingDetailsPhone(body.shipping?.phone)) return NextResponse.json({ error: "Enter a contact phone number for locker collection." }, { status: 400 });
+  if (deliveryMethod === "locker" && (!locker?.code || !locker?.name || !locker?.address)) return NextResponse.json({ error: "Choose a valid pickup locker." }, { status: 400 });
+  if (deliveryMethod === "door" && ![shippingDetails.address, shippingDetails.suburb, shippingDetails.city, shippingDetails.province, shippingDetails.postalCode].every(Boolean)) return NextResponse.json({ error: "Complete your delivery address before continuing." }, { status: 400 });
+
   const { data: shippingSettings, error: shippingSettingsError } = await supabase
-    .from("shipping_settings")
-    .select("free_shipping_threshold_cents")
-    .eq("id", 1)
-    .single();
-  if (shippingSettingsError || !shippingSettings) {
-    return NextResponse.json({ error: "Shipping is temporarily unavailable. Please try again shortly." }, { status: 503 });
-  }
+    .from("shipping_settings").select("free_shipping_threshold_cents").eq("id", 1).single();
+  if (shippingSettingsError || !shippingSettings) return NextResponse.json({ error: "Shipping is temporarily unavailable. Please try again shortly." }, { status: 503 });
 
   const qualifiesForFreeShipping = subtotal - discount >= shippingSettings.free_shipping_threshold_cents;
   let shipping = 0;
-  let bobgoQuote: { id: number; service_name: string; service_code: string; total_price: number; description?: string } | null = null;
-  if (!qualifiesForFreeShipping) {
-    try {
-      const result = await getBobGoCheckoutRates(supabase, {
-        delivery: {
-          streetAddress: shippingDetails.address,
-          suburb: shippingDetails.suburb,
-          city: shippingDetails.city,
-          province: shippingDetails.province,
-          postalCode: shippingDetails.postalCode,
-        },
-        items: normalizedItems.map((item) => ({ id: item.product_id, quantity: item.quantity, unitPriceCents: item.unit_price_cents })),
-        orderTotalCents: subtotal - discount,
-      });
-      bobgoQuote = result.rate;
-      shipping = Math.round(result.rate.total_price * 100);
-      if (!body.shippingQuote?.rateId || Number(body.shippingQuote.rateId) !== result.rate.id || Number(body.shippingQuote.totalPriceCents) !== shipping) {
-        return NextResponse.json({ error: "Your delivery quote has changed. Please refresh the quote before continuing to payment." }, { status: 409, headers: { "X-Shipping-Quote-Refresh": "required" } });
-      }
-    } catch (error) {
-      const message = error instanceof ShippingConfigurationError ? error.message : "We couldn't calculate delivery. Please try again.";
-      if (!(error instanceof ShippingConfigurationError)) console.error("Bob Go checkout validation failed:", error);
-      return NextResponse.json({ error: message }, { status: 503 });
+  let courierRate: { rate: string | number; service_level: { id: number; code: string; name: string; description?: string }; rate_revision_id?: number } | null = null;
+  try {
+    const rateResult = deliveryMethod === "locker"
+      ? await getLockerRates(supabase, String(locker?.code ?? ""), normalizedItems.map((item) => ({ id: item.product_id, quantity: item.quantity, unitPriceCents: item.unit_price_cents })))
+      : await getStandardRates(supabase, { streetAddress: shippingDetails.address, suburb: shippingDetails.suburb, city: shippingDetails.city, province: shippingDetails.province, postalCode: shippingDetails.postalCode }, normalizedItems.map((item) => ({ id: item.product_id, quantity: item.quantity, unitPriceCents: item.unit_price_cents })), subtotal - discount);
+    courierRate = rateResult.rate;
+    shipping = qualifiesForFreeShipping ? 0 : Math.round(Number(rateResult.rate.rate) * 100);
+    if (body.shippingQuote?.deliveryMethod !== deliveryMethod || body.shippingQuote?.serviceLevelCode !== rateResult.rate.service_level.code || Number(body.shippingQuote?.totalPriceCents) !== shipping) {
+      return NextResponse.json({ error: "Your delivery quote has changed. Please refresh the quote before continuing to payment." }, { status: 409, headers: { "X-Shipping-Quote-Refresh": "required" } });
     }
+  } catch (error) {
+    const message = error instanceof ShippingConfigurationError ? error.message : "We couldn't calculate delivery. Please try again.";
+    if (!(error instanceof ShippingConfigurationError)) console.error("The Courier Guy checkout validation failed:", error);
+    return NextResponse.json({ error: message }, { status: 503 });
   }
   const total = Math.max(0, subtotal - discount + shipping);
   if (total < 200) return NextResponse.json({ error: "Order total is below the minimum payable amount." }, { status: 400 });
@@ -322,7 +310,7 @@ const allProducts = catalogue ?? [];
     userId,
     email,
     items: normalizedItems,
-    shipping: shippingDetails,
+    shipping: { ...shippingDetails, deliveryMethod, lockerCode: locker?.code ?? "" },
     promoCode,
     totalCents: total,
   });
@@ -392,10 +380,14 @@ const allProducts = catalogue ?? [];
       discount_cents: discount,
       shipping_cents: shipping,
       total_cents: total,
-      bobgo_rate_id: bobgoQuote?.id ?? null,
-      bobgo_service_code: bobgoQuote?.service_code ?? null,
-      bobgo_service_name: bobgoQuote?.service_name ?? (qualifiesForFreeShipping ? "Free standard delivery" : null),
-      bobgo_quote_snapshot: bobgoQuote ? { ...bobgoQuote, quoted_at: new Date().toISOString() } : null,
+      courier_provider: "the_courier_guy",
+      delivery_method: deliveryMethod,
+      locker_code: locker?.code ?? null,
+      locker_name: locker?.name ?? null,
+      locker_address: locker?.address ?? null,
+      courier_service_code: courierRate?.service_level.code ?? null,
+      courier_service_name: courierRate?.service_level.name ?? (qualifiesForFreeShipping ? "Free delivery" : null),
+      courier_quote_snapshot: courierRate ? { ...courierRate, quoted_at: new Date().toISOString(), locker: locker ?? null } : null,
       promo_code: promoCode,
       checkout_key: checkoutKey,
       status: "pending",

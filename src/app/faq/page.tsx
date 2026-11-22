@@ -161,7 +161,7 @@ const faqData: FaqCategory[] = [
         question: 'How much does shipping cost?',
         answer: (
           <p>
-            Free standard delivery applies to orders of R500 or more after discounts. Orders below R500 are charged the live Bob Go standard delivery quote calculated at checkout. The quote is based on your delivery address and the packed items in your order.
+            Free standard delivery applies to orders of R500 or more after discounts. Orders below R500 are charged the live The Courier Guy delivery quote calculated at checkout. The quote is based on your delivery address and the packed items in your order.
           </p>
         ),
       },

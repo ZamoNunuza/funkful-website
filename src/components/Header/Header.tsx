@@ -123,7 +123,7 @@ export default function Header() {
         </span>
         <span className={styles.shippingSeparator}>·</span>
         <span className={styles.shippingMessage}>
-          Live Bob Go standard rates below R500
+          Live The Courier Guy rates below R500
         </span>
       </div>
 

@@ -44,7 +44,6 @@ export async function PATCH(request: Request) {
         collection_contact_name: String(body.collection_contact_name ?? "").trim() || null,
         collection_contact_phone: String(body.collection_contact_phone ?? "").trim() || null,
         collection_contact_email: String(body.collection_contact_email ?? "").trim() || null,
-        bobgo_environment: body.bobgo_environment === "production" ? "production" : "sandbox",
         standard_service_name: String(body.standard_service_name ?? "").trim() || null,
         handling_time_days: handling,
         updated_at: new Date().toISOString(),

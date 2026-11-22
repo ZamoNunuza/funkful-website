@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getBobGoCheckoutRates, ShippingConfigurationError } from "@/lib/shipping/bobgo";
+import { getLockerRates, getStandardRates, ShippingConfigurationError } from "@/lib/shipping/the-courier-guy";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -25,8 +25,12 @@ export async function POST(request: Request) {
     }
 
     const delivery = body.delivery ?? {};
-    if (![delivery.address, delivery.suburb, delivery.city, delivery.province, delivery.postalCode].every((value) => typeof value === "string" && value.trim().length > 0)) {
+    const deliveryMethod = body.deliveryMethod === "locker" ? "locker" : "door";
+    if (deliveryMethod === "door" && ![delivery.address, delivery.suburb, delivery.city, delivery.province, delivery.postalCode].every((value) => typeof value === "string" && value.trim().length > 0)) {
       return NextResponse.json({ error: "Complete your delivery address before calculating shipping." }, { status: 400 });
+    }
+    if (deliveryMethod === "locker" && (typeof body.lockerCode !== "string" || !body.lockerCode.trim())) {
+      return NextResponse.json({ error: "Choose a pickup locker before calculating shipping." }, { status: 400 });
     }
 
     const admin = createAdminClient();
@@ -99,19 +103,25 @@ export async function POST(request: Request) {
       discountCents = promo.discount_type === "percentage" ? Math.floor(subtotalCents * promo.discount_value / 100) : Math.min(promo.discount_value, subtotalCents);
     }
 
-    if (subtotalCents - discountCents >= settings.free_shipping_threshold_cents) {
-      return NextResponse.json({ shippingCents: 0, isFree: true, serviceName: "Free standard delivery" });
-    }
-
-    const { rate } = await getBobGoCheckoutRates(admin, {
-      delivery: {
-        streetAddress: clean(delivery.address), suburb: clean(delivery.suburb), city: clean(delivery.city),
-        province: clean(delivery.province), postalCode: clean(delivery.postalCode),
-      },
-      items: normalizedItems,
-      orderTotalCents: subtotalCents - discountCents,
+    const isFree = subtotalCents - discountCents >= settings.free_shipping_threshold_cents;
+    const itemsForRate = normalizedItems;
+    const rateResult = deliveryMethod === "locker"
+      ? await getLockerRates(admin, clean(body.lockerCode), itemsForRate)
+      : await getStandardRates(admin, {
+          streetAddress: clean(delivery.address), suburb: clean(delivery.suburb), city: clean(delivery.city),
+          province: clean(delivery.province), postalCode: clean(delivery.postalCode),
+        }, itemsForRate, subtotalCents - discountCents);
+    const rate = rateResult.rate;
+    return NextResponse.json({
+      shippingCents: isFree ? 0 : Math.round(Number(rate.rate) * 100),
+      isFree,
+      deliveryMethod,
+      serviceName: rate.service_level.name,
+      serviceLevelCode: rate.service_level.code,
+      serviceLevelId: rate.service_level.id,
+      rateRevisionId: rate.rate_revision_id ?? null,
+      deliveryDescription: rate.service_level.description ?? null,
     });
-    return NextResponse.json({ shippingCents: Math.round(rate.total_price * 100), isFree: false, serviceName: rate.service_name, rateId: rate.id, serviceCode: rate.service_code, deliveryDescription: rate.description ?? null });
   } catch (error) {
     const message = error instanceof ShippingConfigurationError ? error.message : "Could not calculate delivery. Please try again.";
     if (!(error instanceof ShippingConfigurationError)) console.error("Shipping quote failed:", error);

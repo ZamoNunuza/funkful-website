@@ -17,7 +17,7 @@ export default async function AdminShippingPage() {
   return <main className="min-h-screen bg-[#FAF8F4] px-5 py-8 text-[#171512] sm:px-8">
     <div className="mx-auto max-w-6xl">
       <Link href="/admin" className="text-sm font-bold underline">← Admin dashboard</Link>
-      <div className="mb-8 mt-5"><p className="text-xs font-black uppercase tracking-[.16em] text-[#8a4a45]">Fulfilment</p><h1 className="mt-2 text-3xl font-black uppercase">Shipping & packaging</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-neutral-600">Configure Bob Go, your collection address, the R500 free-shipping threshold and parcel profiles. Dimensions are intentionally blank until you measure real packed parcels.</p></div>
+      <div className="mb-8 mt-5"><p className="text-xs font-black uppercase tracking-[.16em] text-[#8a4a45]">Fulfilment</p><h1 className="mt-2 text-3xl font-black uppercase">Shipping & packaging</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-neutral-600">Configure The Courier Guy Standard API, your collection address, the R500 free-shipping threshold and parcel profiles. Dimensions are intentionally blank until you measure real packed parcels.</p></div>
       <ShippingSettings initialSettings={settings.data} initialProfiles={profiles.data ?? []} initialProducts={products.data ?? []} />
     </div>
   </main>;
