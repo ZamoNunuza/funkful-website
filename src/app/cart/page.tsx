@@ -7,11 +7,16 @@ import { brands, palette } from "@/lib/brands";
 
 function formatRands(cents: number) { return `R${(cents / 100).toFixed(2)}`; }
 
+// Keep in step with shipping_settings.free_shipping_threshold_cents (checkout uses the database value).
+const FREE_SHIPPING_THRESHOLD_CENTS = 50000;
+
 export default function CartPage() {
   const { items, hydrated, setQuantity, removeItem, subtotalCents, itemCount } = useCart();
-  const qualifiesForFreeShipping = subtotalCents >= 50000;
+  const qualifiesForFreeShipping = subtotalCents >= FREE_SHIPPING_THRESHOLD_CENTS;
   const shippingLabel = qualifiesForFreeShipping ? <span className="font-semibold" style={{ color: "#4a6b3c" }}>Free standard delivery</span> : "Calculated at checkout";
   const totalCents = subtotalCents;
+  const remainingForFreeCents = Math.max(0, FREE_SHIPPING_THRESHOLD_CENTS - subtotalCents);
+  const freeShippingProgress = Math.min(100, Math.round((subtotalCents / FREE_SHIPPING_THRESHOLD_CENTS) * 100));
   const brandsInCart = new Set(items.map((item) => item.brand));
 
   if (!hydrated) return <CartShell><div className="py-20 text-center text-sm text-neutral-500">Loading your bag…</div></CartShell>;
@@ -76,9 +81,29 @@ export default function CartPage() {
               <h2 className="text-sm font-black uppercase mb-4">Order summary</h2>
               <SummaryRow label={`Subtotal (${itemCount} ${itemCount === 1 ? "item" : "items"})`} value={formatRands(subtotalCents)} />
               <SummaryRow label="Shipping" value={shippingLabel} />
+              <div className="mt-2 rounded-2xl bg-white/60 px-4 py-3">
+                {qualifiesForFreeShipping ? (
+                  <p className="text-xs font-bold" style={{ color: "#4a6b3c" }}>🎉 You&apos;ve unlocked free standard delivery!</p>
+                ) : (
+                  <>
+                    <p className="text-xs font-bold" style={{ color: "#4a4438" }}>Add <span style={{ color: "#8a4a45" }}>{formatRands(remainingForFreeCents)}</span> more for free standard delivery</p>
+                    <div
+                      className="mt-2 h-2 w-full overflow-hidden rounded-full"
+                      style={{ background: "rgba(17,17,17,0.1)" }}
+                      role="progressbar"
+                      aria-label="Progress towards free delivery"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={freeShippingProgress}
+                    >
+                      <div className="h-full rounded-full transition-[width] duration-300" style={{ width: `${freeShippingProgress}%`, background: "#4a6b3c" }} />
+                    </div>
+                  </>
+                )}
+              </div>
               <div className="border-t mt-3 pt-4 flex justify-between font-black"><span>Merchandise subtotal</span><span>{formatRands(totalCents)}</span></div>
               <Link href="/checkout" style={{ background: palette.black, color: palette.cream }} className="block text-center w-full py-4 rounded-full mt-6 text-xs font-extrabold uppercase tracking-wide">Continue to checkout</Link>
-              <p className="text-xs text-neutral-500 leading-relaxed mt-4">Free standard delivery on orders of R500 or more. Orders below R500 receive a live Bob Go standard delivery quote at checkout. Secure payment is handled by Yoco.</p>
+              <p className="text-xs text-neutral-500 leading-relaxed mt-4">Delivered by The Courier Guy to your door, or to a locker, kiosk or pickup point near you. Free standard delivery on orders of R500 or more. Orders below R500 get a live delivery quote at checkout once you choose how you&apos;d like it delivered. Secure payment is handled by Yoco.</p>
             </aside>
           </div>
         )}

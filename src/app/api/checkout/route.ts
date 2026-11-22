@@ -275,8 +275,8 @@ const allProducts = catalogue ?? [];
 
   const deliveryMethod = body.deliveryMethod === "locker" ? "locker" : "door";
   const locker = deliveryMethod === "locker" ? body.locker : null;
-  if (deliveryMethod === "locker" && !shippingDetailsPhone(body.shipping?.phone)) return NextResponse.json({ error: "Enter a contact phone number for locker collection." }, { status: 400 });
-  if (deliveryMethod === "locker" && (!locker?.code || !locker?.name || !locker?.address)) return NextResponse.json({ error: "Choose a valid pickup locker." }, { status: 400 });
+  if (deliveryMethod === "locker" && !shippingDetailsPhone(body.shipping?.phone)) return NextResponse.json({ error: "Enter a contact phone number for pickup point collection." }, { status: 400 });
+  if (deliveryMethod === "locker" && (!locker?.code || !locker?.name || !locker?.address)) return NextResponse.json({ error: "Choose a valid pickup point." }, { status: 400 });
   if (deliveryMethod === "door" && ![shippingDetails.address, shippingDetails.suburb, shippingDetails.city, shippingDetails.province, shippingDetails.postalCode].every(Boolean)) return NextResponse.json({ error: "Complete your delivery address before continuing." }, { status: 400 });
 
   const { data: shippingSettings, error: shippingSettingsError } = await supabase

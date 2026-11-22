@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "verify:checkout-env": "node scripts/verify-checkout-env.mjs",
+    "probe:courier": "node scripts/probe-courier-guy.mjs",
     "setup:resend-templates": "node scripts/setup-resend-templates.mjs",
     "setup:yoco-webhook": "node scripts/create-yoco-webhook.mjs",
     "regenerate:product-previews": "node scripts/regenerate-product-previews.mjs"

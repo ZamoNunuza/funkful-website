@@ -162,7 +162,7 @@ export default async function AdminDashboardPage() {
           >
             <p className="text-xs font-black uppercase tracking-[0.14em] text-black/45">Fulfilment</p>
             <h2 className="mt-2 text-2xl font-black uppercase">Shipping & packaging</h2>
-            <p className="mt-2 max-w-md text-sm leading-6 text-neutral-600">Configure Bob Go, the R500 free-delivery threshold, collection address and product parcel measurements.</p>
+            <p className="mt-2 max-w-md text-sm leading-6 text-neutral-600">Configure The Courier Guy delivery, the R500 free-delivery threshold, collection address and product parcel measurements.</p>
             <span className="mt-8 inline-block text-sm font-black">Configure shipping →</span>
           </Link>
 

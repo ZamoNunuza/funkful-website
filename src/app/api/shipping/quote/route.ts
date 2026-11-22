@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Complete your delivery address before calculating shipping." }, { status: 400 });
     }
     if (deliveryMethod === "locker" && (typeof body.lockerCode !== "string" || !body.lockerCode.trim())) {
-      return NextResponse.json({ error: "Choose a pickup locker before calculating shipping." }, { status: 400 });
+      return NextResponse.json({ error: "Choose a pickup point before calculating shipping." }, { status: 400 });
     }
 
     const admin = createAdminClient();
