@@ -67,6 +67,27 @@ function slugPart(value: string) {
     .replace(/^-|-$/g, "");
 }
 
+// Chips: product-type order. Groups: best gift sections first, brand-logo pieces last.
+const CATEGORY_ORDER = ["apparel", "mugs", "glassware", "tumblers"];
+const DESIGN_GROUP_ORDER = [
+  "personalization",
+  "anime",
+  "combination (uv + sublimation)",
+  "uv dtf",
+  "geometrical",
+  "apparel",
+  "funkful logo",
+  "funkful emblem",
+];
+const CROSS_SELL_AFTER_GROUP = 2; // slim Scoopful banner after the 3rd group
+
+const rankOf = (list: string[], value: string) => {
+  const i = list.indexOf(value.trim().toLowerCase());
+  return i === -1 ? list.length : i;
+};
+const sameLabel = (a?: string | null, b?: string | null) =>
+  !!a && !!b && a.trim().toLowerCase() === b.trim().toLowerCase();
+const isGenericBadge = (b: string) => /^funkful originals?$/i.test(b.trim());
 
 const collectionDetails: Record<
   string,
@@ -112,6 +133,34 @@ const collectionDetails: Record<
   },
 };
 
+function ScoopfulCta({ slim = false }: { slim?: boolean }) {
+  return (
+    <div
+      style={{ background: brands.scoopful.accent }}
+      className={`rounded-3xl flex items-center justify-between gap-6 flex-wrap ${slim ? "px-6 py-4" : "p-11 gap-8"}`}
+    >
+      <div>
+        {!slim && (
+          <span style={{ background: palette.sage, color: "#1c2617" }} className="inline-block text-[11.5px] font-bold uppercase tracking-wide px-4 py-2.5 rounded-full mb-3.5">
+            🛍️ One cart, every brand
+          </span>
+        )}
+        <h3 style={{ color: brands.scoopful.accentInk }} className={slim ? "text-sm font-extrabold uppercase" : "text-xl font-extrabold uppercase mb-2 max-w-sm"}>
+          Add a mystery scoop to the same order
+        </h3>
+        {!slim && (
+          <p style={{ color: "#5b3d38" }} className="text-sm max-w-md leading-relaxed">
+            Pair a Funkful Original with a Scoopful surprise. It all ships and checks out together.
+          </p>
+        )}
+      </div>
+      <Link href={brands.scoopful.href} style={{ background: palette.black, color: palette.cream }} className="font-bold text-xs uppercase tracking-wide px-6 py-4 rounded-full">
+        Shop Scoopful
+      </Link>
+    </div>
+  );
+}
+
 export default function OriginalsCatalog({
   products,
 }: {
@@ -119,10 +168,14 @@ export default function OriginalsCatalog({
 }) {
   const { addItem } = useCart();
 
-  const categories = useMemo(
-    () => [...new Set(products.map((product) => product.category))],
-    [products]
-  );
+  const categories = useMemo(() => {
+    const set = new Set(
+      products
+        .filter((p) => p.design_group?.trim().toLowerCase() !== "personalization")
+        .map((p) => p.category)
+    );
+    return [...set].sort((a, b) => rankOf(CATEGORY_ORDER, a) - rankOf(CATEGORY_ORDER, b));
+  }, [products]);
 
   const [activeCategory, setActiveCategory] = useState("all");
 
@@ -268,10 +321,17 @@ export default function OriginalsCatalog({
         groups.get(groupKey)!.products.push(product);
       });
 
-    return [...groups.values()].map((group) => ({
-      ...group,
-      details: collectionDetails[group.designGroup.toLowerCase()] ?? null,
-    }));
+    return [...groups.values()]
+      .sort((a, b) => {
+        const r = rankOf(DESIGN_GROUP_ORDER, a.designGroup) - rankOf(DESIGN_GROUP_ORDER, b.designGroup);
+        if (r !== 0) return r;
+        const min = (g: typeof a) => Math.min(...g.products.map((p) => p.sort_order));
+        return min(a) - min(b);
+      })
+      .map((group) => ({
+        ...group,
+        details: collectionDetails[group.designGroup.toLowerCase()] ?? null,
+      }));
   }, [visible]);
 
   return (
@@ -340,10 +400,9 @@ export default function OriginalsCatalog({
             </div>
           ) : (
             <div className="space-y-16">
-              {groupedProducts.map((group) => (
-                <section
-                  key={`${group.category ?? "all"}::${group.designGroup}`}
-                >
+              {groupedProducts.map((group, groupIndex) => (
+                <div key={`${group.category ?? "all"}::${group.designGroup}`}>
+                <section>
                   {/* GROUP HEADING */}
                   <div className="mb-7">
                     {group.category && (
@@ -381,7 +440,7 @@ export default function OriginalsCatalog({
 
                   {/* PRODUCTS IN GROUP */}
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {group.products.map((product) => {
+                    {group.products.map((product, productIndex) => {
                       const selectedProduct = selected(product);
 
                       const primaryImage =
@@ -410,7 +469,7 @@ export default function OriginalsCatalog({
                                 src={primaryImage.url}
                                 alt={primaryImage.alt ?? product.name}
                                 fill
-                                priority
+                                priority={groupIndex === 0 && productIndex < 3}
                                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                 className="object-cover p-5"
                                 onError={() =>
@@ -431,7 +490,9 @@ export default function OriginalsCatalog({
                             )}
 
                             {/* PRODUCT BADGE */}
-                            {product.badge && (
+                            {product.badge &&
+                              !sameLabel(product.badge, group.designGroup) &&
+                              !isGenericBadge(product.badge) && (
                               <span
                                 style={{
                                   background: palette.cream,
@@ -455,11 +516,6 @@ export default function OriginalsCatalog({
                             {/* NAME + PRICE */}
                             <div className="flex items-start justify-between gap-3 mb-1.5">
                               <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-neutral-400">
-                                  {product.design_group ||
-                                    categoryLabel(product.category)}
-                                </p>
-
                                 <h3 className="text-sm font-bold">
                                   {product.name}
                                 </h3>
@@ -615,6 +671,10 @@ export default function OriginalsCatalog({
                     })}
                   </div>
                 </section>
+                {groupIndex === CROSS_SELL_AFTER_GROUP && groupedProducts.length > CROSS_SELL_AFTER_GROUP + 1 && (
+                  <div className="mt-16"><ScoopfulCta slim /></div>
+                )}
+                </div>
               ))}
             </div>
           )}
@@ -624,54 +684,7 @@ export default function OriginalsCatalog({
       {/* SCOOPFUL CTA */}
       <section className="py-16">
         <div className="max-w-[1180px] mx-auto px-8">
-          <div
-            style={{
-              background: brands.scoopful.accent,
-            }}
-            className="rounded-3xl p-11 flex items-center justify-between gap-8 flex-wrap"
-          >
-            <div>
-              <span
-                style={{
-                  background: palette.sage,
-                  color: "#1c2617",
-                }}
-                className="inline-block text-[11.5px] font-bold uppercase tracking-wide px-4 py-2.5 rounded-full mb-3.5"
-              >
-                🛍️ One cart, every brand
-              </span>
-
-              <h3
-                style={{
-                  color: brands.scoopful.accentInk,
-                }}
-                className="text-xl font-extrabold uppercase mb-2 max-w-sm"
-              >
-                Add a mystery scoop to the same order
-              </h3>
-
-              <p
-                style={{
-                  color: "#5b3d38",
-                }}
-                className="text-sm max-w-md leading-relaxed"
-              >
-                Pair a Funkful Original with a Scoopful surprise — it
-                all ships and checks out together.
-              </p>
-            </div>
-
-            <Link
-              href={brands.scoopful.href}
-              style={{
-                background: palette.black,
-                color: palette.cream,
-              }}
-              className="font-bold text-xs uppercase tracking-wide px-6 py-4 rounded-full"
-            >
-              Shop Scoopful
-            </Link>
-          </div>
+          <ScoopfulCta />
         </div>
       </section>
     </>

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
@@ -5,6 +6,16 @@ import OriginalsCatalog from "./OriginalsCatalog";
 import { brands, palette } from "@/lib/brands";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Funkful Originals | Made-to-order hoodies, tees and mugs",
+  description:
+    "Made-to-order hoodies, tees and mugs: anime, Disney, geometrical and personalised caricature gifts. Free delivery on R500+.",
+};
+
+const FREE_DELIVERY_THRESHOLD = 500;
+// TODO owner: replace with the real turnaround, e.g. "Ready in 5 to 7 working days"
+const LEAD_TIME_TEXT = "Made to order, just for you";
 
 type ProductRow = {
   id: string;
@@ -148,7 +159,7 @@ export default async function OriginalsPage() {
               Funkful Originals
             </h1>
             <p style={{ color: "#4a4438" }} className="text-sm leading-relaxed max-w-lg mb-2">
-              Original designs made by Funkful and created after you order.
+              Original designs and fan favourites, printed after you order.
             </p>
             <p style={{ color: "#4a4438" }} className="text-sm leading-relaxed max-w-lg mb-6">
               Choose a design, pick your options, then add a name or short message for an additional R50 where personalization is available.
@@ -156,6 +167,13 @@ export default async function OriginalsPage() {
             <a href="#catalog" style={{ background: palette.black, color: palette.cream }} className="inline-block font-bold text-xs uppercase tracking-wide px-6 py-4 rounded-full">
               Shop the Originals
             </a>
+            <ul className="mt-5 flex flex-wrap gap-2">
+              {[LEAD_TIME_TEXT, `Free delivery on orders of R${FREE_DELIVERY_THRESHOLD}+`, "Add a Scoopful to the same cart"].map((text) => (
+                <li key={text} style={{ background: palette.black, color: palette.cream }} className="rounded-full px-3.5 py-1.5 text-xs font-bold">
+                  {text}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
