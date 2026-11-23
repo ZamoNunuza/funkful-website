@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getLockerRates, getStandardRates, ShippingConfigurationError } from "@/lib/shipping/the-courier-guy";
+import { COLD_VINYL_FINISH, findColdVinylColour } from "@/lib/inventory/cold-vinyl";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -51,11 +52,18 @@ export async function POST(request: Request) {
       const optionParts = clean(item.variant).split(" · ").map((value) => value.trim()).filter(Boolean);
       const isGlassCup = product.id === "original-glass-personalize-bamboo";
       const glassDesign = isGlassCup ? optionParts.find((value) => value.startsWith("Design: "))?.slice("Design: ".length) : undefined;
+      let coldVinyl: Awaited<ReturnType<typeof findColdVinylColour>> = null;
       if (isGlassCup) {
         const finish = optionParts.find((value) => value.startsWith("Finish: "))?.slice("Finish: ".length);
         const colour = optionParts.find((value) => value.startsWith("Colour: "))?.slice("Colour: ".length);
-        if (!finish || !glassDesign || !colour) return NextResponse.json({ error: "Please review your glass cup finish, design and colour selections." }, { status: 400 });
-        optionParts.push(finish, glassDesign, colour);
+        const vinylCode = optionParts.find((value) => value.startsWith("Vinyl code: "))?.slice("Vinyl code: ".length);
+        if (finish === COLD_VINYL_FINISH && vinylCode) {
+          coldVinyl = await findColdVinylColour(vinylCode);
+          if (!coldVinyl || !coldVinyl.inStock) return NextResponse.json({ error: "That cold colour-changing vinyl colour is no longer available. Please choose another colour." }, { status: 400 });
+        }
+        if (!finish || !glassDesign || (!colour && !coldVinyl)) return NextResponse.json({ error: "Please review your glass cup finish, design and colour selections." }, { status: 400 });
+        optionParts.push(finish, glassDesign);
+        if (colour && !coldVinyl) optionParts.push(colour);
       }
       let unitPrice = Number(product.base_price_cents);
       const productVariants = (variants ?? []).filter((variant) => variant.product_id === product.id);
@@ -71,7 +79,7 @@ export async function POST(request: Request) {
         const requiredOptions = [
           { group: "Finish", value: optionParts.find((value) => value.startsWith("Finish: "))?.slice("Finish: ".length) },
           { group: "Design", value: glassDesign },
-          { group: "Colour", value: optionParts.find((value) => value.startsWith("Colour: "))?.slice("Colour: ".length) },
+          ...(coldVinyl ? [] : [{ group: "Colour", value: optionParts.find((value) => value.startsWith("Colour: "))?.slice("Colour: ".length) }]),
         ];
         if (requiredOptions.some(({ group, value }) => !value || !productVariants.some((variant) => variant.group_name === group && variant.option_name === value))) {
           return NextResponse.json({ error: "One or more glass cup options are unavailable. Please refresh and choose again." }, { status: 400 });

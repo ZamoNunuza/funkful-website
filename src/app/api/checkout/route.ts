@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getLockerRates, getStandardRates, ShippingConfigurationError } from "@/lib/shipping/the-courier-guy";
+import { COLD_VINYL_FINISH, findColdVinylColour } from "@/lib/inventory/cold-vinyl";
 import {
   buildCheckoutKey,
   checkoutExpiresAt,
@@ -158,12 +159,19 @@ const allProducts = catalogue ?? [];
     const optionParts = clean(item.variant).split(" · ").map((v) => v.trim()).filter(Boolean);
     const isGlassCup = product.id === "original-glass-personalize-bamboo";
     const glassDesign = isGlassCup ? optionParts.find((v) => v.startsWith("Design: "))?.slice("Design: ".length) : undefined;
+    let coldVinyl: Awaited<ReturnType<typeof findColdVinylColour>> = null;
     if (isGlassCup) {
       const finish = optionParts.find((v) => v.startsWith("Finish: "))?.slice("Finish: ".length);
       const design = glassDesign;
       const colour = optionParts.find((v) => v.startsWith("Colour: "))?.slice("Colour: ".length);
-      if (!finish || !design || !colour) return NextResponse.json({ error: "Please review your glass cup finish, design and colour selections." }, { status: 400 });
-      optionParts.push(finish, design, colour);
+      const vinylCode = optionParts.find((v) => v.startsWith("Vinyl code: "))?.slice("Vinyl code: ".length);
+      if (finish === COLD_VINYL_FINISH && vinylCode) {
+        coldVinyl = await findColdVinylColour(vinylCode);
+        if (!coldVinyl || !coldVinyl.inStock) return NextResponse.json({ error: "That cold colour-changing vinyl colour is no longer available. Please choose another colour." }, { status: 400 });
+      }
+      if (!finish || !design || (!colour && !coldVinyl)) return NextResponse.json({ error: "Please review your glass cup finish, design and colour selections." }, { status: 400 });
+      optionParts.push(finish, design);
+      if (colour && !coldVinyl) optionParts.push(colour);
     }
     let unitPrice = product.base_price_cents;
     const productVariants = (variants ?? []).filter((v) => v.product_id === product.id);
@@ -181,7 +189,7 @@ const allProducts = catalogue ?? [];
       const requiredOptions = [
         { group: "Finish", value: optionParts.find((v) => v.startsWith("Finish: "))?.slice("Finish: ".length) },
         { group: "Design", value: glassDesign },
-        { group: "Colour", value: optionParts.find((v) => v.startsWith("Colour: "))?.slice("Colour: ".length) },
+        ...(coldVinyl ? [] : [{ group: "Colour", value: optionParts.find((v) => v.startsWith("Colour: "))?.slice("Colour: ".length) }]),
       ];
       if (requiredOptions.some(({ group, value }) => !value || !productVariants.some((v) => v.group_name === group && v.option_name === value))) {
         return NextResponse.json({ error: "One or more glass cup options are unavailable. Please refresh and choose again." }, { status: 400 });
@@ -227,7 +235,10 @@ const allProducts = catalogue ?? [];
       product_id: product.id,
       product_name: product.name,
       brand: product.brand,
-      variant: clean(item.variant) || undefined,
+      // Rewrite the vinyl label from the database so a tampered cart can't change what we cut.
+      variant: (coldVinyl
+        ? clean(item.variant).split(" · ").map((v) => (v.trim().startsWith("Cold vinyl: ") ? `Cold vinyl: ${coldVinyl!.range} – ${coldVinyl!.colour}` : v.trim())).join(" · ")
+        : clean(item.variant)) || undefined,
       personalization_text: personalization,
       unit_price_cents: unitPrice,
       quantity: item.quantity,

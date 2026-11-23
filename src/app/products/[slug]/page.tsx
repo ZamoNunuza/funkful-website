@@ -7,6 +7,7 @@ import AddToCart from "./add-to-cart";
 import WishlistButton from "@/components/wishlist/WishlistButton";
 import ProductWhatsAppButton from "./ProductWhatsAppButton";
 import ProductGallery from "./ProductGallery";
+import { listColdVinylColours } from "@/lib/inventory/cold-vinyl";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,9 @@ export default async function ProductPage({
         priceDeltaCents: variant.price_delta_cents,
       });
   }
+
+  const coldVinylColours =
+    product.id === "original-glass-personalize-bamboo" ? await listColdVinylColours() : [];
 
   const productForCart = {
     ...product,
@@ -161,7 +165,7 @@ export default async function ProductPage({
             </div>
           )}
 
-          <AddToCart product={productForCart} />
+          <AddToCart product={productForCart} coldVinylColours={coldVinylColours} />
 
           {/* WhatsApp + Wishlist Actions */}
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-center">
