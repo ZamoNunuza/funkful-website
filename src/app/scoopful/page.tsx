@@ -1,4 +1,3 @@
-// src/app/scoopful/page.tsx
 
 import { createClient } from "@/lib/supabase/server";
 import ScoopfulCatalog from "../../components/scoopful/ScoopfulCatalog";
@@ -34,6 +33,7 @@ type ScoopfulProduct = {
   base_price_cents: number;
   compare_at_price_cents: number | null;
   badge: string | null;
+  swatch: string | null;
   featured: boolean;
   sort_order: number;
   stock_quantity: number;
@@ -58,6 +58,7 @@ export default async function ScoopfulPage() {
       base_price_cents,
       compare_at_price_cents,
       badge,
+      swatch,
       featured,
       sort_order,
       stock_quantity,
@@ -97,3 +98,4 @@ export default async function ScoopfulPage() {
     />
   );
 }
+

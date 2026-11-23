@@ -104,6 +104,24 @@ export const ballColors = {
   orange: "#D98A42",
 } as const;
 
+// Brighter take on the palette above, used by the Scoopful landing page.
+// Same hues as `palette` / `ballColors`, just pushed up in saturation so the
+// page feels more playful. Other pages keep using the originals.
+export const scoopfulBright = {
+  blush: "#F9B4C2",
+  blushDeep: "#F2678B",
+  gold: "#FFD166",
+  lavender: "#C9B8FF",
+  sage: "#A8E6B8",
+  balls: {
+    blue: "#3E8EF7",
+    yellow: "#FFC62E",
+    green: "#38C172",
+    red: "#F0455A",
+    orange: "#FF8A1F",
+  },
+} as const;
+
 /** Best image for a compact, roughly square space: emblem if the brand has one, else its logo. */
 export function brandMark(brand: Brand): string {
   return brand.emblem ?? brand.logo;
