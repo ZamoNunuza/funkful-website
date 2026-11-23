@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getLockerRates, getStandardRates, ShippingConfigurationError } from "@/lib/shipping/the-courier-guy";
 import {
   buildCheckoutKey,
+  checkoutExpiresAt,
   CHECKOUT_REUSE_WINDOW_MS,
   createYocoCheckout,
   isFresh,
@@ -436,11 +437,16 @@ const allProducts = catalogue ?? [];
     );
   }
 
+  const { data: orderRow } = await supabase.from("orders").select("created_at").eq("id", orderId).maybeSingle();
+
   const checkout = await createYocoCheckout(
     secretKey,
     {
       amount: total,
       currency: "ZAR",
+      // Unpaid checkouts now expire. Tied to the order's created_at so retries
+      // send an identical body (see checkoutExpiresAt).
+      expiresAt: checkoutExpiresAt(orderRow?.created_at),
       lineItems: sortYocoLineItems(
         savedItems.map((item) => ({
           displayName: item.variant ? `${item.product_name} (${item.variant.replace(/Reference image: pending\/[0-9a-f-]{36}\.(?:jpg|png|webp)/g, "Reference image attached")})` : item.product_name,

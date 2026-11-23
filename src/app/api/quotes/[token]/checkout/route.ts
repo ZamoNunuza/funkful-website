@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createYocoCheckout, isFresh, sortYocoLineItems } from "@/lib/yoco-checkout";
+import { checkoutExpiresAt, createYocoCheckout, isFresh, sortYocoLineItems } from "@/lib/yoco-checkout";
 
 export const runtime = "nodejs";
 // Yoco creation retries up to 3 times (7s each) with the same idempotency key.
@@ -66,11 +66,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   // reused idempotency key always matches the original request (Yoco returns 422
   // if the body differs).
   const startYocoCheckout = async (orderId: string, email: string) => {
+    const { data: orderRow } = await supabase.from("orders").select("created_at").eq("id", orderId).maybeSingle();
     const checkout = await createYocoCheckout(
       secretKey,
       {
         amount: total,
         currency: "ZAR",
+        // Unpaid checkouts now expire; derived from the order so retries match.
+        expiresAt: checkoutExpiresAt(orderRow?.created_at),
         lineItems: sortYocoLineItems(items.map((item) => ({
           displayName: item.description,
           quantity: item.quantity,
@@ -141,7 +144,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
       return NextResponse.json({ error: "Your previous payment session expired. Please refresh the page and try again." }, { status: 409 });
     }
     // Accepted but no Yoco checkout was ever saved (timeout last time): create it,
-    // idempotently, with the same key as the earlier attempt.
+    // idempotently, with the same key as the earlier attempt. Too old and the
+    // original expiresAt would already be in the past, so release it instead.
+    if (!isFresh(order.created_at)) {
+      await supabase.from("orders").update({ status: "cancelled" })
+        .eq("id", order.id).eq("status", "pending").eq("payment_status", "pending");
+      await reopenQuote();
+      return NextResponse.json({ error: "Your previous payment session expired. Please refresh the page and try again." }, { status: 409 });
+    }
     return startYocoCheckout(order.id, order.email);
   }
 
@@ -207,7 +217,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
 
   // Quote line items are custom-quoted items, not catalogue products. Give each
   // line a recognisable, unique quote-prefixed identifier instead of a null ID.
-  const { error: itemError } = await supabase.from("order_items").insert(items.map((item, index) => ({
+  const { error: itemError } = await supabase.from("order_items").insert(items.map((item) => ({
     order_id: orderId, product_id: null, product_name: item.description, brand: "funkful",
     variant: item.details || null, personalization_text: item.details || null,
     unit_price_cents: item.unitPriceCents, quantity: item.quantity,

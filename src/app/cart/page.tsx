@@ -113,7 +113,7 @@ export default function CartPage() {
 }
 
 function CartShell({ children }: { children: React.ReactNode }) {
-  return <main style={{ background: palette.cream, color: palette.black }} className="min-h-screen"><header style={{ borderBottom: "1px solid rgba(17,17,17,0.08)" }}><div className="max-w-[1180px] mx-auto px-5 sm:px-8 flex items-center justify-between py-4"><Link href="/"><Image src={brands.funkful.logo} alt="Funkful" width={110} height={24} className="w-auto" /></Link><span className="text-sm font-semibold text-neutral-500">🔒 Secure checkout</span></div></header>{children}</main>;
+  return <main style={{ background: palette.cream, color: palette.black }} className="min-h-screen"><header style={{ borderBottom: "1px solid rgba(17,17,17,0.08)" }}><div className="max-w-[1180px] mx-auto px-5 sm:px-8 flex items-center justify-between py-4"><Link href="/"><Image src={brands.funkful.logo} alt="Funkful" width={110} height={24} className="h-6 w-auto" /></Link><span className="text-sm font-semibold text-neutral-500">🔒 Secure checkout</span></div></header>{children}</main>;
 }
 
 function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) { return <div className="flex justify-between text-sm py-2" style={{ color: "#4a4438" }}><span>{label}</span><span>{value}</span></div>; }

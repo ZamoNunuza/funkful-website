@@ -96,6 +96,14 @@
   color: #555555;
 }
 
+.logoImg {
+  display: block;
+  width: 110px;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: 1fr 1fr;

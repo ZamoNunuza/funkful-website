@@ -257,6 +257,7 @@ export interface OrderRow {
   tracking_number?: string | null;
   tracking_url?: string | null;
   courier?: string | null;
+  yoco_checkout_id?: string | null;
 }
 
 export interface OrderItemRow {

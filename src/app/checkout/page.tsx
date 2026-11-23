@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import { brands, palette } from "@/lib/brands";
 
@@ -10,6 +11,7 @@ function formatRands(cents: number) { return `R${(cents / 100).toFixed(2)}`; }
 const inputClass = "w-full rounded-xl border px-3.5 py-3 text-sm outline-none focus:ring-2 focus:ring-black/10";
 
 export default function CheckoutPage() {
+  const router = useRouter();
   const { items, hydrated, subtotalCents } = useCart();
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -153,7 +155,7 @@ export default function CheckoutPage() {
       }) });
       const data = await res.json();
       // This exact bag was paid moments ago. Show that order instead of charging again.
-      if (data.alreadyPaid && data.orderId) { window.location.assign(`/checkout/success?order=${data.orderId}`); return; }
+      if (data.alreadyPaid && data.orderId) { router.push(`/checkout/success?order=${data.orderId}`); return; }
       if (!res.ok || !data.redirectUrl) throw new Error(data.error ?? "Could not start secure payment.");
       window.location.assign(data.redirectUrl);
     } catch (e) {

@@ -104,13 +104,13 @@ async function handleUnmatchedPayment(
   const secretKey = process.env.YOCO_SECRET_KEY;
   if (!secretKey) return;
 
-  const refund = await refundYocoCheckout(secretKey, info.checkoutId);
+  const refund = await refundYocoCheckout(secretKey, info.checkoutId, info.amount);
   console.error("Duplicate payment refund result:", { orderId: order.id, checkoutId: info.checkoutId, refund });
   await logOrderEvent(
     supabase,
     order,
     refund.ok
-      ? `Duplicate payment on checkout ${info.checkoutId} was refunded automatically.`
+      ? `Refund of duplicate payment on checkout ${info.checkoutId} was requested from Yoco (R${(info.amount / 100).toFixed(2)}); awaiting Yoco's confirmation.`
       : `Automatic refund of duplicate checkout ${info.checkoutId} FAILED (${refund.status}). Refund it in the Yoco dashboard.`,
   );
 }
@@ -202,6 +202,9 @@ export async function POST(req: NextRequest) {
     metadata.checkout_id,
     nestedMetadata.checkoutId,
     nestedMetadata.checkout_id,
+    // On checkout.* events the object itself is the checkout.
+    eventType?.startsWith("checkout.") ? payload.id : null,
+    eventType?.startsWith("checkout.") ? nestedData.id : null,
   );
 
   const amount = firstNumber(
@@ -355,6 +358,17 @@ export async function POST(req: NextRequest) {
         finalized,
       });
 
+      // A payment can land after we released the order (stale-order release or
+      // checkout expiry). It is still finalised and the customer keeps their
+      // order, but flag it so it is seen rather than silently resurrected.
+      if (order.status === "cancelled" && !alreadyPaid) {
+        await logOrderEvent(
+          supabase,
+          order,
+          "Payment arrived after this order was cancelled/expired. It was finalised as paid; confirm it should ship, or refund it.",
+        );
+      }
+
       // Keep custom quotations in sync with the verified payment event.
       const { data: updatedQuotes, error: quoteUpdateError } = await supabase
         .from("custom_quotes")
@@ -429,6 +443,62 @@ export async function POST(req: NextRequest) {
         orderId,
       });
     }
+    // -----------------------------------------------------------------------
+    // REFUND RESULT (Yoco confirms refunds asynchronously)
+    // -----------------------------------------------------------------------
+
+    if (eventType === "refund.succeeded" || eventType === "refund.failed") {
+      // Only the order's OWN checkout counts. A refund of a duplicate payment is
+      // on a different checkout and must never mark this order refunded.
+      const ownCheckout = Boolean(checkoutId && order.yoco_checkout_id && checkoutId === order.yoco_checkout_id);
+      const rand = amount != null ? `R${(amount / 100).toFixed(2)}` : "an unknown amount";
+
+      if (!ownCheckout) {
+        await logOrderEvent(supabase, order, `Yoco ${eventType} for ${rand} on checkout ${checkoutId ?? "?"}, which is not this order's checkout (duplicate-payment refund). Order unchanged.`);
+        return NextResponse.json({ received: true, event: eventType, orderId });
+      }
+
+      if (eventType === "refund.failed") {
+        await logOrderEvent(supabase, order, `Yoco could not complete the refund of ${rand}. Try again or refund it in the Yoco dashboard.`);
+        return NextResponse.json({ received: true, event: eventType, orderId });
+      }
+
+      const fullRefund = amount != null && amount >= Number(order.total_cents);
+      if (fullRefund && order.payment_status === "paid") {
+        const { error: refundUpdateError } = await supabase
+          .from("orders")
+          .update({ payment_status: "refunded" })
+          .eq("id", orderId)
+          .eq("payment_status", "paid");
+        if (refundUpdateError) throw refundUpdateError;
+        await logOrderEvent(supabase, order, `Yoco confirmed a full refund of ${rand}. Payment status set to refunded.`);
+      } else {
+        await logOrderEvent(supabase, order, `Yoco confirmed a refund of ${rand}${fullRefund ? "" : " (partial or unrecognised amount)"}. Payment status left as it was.`);
+      }
+      return NextResponse.json({ received: true, event: eventType, orderId });
+    }
+
+    // -----------------------------------------------------------------------
+    // CHECKOUT EXPIRED (only delivered if added to the webhook's events list)
+    // -----------------------------------------------------------------------
+
+    if (eventType === "checkout.expired") {
+      // Release the unpaid order. Guarded so a paid or already-moved order is
+      // never touched. The quote page reopens the quotation when the customer
+      // returns to an order that is no longer pending.
+      if (order.payment_status !== "paid" && order.status === "pending") {
+        const { error: cancelError } = await supabase
+          .from("orders")
+          .update({ status: "cancelled" })
+          .eq("id", orderId)
+          .eq("status", "pending")
+          .eq("payment_status", "pending");
+        if (cancelError) throw cancelError;
+        await logOrderEvent(supabase, order, "Yoco checkout expired unpaid. Order released.");
+      }
+      return NextResponse.json({ received: true, event: eventType, orderId });
+    }
+
     // -----------------------------------------------------------------------
     // Other valid Yoco events
     // -----------------------------------------------------------------------

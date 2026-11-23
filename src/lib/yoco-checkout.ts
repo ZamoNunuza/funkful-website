@@ -20,11 +20,26 @@ function minutesFromEnv(name: string, fallback: number) {
 
 /**
  * How long an unpaid order's Yoco checkout is reused before we start fresh.
- * Yoco's checkout expiry is not documented in the pages this was built from, so
- * this is deliberately conservative and configurable.
+ *
+ * This is also the checkout's real lifetime: every checkout is created with an
+ * explicit `expiresAt` of order.created_at + this window (see checkoutExpiresAt),
+ * so the moment we release a stale order its Yoco checkout can no longer be
+ * paid. Yoco requires expiresAt to be 30 minutes to 70 days after creation, and
+ * from 21 Jan 2027 checkouts without one close after 24h.
  */
 export const CHECKOUT_REUSE_WINDOW_MS =
-  minutesFromEnv("YOCO_CHECKOUT_REUSE_MINUTES", 30) * 60 * 1000;
+  Math.max(minutesFromEnv("YOCO_CHECKOUT_REUSE_MINUTES", 60), 35) * 60 * 1000;
+
+/**
+ * Deterministic expiry for an order's Yoco checkout. It is derived from the
+ * order's created_at, never from "now", so every retry of the same order sends
+ * a byte-identical body and the Idempotency-Key is never rejected (422).
+ */
+export function checkoutExpiresAt(orderCreatedAt: string | null | undefined): string {
+  const created = orderCreatedAt ? new Date(orderCreatedAt).getTime() : NaN;
+  const base = Number.isFinite(created) ? created : Date.now();
+  return new Date(base + CHECKOUT_REUSE_WINDOW_MS).toISOString();
+}
 
 /**
  * If the same basket was PAID within this window, a new checkout attempt is
@@ -195,18 +210,34 @@ export async function createYocoCheckout(
 }
 
 // ---------------------------------------------------------------------------
-// Refund (used only for duplicate-payment recovery)
+// Refund (duplicate-payment recovery and the admin Refund button)
 // ---------------------------------------------------------------------------
 
-export async function refundYocoCheckout(secretKey: string, checkoutId: string) {
+/**
+ * Asks Yoco to refund `amountCents` of a checkout. Yoco answers 202 Accepted:
+ * the refund has only STARTED. The outcome arrives later as a refund.succeeded
+ * or refund.failed webhook, which is what actually marks the order refunded.
+ * Refunds only work on checkouts made with live keys.
+ *
+ * `idempotencyKey` makes a retried or double-clicked request safe. The default
+ * is one refund per checkout, which is right for duplicate recovery; the admin
+ * button passes its own key so a deliberate second partial refund can happen.
+ */
+export async function refundYocoCheckout(
+  secretKey: string,
+  checkoutId: string,
+  amountCents: number,
+  idempotencyKey = `funkful-refund-${checkoutId}`,
+) {
   try {
     const res = await fetch(`${YOCO_API}/checkouts/${encodeURIComponent(checkoutId)}/refund`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${secretKey}`,
-        "Idempotency-Key": `funkful-refund-${checkoutId}`,
+        "Idempotency-Key": idempotencyKey,
       },
+      body: JSON.stringify({ amount: amountCents }),
       signal: AbortSignal.timeout(10000),
     });
     const text = await res.text();

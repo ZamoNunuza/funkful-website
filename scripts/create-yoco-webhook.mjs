@@ -10,10 +10,18 @@ async function createYocoWebhook() {
 
   const endpoint = "https://payments.yoco.com/api/webhooks";
 
-   const payload = {
+  const payload = {
     name: "Funkful Payment Webhook",
     url: "https://funkful.co.za/api/webhooks/yoco",
   };
+
+  // Optional: YOCO_WEBHOOK_EVENTS="payment.succeeded,payment.failed,refund.succeeded,refund.failed,checkout.expired"
+  // Yoco's expiry email says checkout.expired is added to the subscription's
+  // events list. Check the field name in Yoco's webhook API reference before
+  // relying on this; if Yoco rejects it, the error is printed below.
+  if (process.env.YOCO_WEBHOOK_EVENTS) {
+    payload.events = process.env.YOCO_WEBHOOK_EVENTS.split(",").map((e) => e.trim()).filter(Boolean);
+  }
 
   console.log(`Creating Yoco webhook via ${endpoint}`);
   console.log("Webhook URL:", payload.url);
