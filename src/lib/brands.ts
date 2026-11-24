@@ -16,7 +16,7 @@ export interface Brand {
   eyebrow: string;
   /** One or two sentence description used in cards and meta tags */
   description: string;
-  /** Path under /public, e.g. "/assets/scoopful-logo.png" */
+  /** Path under /public, e.g. "/assets/scoopful-logo.webp" */
   logo: string;
   /**
    * Square mark for compact spaces (favicons, avatars, tiles, placeholders).
