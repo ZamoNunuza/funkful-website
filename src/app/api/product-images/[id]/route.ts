@@ -168,7 +168,7 @@ export async function GET(
         headers: {
           "Content-Type": contentType,
           "Content-Length": String(preview.size),
-          "Cache-Control": "private, max-age=3600",
+         "Cache-Control": "public, max-age=86400, s-maxage=31536000, immutable",
           "Content-Disposition": `inline; filename="${id}.${extension}"`,
         },
       });
@@ -229,7 +229,7 @@ export async function GET(
             headers: {
               "Content-Type": contentType,
               "Content-Length": String(legacyImage.size),
-              "Cache-Control": "private, max-age=3600",
+              "Cache-Control": "public, max-age=86400, s-maxage=31536000, immutable",
               "Content-Disposition": `inline; filename="${id}.${extension}"`,
             },
           });

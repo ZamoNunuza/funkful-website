@@ -81,7 +81,7 @@ export default function WishlistGrid({ items: initialItems }: { items: WishlistP
                       {item.badge}
                     </span>
                   )}
-                  <Image src={brand.logo} alt="" width={56} height={56} className="object-contain opacity-80" draggable={false} />
+                  <Image unoptimized src={brand.logo} alt="" width={56} height={56} className="object-contain opacity-80" draggable={false} />
                 </div>
 
                 <div className="p-5 flex flex-col flex-1">

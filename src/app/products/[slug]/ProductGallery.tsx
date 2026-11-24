@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { getProductThumbnailUrl } from "@/lib/product-images/paths";
 
 type ProductImage = {
   id: string;
@@ -86,6 +87,8 @@ export default function ProductGallery({
             const isSelected =
               index === selectedIndex;
 
+            const thumbnailUrl = getProductThumbnailUrl(image.image_url) ?? image.image_url;
+
             return (
               <button
                 key={image.id}
@@ -103,16 +106,16 @@ export default function ProductGallery({
                 }`}
               >
                 <Image
-                  src={image.image_url}
+                  src={thumbnailUrl}
                   alt={
                     image.alt_text ||
-                    `${productName} image ${
-                      index + 1
-                    }`
+                    `${productName} image ${index + 1}`
                   }
                   width={100}
                   height={100}
-                  sizes="100px"
+                  unoptimized
+                  loading="lazy"
+                  className="h-full w-full object-contain"
                 />
 
                 {image.is_primary && (

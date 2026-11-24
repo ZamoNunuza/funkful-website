@@ -149,7 +149,7 @@ export default function HomePage() {
               className="absolute w-[68%] aspect-square rounded-[30px] rotate-[6deg] shadow-2xl flex items-center justify-center p-8"
             >
               <div className="text-center">
-                <Image
+                <Image unoptimized
                   src={funkful.logo}
                   alt="Funkful"
                   width={260}
@@ -273,7 +273,7 @@ export default function HomePage() {
               />
 
               <div className="relative text-center">
-                <Image
+                <Image unoptimized
                   src={funkful.logo}
                   alt="Funkful Originals"
                   width={280}
@@ -396,7 +396,7 @@ export default function HomePage() {
                 }}
                 className="relative w-[245px] h-[245px] rounded-[30px] rotate-[5deg] flex items-center justify-center p-8 shadow-2xl"
               >
-                <Image
+                <Image unoptimized
                   src={scoopful.logo}
                   alt="Scoopful by Funkful"
                   width={220}

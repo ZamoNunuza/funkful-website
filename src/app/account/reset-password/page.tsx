@@ -22,7 +22,7 @@ export default async function ResetPasswordPage() {
     >
       <div className="w-full max-w-md">
         <Link href="/" className="flex justify-center mb-8">
-          <Image src={brands.funkful.logo} alt="Funkful" width={130} height={30} className="w-auto" />
+          <Image unoptimized src={brands.funkful.logo} alt="Funkful" width={130} height={30} className="w-auto" />
         </Link>
 
         <div style={{ background: "white", borderColor: "rgba(17,17,17,0.08)" }} className="border rounded-[22px] p-8">

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { navLinks } from "@/lib/brands";
+import { brands, navLinks } from "@/lib/brands";
 import { useCart } from "@/lib/cart-context";
 import { useWishlist } from "@/lib/wishlist-context";
 import styles from "./Header.module.css";
@@ -136,13 +136,14 @@ export default function Header() {
             aria-label="Funkful homepage"
           >
             <Image
-              src="/assets/funkful-logo.png"
+              src={brands.funkful.logo}
               alt="Funkful"
               width={110}
-              height={26}
+              height={48}
               className={styles.logoImg}
               draggable={false}
               priority
+              unoptimized
             />
           </Link>
 

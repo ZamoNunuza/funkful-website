@@ -34,7 +34,7 @@ export interface Brand {
 }
 
 /** Funkful's square emblem. Compact spaces only; the wide logo handles headers. */
-export const FUNKFUL_EMBLEM = "/assets/funkful-emblem.png";
+export const FUNKFUL_EMBLEM = "/assets/funkful-emblem.webp";
 
 export const brands: Record<BrandSlug, Brand> = {
   funkful: {
@@ -44,7 +44,7 @@ export const brands: Record<BrandSlug, Brand> = {
     eyebrow: "The Creative Friend",
     description:
       "Custom mugs, tumblers and apparel — bespoke, affordable lifestyle goods that trigger a little self-expression every day.",
-    logo: "/assets/funkful-logo.png",
+    logo: "/assets/funkful-logo.webp",
     emblem: FUNKFUL_EMBLEM,
     accent: "#E8DDD0", // beige
     accentInk: "#111111",
@@ -58,7 +58,7 @@ export const brands: Record<BrandSlug, Brand> = {
     eyebrow: "The Fun Bestie",
     description:
       "A gamified mystery scoop event — five ball colors, five rarities, and every scoop tells you exactly which colors are guaranteed.",
-    logo: "/assets/scoopful-logo.png",
+    logo: "/assets/scoopful-logo.webp",
     accent: "#EBC6C2", // blush
     accentInk: "#5b2f2b",
     status: "live",
@@ -71,7 +71,7 @@ export const brands: Record<BrandSlug, Brand> = {
     eyebrow: "Coming soon",
     description:
       "Curated anime-themed mystery boxes and merch. Name's still TBD — join the waitlist to help us reveal it first.",
-    logo: "/assets/funkful-logo.png", // swap once the brand has its own mark
+    logo: "/assets/funkful-logo.webp", // swap once the brand has its own mark
     accent: "#CFC5E8", // lavender
     accentInk: "#241a45",
     status: "coming-soon",

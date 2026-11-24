@@ -10,8 +10,8 @@ export default function NotFound() {
   return (
     <main className="min-h-[65vh] px-6 py-16 sm:py-24 flex items-center justify-center">
       <section className="w-full max-w-2xl text-center">
-        <Image
-          src="/assets/funkful-emblem.png"
+        <Image unoptimized
+          src="/assets/funkful-emblem.webp"
           alt="Funkful emblem"
           width={88}
           height={88}

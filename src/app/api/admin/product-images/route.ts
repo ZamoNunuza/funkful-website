@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createWatermarkedPreview } from "@/lib/product-images/watermark";
+import { createWatermarkedPreview, createWatermarkedThumbnail} from "@/lib/product-images/watermark";
+import { getProductThumbnailPath } from "@/lib/product-images/paths";
 
 const LEGACY_BUCKET = "product-images";
 const ORIGINALS_BUCKET = "product-originals";
@@ -66,8 +67,12 @@ export async function POST(request: Request) {
     const fileName = safeFileName(file.name);
     const originalPath = `products/${productId}/${String(sortOrder + 1).padStart(2, "0")}-${fileName}`;
     const previewPath = `products/${productId}/${String(sortOrder + 1).padStart(2, "0")}-${fileName.replace(/\.(jpe?g|png|webp)$/i, ".webp")}`;
+    const thumbnailPath = getProductThumbnailPath(previewPath);
     const bytes = Buffer.from(await file.arrayBuffer());
-    const previewBytes = await createWatermarkedPreview(bytes);
+    const [previewBytes, thumbnailBytes] = await Promise.all([
+      createWatermarkedPreview(bytes),
+      createWatermarkedThumbnail(bytes),
+    ]);
 
     const { error: originalUploadError } = await admin.storage.from(ORIGINALS_BUCKET).upload(originalPath, bytes, {
       contentType: file.type,
@@ -85,6 +90,22 @@ export async function POST(request: Request) {
       await admin.storage.from(ORIGINALS_BUCKET).remove([originalPath]);
       return jsonError(previewUploadError.message, 500);
     }
+    const { error: thumbnailUploadError } = await admin.storage
+      .from(PREVIEWS_BUCKET)
+      .upload(thumbnailPath, thumbnailBytes, {
+        contentType: "image/webp",
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+      if (thumbnailUploadError) {
+        await Promise.all([
+          admin.storage.from(ORIGINALS_BUCKET).remove([originalPath]),
+          admin.storage.from(PREVIEWS_BUCKET).remove([previewPath]),
+        ]);
+
+        return jsonError(thumbnailUploadError.message, 500);
+      }
     const { data: image, error: imageError } = await admin
       .from("product_images")
       .insert({
@@ -101,8 +122,10 @@ export async function POST(request: Request) {
       .single();
 
     if (imageError) {
-      await admin.storage.from(ORIGINALS_BUCKET).remove([originalPath]);
-      await admin.storage.from(PREVIEWS_BUCKET).remove([previewPath]);
+      await Promise.all([
+        admin.storage.from(ORIGINALS_BUCKET).remove([originalPath]),
+        admin.storage.from(PREVIEWS_BUCKET).remove([previewPath, thumbnailPath]),
+      ]);
       return jsonError(imageError.message, 500);
     }
 
@@ -114,8 +137,10 @@ export async function POST(request: Request) {
       .single();
 
     if (urlUpdateError || !finalImage) {
-      await admin.storage.from(ORIGINALS_BUCKET).remove([originalPath]);
-      await admin.storage.from(PREVIEWS_BUCKET).remove([previewPath]);
+      await Promise.all([
+        admin.storage.from(ORIGINALS_BUCKET).remove([originalPath]),
+        admin.storage.from(PREVIEWS_BUCKET).remove([previewPath, thumbnailPath]),
+      ]);
       await admin.from("product_images").delete().eq("id", image.id);
       return jsonError(urlUpdateError?.message ?? "Could not finalize protected image.", 500);
     }
@@ -143,9 +168,17 @@ export async function DELETE(request: Request) {
     if (imageError) return jsonError(imageError.message, 500);
     if (!image) return jsonError("Image not found.", 404);
 
-    const protectedPaths = [image.original_path, image.preview_path].filter((value): value is string => Boolean(value));
-    if (image.original_path) await admin.storage.from(ORIGINALS_BUCKET).remove([image.original_path]);
-    if (image.preview_path) await admin.storage.from(PREVIEWS_BUCKET).remove([image.preview_path]);
+    if (image.original_path) {
+      await admin.storage.from(ORIGINALS_BUCKET).remove([image.original_path]);
+    }
+
+    if (image.preview_path) {
+      const thumbnailPath = getProductThumbnailPath(image.preview_path);
+
+      await admin.storage
+        .from(PREVIEWS_BUCKET)
+        .remove([image.preview_path, thumbnailPath]);
+    }
 
     // Legacy public objects are removed only when the stored URL belongs to our old bucket.
     const marker = `/storage/v1/object/public/${LEGACY_BUCKET}/`;
@@ -154,8 +187,6 @@ export async function DELETE(request: Request) {
       const legacyPath = decodeURIComponent(image.image_url.slice(markerIndex + marker.length));
       await admin.storage.from(LEGACY_BUCKET).remove([legacyPath]);
     }
-
-    void protectedPaths;
 
     const { error: deleteError } = await admin.from("product_images").delete().eq("id", image.id);
     if (deleteError) return jsonError(deleteError.message, 500);

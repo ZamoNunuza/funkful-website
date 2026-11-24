@@ -21,7 +21,7 @@ export default async function ConfirmedPage() {
     >
       <div className="w-full max-w-md text-center">
         <Link href="/" className="flex justify-center mb-10">
-          <Image src={brands.funkful.logo} alt="Funkful" width={130} height={30} className="w-auto" />
+          <Image unoptimized src={brands.funkful.logo} alt="Funkful" width={130} height={30} className="w-auto" />
         </Link>
 
         <div className="bg-white border rounded-[22px] p-9">

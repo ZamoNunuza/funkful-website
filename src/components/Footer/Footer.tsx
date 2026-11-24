@@ -48,6 +48,7 @@ export default function Footer() {
                         className={styles.logoImg}
                         width={120}
                         height={28}
+                        unoptimized
                     />
 
                     <p className={styles.blurb}>

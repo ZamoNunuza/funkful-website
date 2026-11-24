@@ -16,7 +16,7 @@ export default function SearchPage() {
       <p className="text-xs font-bold uppercase tracking-wide text-neutral-500 mb-5">{results.length} result{results.length===1?"":"s"}</p>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {results.map(p=><Link key={p.id} href={`/products/${p.id}`} className="border rounded-[20px] overflow-hidden bg-white hover:-translate-y-0.5 transition-transform">
-          <div style={{background:p.swatch}} className="aspect-square flex items-center justify-center"><Image src={brands[p.brand].logo} alt="" width={130} height={130} className="object-contain"/></div>
+          <div style={{background:p.swatch}} className="aspect-square flex items-center justify-center"><Image unoptimized src={brands[p.brand].logo} alt="" width={130} height={130} className="object-contain"/></div>
           <div className="p-5"><p className="text-[10px] uppercase font-bold text-neutral-500">{p.category}</p><h2 className="font-extrabold mt-1">{p.name}</h2><p className="text-sm mt-2">R{(p.basePriceCents/100).toFixed(0)}</p></div>
         </Link>)}
       </div>

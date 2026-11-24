@@ -283,7 +283,7 @@ function ScoopImageArea({ product }: { product: ScoopfulProduct }) {
             src={image.image_url}
             alt={image.alt_text || product.name}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            sizes="(max-width: 639px) calc(100vw - 4rem), (max-width: 1023px) calc((100vw - 5.25rem) / 2), (max-width: 1179px) calc((100vw - 7.75rem) / 4), 264px"
             className="object-contain p-7 transition-transform duration-300 hover:scale-105"
           />
         </Link>
@@ -336,7 +336,7 @@ export default function ScoopfulCatalog({ scoops, addOns }: Props) {
                 }}
               />
             ))}
-            <Image
+            <Image unoptimized
               src={scoopful.logo}
               alt={scoopful.name}
               width={500}
@@ -515,7 +515,7 @@ export default function ScoopfulCatalog({ scoops, addOns }: Props) {
                             alt={image.alt_text || addOn.name}
                             fill
                             priority={false}
-                            sizes="(max-width: 768px) 100vw, 420px"
+                            sizes="(max-width: 767px) calc(100vw - 4rem), 420px"
                             className="object-contain p-6 transition-transform duration-500 hover:scale-105"
                           />
                         </Link>

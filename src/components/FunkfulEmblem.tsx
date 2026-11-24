@@ -19,7 +19,7 @@ export default function FunkfulEmblem({
   priority?: boolean;
 }) {
   return (
-    <Image
+    <Image unoptimized
       src={FUNKFUL_EMBLEM}
       alt={alt}
       width={size}

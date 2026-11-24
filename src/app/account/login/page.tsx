@@ -75,7 +75,7 @@ return (
     >
       <div className="w-full max-w-md">
         <Link href="/" className="flex justify-center mb-8">
-          <Image
+          <Image unoptimized
             src={funkful.logo}
             alt="Funkful"
             width={130}

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
+import { getProductThumbnailUrl } from "@/lib/product-images/paths";
 
 type Product = { id: string; name: string; slug: string | null; brand: string; category: string; is_active: boolean };
 type ProductImage = { id: string; product_id: string; image_url: string; alt_text: string | null; is_primary: boolean; sort_order: number };
@@ -307,23 +308,87 @@ export default function ProductImageManager({ products, initialImages }: { produ
         <div className="mb-5"><p className="text-xs font-black uppercase tracking-wide">Gallery</p><p className="mt-1 text-xs text-neutral-500">The primary image is used first on the Originals grid. Gallery order controls the product detail gallery.</p></div>
         {selectedImages.length === 0 ? <div className="rounded-2xl border border-dashed border-black/15 bg-white p-10 text-center text-sm text-neutral-500">No images linked yet. Upload the first image from the left.</div> :
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {selectedImages.map((image, index) => (
-              <article key={image.id} className="overflow-hidden rounded-2xl border border-black/10 bg-white">
-                <div className="relative aspect-square bg-[#F2E7D5]">
-                  <Image src={image.image_url} alt={image.alt_text || selectedProduct?.name || "Product image"} fill sizes="(max-width: 640px) 100vw, (max-width: 1280px) 33vw, 300px" className="object-contain p-3" />
-                  {image.is_primary && <span className="absolute left-3 top-3 rounded-full bg-black px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-white">Primary</span>}
-                </div>
-                <div className="space-y-3 p-4">
-                  <input defaultValue={image.alt_text ?? ""} onBlur={(event) => saveAlt(image, event.target.value).catch((error) => setMessage(error instanceof Error ? error.message : "Could not save alt text."))} aria-label="Alt text" className="w-full rounded-xl border border-black/10 px-3 py-2 text-xs" />
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => makePrimary(image.id)} disabled={image.is_primary} className="rounded-lg border border-black/10 px-3 py-2 text-[10px] font-black uppercase disabled:opacity-35">Primary</button>
-                    <button type="button" onClick={() => move(image.id, -1)} disabled={index === 0} className="rounded-lg border border-black/10 px-3 py-2 text-[10px] font-black disabled:opacity-35" aria-label="Move image left">←</button>
-                    <button type="button" onClick={() => move(image.id, 1)} disabled={index === selectedImages.length - 1} className="rounded-lg border border-black/10 px-3 py-2 text-[10px] font-black disabled:opacity-35" aria-label="Move image right">→</button>
-                    <button type="button" onClick={() => remove(image)} disabled={busy} className="ml-auto rounded-lg border border-red-200 px-3 py-2 text-[10px] font-black text-red-700">Remove</button>
+            {selectedImages.map((image, index) => {
+              const thumbnailUrl = getProductThumbnailUrl(image.image_url) ?? image.image_url;
+              return (
+                <article
+                  key={image.id}
+                  className="overflow-hidden rounded-2xl border border-black/10 bg-white" >
+                  <div className="relative aspect-square bg-[#F2E7D5]">
+                    <Image
+                      src={thumbnailUrl}
+                      alt={image.alt_text || selectedProduct?.name || "Product image"}
+                      fill
+                      unoptimized
+                      className="object-contain p-3"
+                    />
+
+                    {image.is_primary && (
+                      <span className="absolute left-3 top-3 rounded-full bg-black px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-white">
+                        Primary
+                      </span>
+                    )}
                   </div>
-                </div>
-              </article>
-            ))}
+
+                  <div className="space-y-3 p-4">
+                    <input
+                      defaultValue={image.alt_text ?? ""}
+                      onBlur={(event) =>
+                        saveAlt(image, event.target.value).catch((error) =>
+                          setMessage(
+                            error instanceof Error
+                              ? error.message
+                              : "Could not save alt text."
+                          )
+                        )
+                      }
+                      aria-label="Alt text"
+                      className="w-full rounded-xl border border-black/10 px-3 py-2 text-xs"
+                    />
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => makePrimary(image.id)}
+                        disabled={image.is_primary}
+                        className="rounded-lg border border-black/10 px-3 py-2 text-[10px] font-black uppercase disabled:opacity-35"
+                      >
+                        Primary
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => move(image.id, -1)}
+                        disabled={index === 0}
+                        className="rounded-lg border border-black/10 px-3 py-2 text-[10px] font-black disabled:opacity-35"
+                        aria-label="Move image left"
+                      >
+                        ←
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => move(image.id, 1)}
+                        disabled={index === selectedImages.length - 1}
+                        className="rounded-lg border border-black/10 px-3 py-2 text-[10px] font-black disabled:opacity-35"
+                        aria-label="Move image right"
+                      >
+                        →
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => remove(image)}
+                        disabled={busy}
+                        className="ml-auto rounded-lg border border-red-200 px-3 py-2 text-[10px] font-black text-red-700"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>}
       </section>
     </div>

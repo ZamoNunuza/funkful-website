@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/lib/cart-context";
 import { brands, palette } from "@/lib/brands";
+import { getProductThumbnailUrl } from "@/lib/product-images/paths";
 
 function formatRands(cents: number) { return `R${(cents / 100).toFixed(2)}`; }
 
@@ -55,8 +56,18 @@ export default function CartPage() {
               <div className="divide-y border-y" style={{ borderColor: "rgba(17,17,17,0.1)" }}>
                 {items.map((item) => {
                   const brand = brands[item.brand];
+                  const imageUrl = getProductThumbnailUrl(item.imageUrl);
                   return <div key={item.id} className="py-5 grid grid-cols-[72px_1fr_auto] sm:grid-cols-[92px_1fr_auto] gap-4 items-center">
-                    <div style={{ background: brand.accent }} className="w-[72px] h-[72px] sm:w-[92px] sm:h-[92px] rounded-2xl flex items-center justify-center p-4"><Image src={item.imageUrl || brand.logo} alt="" width={54} height={54} className="object-contain" /></div>
+                    <div style={{ background: brand.accent }} className="w-[72px] h-[72px] sm:w-[92px] sm:h-[92px] rounded-2xl flex items-center justify-center p-4">
+                      <Image
+                        src={imageUrl || brand.logo}
+                        alt=""
+                        width={54}
+                        height={54}
+                        unoptimized
+                        className="object-contain"
+                      />
+                    </div>
                     <div className="min-w-0">
                       <p style={{ color: "#8a4a45" }} className="text-[10px] font-bold uppercase tracking-wide">{brand.name}</p>
                       <h2 className="font-bold text-sm sm:text-base mt-1">{item.name}</h2>
@@ -113,7 +124,7 @@ export default function CartPage() {
 }
 
 function CartShell({ children }: { children: React.ReactNode }) {
-  return <main style={{ background: palette.cream, color: palette.black }} className="min-h-screen"><header style={{ borderBottom: "1px solid rgba(17,17,17,0.08)" }}><div className="max-w-[1180px] mx-auto px-5 sm:px-8 flex items-center justify-between py-4"><Link href="/"><Image src={brands.funkful.logo} alt="Funkful" width={110} height={24} className="h-6 w-auto" /></Link><span className="text-sm font-semibold text-neutral-500">🔒 Secure checkout</span></div></header>{children}</main>;
+  return <main style={{ background: palette.cream, color: palette.black }} className="min-h-screen"><header style={{ borderBottom: "1px solid rgba(17,17,17,0.08)" }}><div className="max-w-[1180px] mx-auto px-5 sm:px-8 flex items-center justify-between py-4"><Link href="/"><Image unoptimized src={brands.funkful.logo} alt="Funkful" width={110} height={24} className="h-6 w-auto" /></Link><span className="text-sm font-semibold text-neutral-500">🔒 Secure checkout</span></div></header>{children}</main>;
 }
 
 function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) { return <div className="flex justify-between text-sm py-2" style={{ color: "#4a4438" }}><span>{label}</span><span>{value}</span></div>; }

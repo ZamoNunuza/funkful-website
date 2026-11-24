@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import { brands, palette } from "@/lib/brands";
+import { getProductThumbnailUrl } from "@/lib/product-images/paths";
 
 function formatRands(cents: number) { return `R${(cents / 100).toFixed(2)}`; }
 const inputClass = "w-full rounded-xl border px-3.5 py-3 text-sm outline-none focus:ring-2 focus:ring-black/10";
@@ -200,19 +201,19 @@ export default function CheckoutPage() {
           <div className="space-y-4 mb-5">
             {items.map((item) => {
               const brand = brands[item.brand];
-              const productImage = item.imageUrl || brand.logo;
+              const productImage = getProductThumbnailUrl(item.imageUrl) || brand.logo;
 
               return (
                 <div key={item.id} className="flex gap-3 items-start">
                   <div
                     style={{ background: brand.accent }}
-                    className="w-12 h-12 rounded-xl p-1 flex items-center justify-center shrink-0"
-                  >
+                    className="w-12 h-12 rounded-xl p-1 flex items-center justify-center shrink-0" >
                     <Image
                       src={productImage}
                       alt={item.imageUrl ? item.name : `${item.brand} logo`}
                       width={48}
                       height={48}
+                      unoptimized
                       className="w-full h-full object-contain rounded-lg"
                     />
                   </div>
@@ -244,6 +245,6 @@ export default function CheckoutPage() {
   </CheckoutShell>;
 }
 
-function CheckoutShell({ children }: { children: React.ReactNode }) { return <main style={{ background: palette.cream, color: palette.black }} className="min-h-screen"><header style={{ borderBottom: "1px solid rgba(17,17,17,0.08)" }}><div className="max-w-[1180px] mx-auto px-5 sm:px-8 flex items-center justify-between py-4"><Link href="/"><Image src={brands.funkful.logo} alt="Funkful" width={110} height={24} className="w-auto" /></Link><span className="text-sm font-semibold text-neutral-500">🔒 Secure checkout</span></div></header>{children}</main>; }
+function CheckoutShell({ children }: { children: React.ReactNode }) { return <main style={{ background: palette.cream, color: palette.black }} className="min-h-screen"><header><div className="max-w-[1180px] mx-auto px-5 sm:px-8 flex items-center justify-between py-4"><Link href="/"><Image unoptimized src={brands.funkful.logo} alt="Funkful" width={110} height={24} hidden /></Link><span className="text-sm font-semibold text-neutral-500">🔒 Secure checkout</span></div></header>{children}</main>; }
 function Field({ label, value, onChange, type = "text", placeholder }: { label: string; value: string; onChange: (value: string) => void; type?: string; placeholder?: string }) { return <label className="block"><span className="block text-[11px] font-bold uppercase tracking-wide text-neutral-600 mb-1.5">{label}</span><input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={inputClass} autoComplete={label.toLowerCase().includes("email") ? "email" : label.toLowerCase().includes("first") ? "given-name" : label.toLowerCase().includes("last") ? "family-name" : "off"} /></label>; }
 function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) { return <div className="flex justify-between text-sm py-2" style={{ color: "#4a4438" }}><span>{label}</span><span>{value}</span></div>; }
