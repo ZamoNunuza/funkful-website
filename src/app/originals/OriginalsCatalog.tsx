@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { brands, palette } from "@/lib/brands";
 import WishlistButton from "@/components/wishlist/WishlistButton";
+import { getProductThumbnailUrl } from "@/lib/product-images/paths";
 
 type Option = {
   label: string;
@@ -466,11 +467,11 @@ export default function OriginalsCatalog({
                           >
                             {primaryImage && !showFallback ? (
                               <Image
-                                src={primaryImage.url}
+                                src={getProductThumbnailUrl(primaryImage.url) ?? primaryImage.url}
                                 alt={primaryImage.alt ?? product.name}
                                 fill
+                                unoptimized
                                 priority={groupIndex === 0 && productIndex < 3}
-                                sizes="(max-width: 639px) calc(100vw - 4rem), (max-width: 1023px) calc((100vw - 5.5rem) / 2), (max-width: 1179px) calc((100vw - 7rem) / 3), 356px"
                                 className="object-cover p-5"
                                 onError={() =>
                                   setImageErrors((prev) => ({

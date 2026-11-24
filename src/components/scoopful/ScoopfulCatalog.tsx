@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-
+import { getProductThumbnailUrl } from "@/lib/product-images/paths";
 import { brands, palette, scoopfulBright as bright } from "@/lib/brands";
 import { useCart } from "@/lib/cart-context";
 
@@ -280,10 +280,10 @@ function ScoopImageArea({ product }: { product: ScoopfulProduct }) {
       {image ? (
         <Link href={`/products/${product.slug}`} className="absolute inset-0 block" aria-label={`View ${product.name}`}>
           <Image
-            src={image.image_url}
+            src={getProductThumbnailUrl(image.image_url) ?? image.image_url}
             alt={image.alt_text || product.name}
             fill
-            sizes="(max-width: 639px) calc(100vw - 4rem), (max-width: 1023px) calc((100vw - 5.25rem) / 2), (max-width: 1179px) calc((100vw - 7.75rem) / 4), 264px"
+            unoptimized
             className="object-contain p-7 transition-transform duration-300 hover:scale-105"
           />
         </Link>
@@ -511,11 +511,11 @@ export default function ScoopfulCatalog({ scoops, addOns }: Props) {
                           aria-label={`View ${addOn.name}`}
                         >
                           <Image
-                            src={image.image_url}
+                            src={getProductThumbnailUrl(image.image_url) ?? image.image_url}
                             alt={image.alt_text || addOn.name}
                             fill
+                            unoptimized
                             priority={false}
-                            sizes="(max-width: 767px) calc(100vw - 4rem), 420px"
                             className="object-contain p-6 transition-transform duration-500 hover:scale-105"
                           />
                         </Link>
