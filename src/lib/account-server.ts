@@ -77,6 +77,7 @@ export interface WishlistProductView {
   /** True when the product can go straight into the bag (no variants or personalization). */
   canAddDirect: boolean;
   available: boolean;
+  imageUrl?: string | null;
 }
 
 function asBrand(value: unknown): BrandSlug {
@@ -131,6 +132,38 @@ export async function resolveWishlistProducts(ids: string[]): Promise<WishlistPr
       }
     } catch (err) {
       console.error("resolveWishlistProducts lookup failed:", err);
+    }
+  }
+
+  // Load the primary image for every wishlist product.
+  if (ids.length) {
+    try {
+      const admin = createAdminClient();
+      const { data: images, error } = await admin
+        .from("product_images")
+        .select("product_id,image_url,is_primary,sort_order")
+        .in("product_id", ids)
+        .order("is_primary", { ascending: false })
+        .order("sort_order");
+
+      if (error) throw error;
+
+      const primaryImages = new Map<string, string>();
+
+      for (const image of images ?? []) {
+        if (image.image_url && !primaryImages.has(image.product_id)) {
+          primaryImages.set(image.product_id, image.image_url);
+        }
+      }
+
+      for (const [id, product] of found) {
+        found.set(id, {
+          ...product,
+          imageUrl: primaryImages.get(id) ?? null,
+        });
+      }
+    } catch (err) {
+      console.error("resolveWishlistProducts image lookup failed:", err);
     }
   }
 

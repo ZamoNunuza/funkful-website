@@ -15,6 +15,7 @@ import {
   smallOutlineButtonClass,
   smallPrimaryButtonClass,
 } from "@/components/account/ui";
+import { getProductThumbnailUrl } from "@/lib/product-images/paths";
 
 export default function WishlistGrid({ items: initialItems }: { items: WishlistProductView[] }) {
   const { addItem } = useCart();
@@ -66,6 +67,7 @@ export default function WishlistGrid({ items: initialItems }: { items: WishlistP
       <ul className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
         {items.map((item) => {
           const brand = brands[item.brand];
+          const imageSrc = getProductThumbnailUrl(item.imageUrl) ?? brand.logo;
           return (
             <li key={item.id}>
               <div
@@ -81,7 +83,15 @@ export default function WishlistGrid({ items: initialItems }: { items: WishlistP
                       {item.badge}
                     </span>
                   )}
-                  <Image unoptimized src={brand.logo} alt="" width={56} height={56} className="object-contain opacity-80" draggable={false} />
+                  <Image
+                    unoptimized
+                    src={imageSrc}
+                    alt={item.imageUrl ? item.name : ""}
+                    width={600}
+                    height={450}
+                    className="w-full h-full object-contain"
+                    draggable={false}
+                  />
                 </div>
 
                 <div className="p-5 flex flex-col flex-1">
