@@ -573,7 +573,7 @@ export default function ScoopfulCatalog({ scoops, addOns }: Props) {
               controls
               playsInline
               preload="none"
-              poster="/assets/scoopful/unboxing-poster.jpg"
+              poster="/assets/scoopful/unboxing-poster.webp"
               className="w-full h-full object-cover"
             >
               <source src="/assets/scoopful/unboxing.mp4" type="video/mp4" />
