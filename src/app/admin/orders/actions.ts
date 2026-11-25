@@ -80,7 +80,9 @@ export async function retryNotificationAction(_prev: NotificationState, formData
 
 /** Sends every email that never went out (e.g. after verifying the sending domain). */
 export async function recoverUnsentNotificationsAction(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _prev: NotificationState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _formData: FormData,
 ): Promise<NotificationState> {
   await requireAdmin();

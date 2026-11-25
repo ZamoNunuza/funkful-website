@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
@@ -59,7 +60,7 @@ function OriginalsDataError({ message }: { message: string }) {
         <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-neutral-500 mb-3">Funkful Originals</p>
         <h1 className="text-2xl font-black mb-3">We couldn’t load the Originals catalog.</h1>
         <p className="text-sm text-neutral-600 leading-relaxed">Please refresh the page. If the problem continues, the catalog data connection needs attention.</p>
-        <p className="mt-4 text-[11px] text-neutral-400 break-words">{message}</p>
+        <p className="mt-4 text-[11px] text-neutral-400 wrap-break-word">{message}</p>
       </div>
     </main>
   );
@@ -145,12 +146,12 @@ export default async function OriginalsPage() {
 
   return (
     <main style={{ background: palette.cream, color: palette.black }}>
-      <div className="max-w-[1180px] mx-auto px-8 pt-4 text-xs text-neutral-500">
+      <div className="max-w-295 mx-auto px-8 pt-4 text-xs text-neutral-500">
         <Link href="/">Home</Link> / <span className="text-black font-medium">Funkful Originals</span>
       </div>
       <section style={{ background: brands.funkful.accent }} className="mt-4 py-11 md:py-14">
-        <div className="max-w-[1180px] mx-auto px-8 grid md:grid-cols-[220px_1fr] gap-10 items-center">
-          <img src={brands.funkful.logo} alt={brands.funkful.name} width={220} height={220} className="w-full opacity-90" draggable={false} />
+        <div className="max-w-295 mx-auto px-8 grid md:grid-cols-[220px_1fr] gap-10 items-center">
+          <Image src={brands.funkful.logo} alt={brands.funkful.name} width={220} height={220} className="w-full opacity-90" draggable={false} />
           <div>
             <span style={{ background: palette.black, color: palette.cream }} className="inline-flex items-center border rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wide mb-4">
               {brands.funkful.eyebrow}

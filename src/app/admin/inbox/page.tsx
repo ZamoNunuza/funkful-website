@@ -25,16 +25,6 @@ function extractName(value: unknown) {
   return match?.[1]?.replace(/^["']|["']$/g, "").trim() || "";
 }
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return "";
-  return new Intl.DateTimeFormat("en-ZA", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
-
 type EmailRow = Record<string, unknown>;
 
 function getString(row: EmailRow, key: string) {
@@ -137,7 +127,7 @@ export default async function AdminInboxPage({
   return (
     <main className="min-h-screen bg-[#F7F4EF] text-[#111111]">
       <header className="border-b border-black/10 bg-[#FAF8F4]">
-        <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-5">
+        <div className="mx-auto flex max-w-360 items-center justify-between px-6 py-5">
           <div className="flex items-center gap-4">
            <Link href="/admin/">
               <FunkfulEmblem size={32} />
@@ -152,7 +142,7 @@ export default async function AdminInboxPage({
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-[1440px] grid-cols-1 gap-6 px-6 py-6 lg:grid-cols-[230px_1fr]">
+      <div className="mx-auto grid max-w-360 grid-cols-1 gap-6 px-6 py-6 lg:grid-cols-[230px_1fr]">
         <aside className="rounded-3xl border border-black/10 bg-[#FAF8F4] p-4">
           <Link href="/admin/inbox/compose" className="mb-5 flex w-full items-center justify-center rounded-2xl bg-[#111111] px-4 py-3 text-sm font-bold text-white">
             ✚ Compose
@@ -224,7 +214,7 @@ export default async function AdminInboxPage({
           </div>
 
           {emails.length === 0 ? (
-            <div className="flex min-h-[500px] flex-col items-center justify-center px-6 text-center">
+            <div className="flex min-h-125 flex-col items-center justify-center px-6 text-center">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#EBC6C2]/50 text-2xl">✉</div>
               <h3 className="text-lg font-black uppercase">No messages</h3>
               <p className="mt-2 max-w-sm text-sm leading-relaxed text-black/50">New messages sent to your Funkful addresses will appear here automatically.</p>

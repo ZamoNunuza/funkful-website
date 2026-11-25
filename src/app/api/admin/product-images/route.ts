@@ -31,7 +31,6 @@ function safeFileName(name: string) {
 
 export async function POST(request: Request) {
   try {
-    const user = await requireAdmin("/admin/products/images");
     const formData = await request.formData();
     const productId = String(formData.get("productId") || "");
     const altText = String(formData.get("altText") || "").trim();

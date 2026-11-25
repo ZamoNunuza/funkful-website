@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getLookups, getOpenLots, listMaterials, lotsByMaterial, statusOf } from "@/lib/inventory/inventory";
 import { formatQty, formatRand, materialTitle, stockStatus } from "@/lib/inventory/inventory-shared";
 import { MaterialThumb } from "../material-photo";
-import { Bar, btnGhost, btnPrimary, Card, EmptyState, PageHeader, StatusPill } from "../ui";
+import { Bar, btnGhost, btnPrimary, EmptyState, PageHeader, StatusPill } from "../ui";
 
 type Search = {
   q?: string; category?: string; brand?: string; status?: string; inactive?: string;

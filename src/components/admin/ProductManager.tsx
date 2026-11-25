@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type Product = {
   id: string;
@@ -368,7 +368,7 @@ export default function ProductManager({
         {message && <p className="mt-4 rounded-xl bg-white px-3 py-3 text-sm">{message}</p>}
 
         <div className="mt-5 overflow-x-auto rounded-2xl border border-black/10 bg-white">
-          <table className="w-full min-w-[850px] text-left text-sm">
+          <table className="w-full min-w-212.5 text-left text-sm">
             <thead className="border-b border-black/10 bg-[#F7F4EF] text-[11px] font-black uppercase tracking-[0.12em] text-black/50">
               <tr>
                 <th className="px-4 py-3">Product</th>
@@ -433,7 +433,7 @@ export default function ProductManager({
               >
                 ← Previous
               </button>
-              <span className="min-w-[90px] text-center text-xs font-black">
+              <span className="min-w-22.5 text-center text-xs font-black">
                 Page {page} of {totalPages}
               </span>
               <button

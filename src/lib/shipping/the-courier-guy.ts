@@ -159,7 +159,13 @@ export function collapseToSingleParcel(parcels: Parcel[]): Parcel[] {
 
 /** Strips internal-only fields before a parcel is sent to the API. */
 function apiParcels(parcels: Parcel[]) {
-  return parcels.map(({ packaging: _packaging, ...parcel }) => parcel);
+  return parcels.map(({ parcel_description, submitted_length_cm, submitted_width_cm, submitted_height_cm, submitted_weight_kg }) => ({
+    parcel_description,
+    submitted_length_cm,
+    submitted_width_cm,
+    submitted_height_cm,
+    submitted_weight_kg,
+  }));
 }
 
 export async function getCollectionAddress(admin: SupabaseClient) {

@@ -37,7 +37,7 @@ export default function RootLayout({
     <html lang="en" className={`${montserrat.variable} ${poppins.variable} h-full antialiased`} >
       <meta name="google-site-verification" content="31CUjrglW5VXIoO-RH7Jh-4zkjc26Tel0d2mAPcD86g" />
       <body className="min-h-full" suppressHydrationWarning>
-       {/* <SiteProtection />*/}
+       <SiteProtection />
         <CartProvider>
           <WishlistProvider>
             <Header />

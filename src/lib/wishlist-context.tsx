@@ -12,7 +12,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 interface WishlistContextValue {
   ready: boolean;
@@ -35,11 +35,9 @@ function hasAuthCookie() {
     .some((cookie) => /^sb-.+-auth-token/.test(cookie));
 }
 
-function goToLogin() {
+function getLoginPath() {
   const next = `${window.location.pathname}${window.location.search}`;
-  window.location.assign(
-    `/account/login?next=${encodeURIComponent(next)}`
-  );
+  return `/account/login?next=${encodeURIComponent(next)}`;
 }
 
 export function WishlistProvider({
@@ -48,6 +46,7 @@ export function WishlistProvider({
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   const [ids, setIds] = useState<ReadonlySet<string>>(
     () => new Set()
@@ -140,7 +139,7 @@ export function WishlistProvider({
   const mutate = useCallback(
     async (productId: string, save: boolean): Promise<boolean> => {
       if (!hasAuthCookie()) {
-        goToLogin();
+        router.push(getLoginPath());
         return false;
       }
 
@@ -179,7 +178,7 @@ export function WishlistProvider({
 
         if (res.status === 401) {
           apply(!save);
-          goToLogin();
+          router.push(getLoginPath());
           return false;
         }
 
@@ -196,7 +195,7 @@ export function WishlistProvider({
         return false;
       }
     },
-    []
+    [router]
   );
 
   const toggle = useCallback(

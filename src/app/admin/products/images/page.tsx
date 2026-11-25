@@ -9,9 +9,6 @@ export const metadata = { title: "Product images | Funkful admin", robots: { ind
 export default async function ProductImagesPage() {
   await requireAdmin("/admin/products/images");
   const admin = createAdminClient();
-  const { data: roleCheck, error: roleCheckError } = await admin.rpc(
-  "get_current_user_role"
-);
 
   const [{ data: products, error: productsError }, { data: images, error: imagesError }] = await Promise.all([
     admin.from("products").select("id,name,slug,brand,category,is_active").order("brand").order("sort_order").order("name"),
@@ -31,7 +28,7 @@ export default async function ProductImagesPage() {
 
   return (
     <main className="min-h-screen bg-[#F7F4EF] text-[#111111]">
-      <div className="mx-auto max-w-[1280px] px-5 py-8 sm:px-8 sm:py-12">
+      <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-12">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a4a45]">Funkful admin</p>
