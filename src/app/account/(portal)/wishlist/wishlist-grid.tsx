@@ -74,7 +74,7 @@ export default function WishlistGrid({ items: initialItems }: { items: WishlistP
                 style={{ borderColor: "rgba(17,17,17,0.08)", opacity: item.available ? 1 : 0.75 }}
                 className="bg-white border rounded-[20px] overflow-hidden flex flex-col h-full"
               >
-                <div style={{ background: item.swatch }} className="relative aspect-[4/3] flex items-center justify-center p-5">
+                <div style={{ background: item.swatch }} className="relative aspect-4/3 flex items-center justify-center p-5">
                   {item.badge && (
                     <span
                       style={{ background: palette.cream }}

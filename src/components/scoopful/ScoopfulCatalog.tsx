@@ -222,7 +222,7 @@ function DeliveryMeter() {
 
   return (
     <div style={{ background: palette.black, color: palette.cream }}>
-      <div className="max-w-[1180px] mx-auto px-8 py-3 flex items-center gap-4 flex-wrap justify-center sm:justify-between">
+      <div className="max-w-295 mx-auto px-8 py-3 flex items-center gap-4 flex-wrap justify-center sm:justify-between">
         <p className="text-xs font-bold uppercase tracking-wide">
           {unlocked ? (
             <>🎉 You’ve unlocked <span style={{ color: bright.gold }}>free delivery</span></>
@@ -233,7 +233,7 @@ function DeliveryMeter() {
           )}
         </p>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto sm:min-w-[260px]">
+        <div className="flex items-center gap-3 w-full sm:w-auto sm:min-w-65">
           <div
             className="h-2 flex-1 rounded-full overflow-hidden"
             style={{ background: "rgba(250,248,244,0.2)" }}
@@ -265,7 +265,7 @@ function ScoopImageArea({ product }: { product: ScoopfulProduct }) {
 
   return (
     <div
-      className="relative min-h-[210px] overflow-hidden flex items-center justify-center"
+      className="relative min-h-52.5 overflow-hidden flex items-center justify-center"
       style={{ background: getThumbBackground(product) }}
     >
       {product.badge && (
@@ -288,7 +288,7 @@ function ScoopImageArea({ product }: { product: ScoopfulProduct }) {
           />
         </Link>
       ) : (
-        <div className="px-10 max-w-[220px]">
+        <div className="px-10 max-w-55">
           <BallRow colors={balls} size={28} />
         </div>
       )}
@@ -310,15 +310,15 @@ export default function ScoopfulCatalog({ scoops, addOns }: Props) {
       <DeliveryMeter />
 
       {/* Breadcrumb */}
-      <div className="max-w-[1180px] mx-auto px-8 pt-4 text-xs text-neutral-500">
+      <div className="max-w-295 mx-auto px-8 pt-4 text-xs text-neutral-500">
         <Link href="/" className="hover:text-black">Home</Link> /{" "}
         <span className="text-black font-medium">Scoopful</span>
       </div>
 
       {/* Hero */}
       <section style={{ background: bright.blush }} className="mt-4 py-11 md:py-14 overflow-hidden">
-        <div className="max-w-[1180px] mx-auto px-8 grid md:grid-cols-[240px_1fr] gap-10 items-center">
-          <div className="relative w-full aspect-square max-w-[240px] mx-auto md:mx-0">
+        <div className="max-w-295 mx-auto px-8 grid md:grid-cols-[240px_1fr] gap-10 items-center">
+          <div className="relative w-full aspect-square max-w-60 mx-auto md:mx-0">
             {heroBalls.map((ball, index) => (
               <div
                 key={index}
@@ -393,7 +393,7 @@ export default function ScoopfulCatalog({ scoops, addOns }: Props) {
 
       {/* Scoops — first thing after the hero */}
       <section id="catalog" className="pt-14 pb-14 scroll-mt-4">
-        <div className="max-w-[1180px] mx-auto px-8">
+        <div className="max-w-295 mx-auto px-8">
           <Eyebrow>Choose your surprise</Eyebrow>
           <div className="flex items-end justify-between gap-5 flex-wrap mb-8">
             <div>
@@ -462,7 +462,7 @@ export default function ScoopfulCatalog({ scoops, addOns }: Props) {
 
       {/* Premium add-ons — product image front and centre */}
       <section id="addons" className="pb-16">
-        <div className="max-w-[1180px] mx-auto px-8">
+        <div className="max-w-295 mx-auto px-8">
           <Eyebrow>Skip the mystery</Eyebrow>
           <h2 className="text-2xl md:text-3xl font-extrabold uppercase mb-2">Premium add-ons</h2>
           <p className="text-sm text-neutral-600 max-w-xl leading-relaxed mb-8">
@@ -484,10 +484,10 @@ export default function ScoopfulCatalog({ scoops, addOns }: Props) {
                   <div
                     key={addOn.id}
                     style={{ background: "#fff", borderColor: "rgba(17,17,17,0.08)" }}
-                    className="border rounded-[24px] overflow-hidden grid md:grid-cols-[minmax(0,420px)_1fr] shadow-sm">
+                    className="border rounded-3xl overflow-hidden grid md:grid-cols-[minmax(0,420px)_1fr] shadow-sm">
 
                     <div
-                      className="relative min-h-[320px] md:min-h-[380px] overflow-hidden flex items-center justify-center"
+                      className="relative min-h-80 md:min-h-95 overflow-hidden flex items-center justify-center"
                       style={{
                         background: addOn.swatch || bright.gold,
                       }}
@@ -543,7 +543,7 @@ export default function ScoopfulCatalog({ scoops, addOns }: Props) {
                       </p>
                       <div className="flex items-center gap-5 flex-wrap">
                         <PriceLine product={addOn} />
-                        <div className="flex gap-2 flex-1 min-w-[220px] max-w-[320px]">
+                        <div className="flex gap-2 flex-1 min-w-55 max-w-[320px]">
                           <AddToBagButton product={addOn} kind="addon" />
                           <Link
                             href={`/products/${addOn.slug}`}
@@ -564,9 +564,9 @@ export default function ScoopfulCatalog({ scoops, addOns }: Props) {
 
       {/* Unboxing video */}
       <section id="unboxing" style={{ background: bright.lavender }} className="py-14 scroll-mt-4">
-        <div className="max-w-[1180px] mx-auto px-8 grid md:grid-cols-[320px_1fr] gap-10 items-center">
+        <div className="max-w-295 mx-auto px-8 grid md:grid-cols-[320px_1fr] gap-10 items-center">
           <div
-            className="w-full max-w-[320px] mx-auto md:mx-0 rounded-[24px] overflow-hidden shadow-lg"
+            className="w-full max-w-[320px] mx-auto md:mx-0 rounded-3xl overflow-hidden shadow-lg"
             style={{ aspectRatio: "9 / 16", background: palette.black }}
           >
             <video
@@ -603,7 +603,7 @@ export default function ScoopfulCatalog({ scoops, addOns }: Props) {
 
       {/* Ball system */}
       <section className="pt-16 pb-4">
-        <div className="max-w-[1180px] mx-auto px-8">
+        <div className="max-w-295 mx-auto px-8">
           <Eyebrow>The Ball System</Eyebrow>
           <h2 className="text-2xl md:text-3xl font-extrabold uppercase mb-2">Five colors. Five rarities.</h2>
           <p className="text-sm text-neutral-600 max-w-xl leading-relaxed mb-9">
@@ -620,7 +620,7 @@ export default function ScoopfulCatalog({ scoops, addOns }: Props) {
                 className="border rounded-[18px] p-5 text-center"
               >
                 <div
-                  className="w-[46px] h-[46px] rounded-full mx-auto mb-3.5"
+                  className="w-11.5 h-11.5 rounded-full mx-auto mb-3.5"
                   style={{ background: ball.color, boxShadow: ballShadow }}
                 />
                 <h4 className="text-sm font-extrabold uppercase mb-1.5">{ball.name}</h4>
@@ -634,7 +634,7 @@ export default function ScoopfulCatalog({ scoops, addOns }: Props) {
 
       {/* How it works */}
       <section id="how" style={{ background: palette.black, color: palette.cream }} className="py-16 mt-12">
-        <div className="max-w-[1180px] mx-auto px-8">
+        <div className="max-w-295 mx-auto px-8">
           <Eyebrow color={bright.gold}>Scoop. Surprise. Smile.</Eyebrow>
           <h2 className="text-3xl md:text-4xl font-extrabold uppercase mb-10 max-w-xl">How scooping works</h2>
           <div className="grid md:grid-cols-3 gap-6">
@@ -651,7 +651,7 @@ export default function ScoopfulCatalog({ scoops, addOns }: Props) {
 
       {/* Cross sell */}
       <section className="py-16 pb-28 md:pb-16">
-        <div className="max-w-[1180px] mx-auto px-8">
+        <div className="max-w-295 mx-auto px-8">
           <div style={{ background: bright.gold }} className="rounded-3xl p-8 md:p-11 flex items-center justify-between gap-8 flex-wrap">
             <div>
               <span

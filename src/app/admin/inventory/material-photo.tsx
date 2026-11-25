@@ -4,60 +4,52 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { INVENTORY_BUCKET, materialImageUrl } from "@/lib/inventory/inventory-images";
+import { createOptimizedWebp, getSafeImageExtension } from "@/lib/images/browser";
 import { prepareMaterialImageUpload, removeMaterialImage, saveMaterialImage } from "./image-actions";
 import { btnGhost, btnPrimary, Card } from "./ui";
 
-// ---------------------------------------------------------------- browser-side resize
-
-/** Shrinks a photo in the browser so uploads are small (~100–400 KB) and fast on mobile data. */
-async function toJpeg(file: File, maxEdge: number, quality: number, square: boolean): Promise<Blob> {
-  let bitmap: ImageBitmap;
-  try {
-    bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-  } catch {
-    bitmap = await createImageBitmap(file); // older Safari: no options support
-  }
-  try {
-    let sx = 0, sy = 0, sw = bitmap.width, sh = bitmap.height;
-    if (square) {
-      const side = Math.min(sw, sh);
-      sx = Math.round((sw - side) / 2);
-      sy = Math.round((sh - side) / 2);
-      sw = sh = side;
-    }
-    const scale = Math.min(1, maxEdge / Math.max(sw, sh));
-    const w = Math.max(1, Math.round(sw * scale));
-    const h = Math.max(1, Math.round(sh * scale));
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("This browser can't process photos.");
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, w, h);
-    ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, w, h);
-    return await new Promise<Blob>((resolve, reject) =>
-      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not process that photo."))), "image/jpeg", quality),
-    );
-  } finally {
-    bitmap.close();
-  }
-}
+// ---------------------------------------------------------------- shared image preparation and direct storage upload
 
 async function uploadMaterialImage(materialId: string, file: File) {
-  if (!file.type.startsWith("image/")) throw new Error("Choose an image file.");
   if (file.size > 40 * 1024 * 1024) throw new Error("That photo is too large (40 MB max).");
+  const extension = getSafeImageExtension(file.type);
+  if (!extension) throw new Error("Use a JPG, PNG, or WebP image so the original can be preserved.");
 
-  const [full, thumb] = await Promise.all([toJpeg(file, 1400, 0.82, false), toJpeg(file, 360, 0.8, true)]);
-  const prepared = await prepareMaterialImageUpload(materialId);
+  const [full, thumb] = await Promise.all([
+    createOptimizedWebp(file, "display"),
+    createOptimizedWebp(file, "thumbnail"),
+  ]);
+  const prepared = await prepareMaterialImageUpload(materialId, extension);
   if ("error" in prepared) throw new Error(prepared.error);
 
-  // Straight to Supabase Storage. The Next.js server never sees the image bytes.
+  // Upload the untouched source plus lightweight derivatives directly to Storage.
   const storage = createClient().storage.from(INVENTORY_BUCKET);
-  const a = await storage.uploadToSignedUrl(prepared.full.path, prepared.full.token, full, { contentType: "image/jpeg" });
-  if (a.error) throw new Error("Upload failed. Check your connection and try again.");
-  const b = await storage.uploadToSignedUrl(prepared.thumb.path, prepared.thumb.token, thumb, { contentType: "image/jpeg" });
-  if (b.error) throw new Error("Upload failed. Check your connection and try again.");
+  const originalUpload = await storage.uploadToSignedUrl(
+    prepared.original.path,
+    prepared.original.token,
+    file,
+    { contentType: file.type, cacheControl: "31536000" },
+  );
+  if (originalUpload.error) {
+    await storage.remove([prepared.original.path, prepared.full.path, prepared.thumb.path]);
+    throw new Error("Original upload failed. Check your connection and try again.");
+  }
+
+  const [displayUpload, thumbnailUpload] = await Promise.all([
+    storage.uploadToSignedUrl(prepared.full.path, prepared.full.token, full, {
+      contentType: "image/webp",
+      cacheControl: "31536000",
+    }),
+    storage.uploadToSignedUrl(prepared.thumb.path, prepared.thumb.token, thumb, {
+      contentType: "image/webp",
+      cacheControl: "31536000",
+    }),
+  ]);
+
+  if (displayUpload.error || thumbnailUpload.error) {
+    await storage.remove([prepared.original.path, prepared.full.path, prepared.thumb.path]);
+    throw new Error("Optimized image upload failed. Please try again.");
+  }
 
   const saved = await saveMaterialImage(materialId, prepared.key);
   if (saved.error) throw new Error(saved.error);
@@ -117,7 +109,7 @@ export function MaterialPhoto({ materialId, imageKey, title }: { materialId: str
       <input
         ref={input}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         className="sr-only"
         onChange={(e) => {
           const file = e.target.files?.[0];
@@ -205,7 +197,7 @@ export function MaterialThumb({
       <input
         ref={input}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         className="sr-only"
         onChange={(e) => {
           const file = e.target.files?.[0];

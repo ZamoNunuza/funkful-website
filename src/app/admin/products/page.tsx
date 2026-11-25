@@ -40,7 +40,7 @@ export default async function ProductsPage() {
 
   return (
     <main className="min-h-screen bg-[#F7F4EF] text-[#111111]">
-      <div className="mx-auto max-w-[1400px] px-5 py-8 sm:px-8 sm:py-12">
+      <div className="mx-auto max-w-350 px-5 py-8 sm:px-8 sm:py-12">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8a4a45]">

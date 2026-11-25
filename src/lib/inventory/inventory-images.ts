@@ -1,17 +1,27 @@
-// src/lib/inventory/inventory-images.ts
-//
-// Pure helpers for material photos (safe to import from server and client code).
-// A material stores one `image_key`; the two files live at <key>-full.jpg and
-// <key>-thumb.jpg in the public "inventory-images" bucket.
-
+// Shared image paths for inventory originals and optimized WebP derivatives.
+// Legacy keys continue resolving to their existing JPEG objects.
 export const INVENTORY_BUCKET = "inventory-images";
 
 export function imagePaths(key: string) {
-  return { full: `${key}-full.jpg`, thumb: `${key}-thumb.jpg` };
+  const isOptimized = key.split("/").pop()?.startsWith("v2-") ?? false;
+  return isOptimized
+    ? {
+        original: `${key}-original`,
+        full: `${key}-full.webp`,
+        thumb: `${key}-thumb.webp`,
+      }
+    : {
+        original: "",
+        full: `${key}-full.jpg`,
+        thumb: `${key}-thumb.jpg`,
+      };
 }
 
-/** Direct CDN URL. No network call, no signing, and it never touches the Next.js image optimiser. */
-export function materialImageUrl(key: string | null | undefined, size: "thumb" | "full"): string | null {
+/** Routine UI always uses a derivative, never the preserved source upload. */
+export function materialImageUrl(
+  key: string | null | undefined,
+  size: "thumb" | "full",
+): string | null {
   if (!key) return null;
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!base) return null;
